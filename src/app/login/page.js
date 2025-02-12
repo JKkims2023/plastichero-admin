@@ -6,6 +6,7 @@ import useAuthStore from '../store/authStore';
 import { useRouter } from 'next/navigation';
 import Cookies from 'js-cookie'; // js-cookie 라이브러리 import
 
+
 export default function LoginPage() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -13,6 +14,10 @@ export default function LoginPage() {
   const router = useRouter();
   const isLoggedIn = useAuthStore((state) => state.isLoggedIn);
 
+  console.log(Cookies);
+
+  console.log(Cookies.get('token'));
+  
   useEffect(() => {
     // 이미 로그인되어 있다면 홈페이지로 리디렉션
     if (isLoggedIn) {

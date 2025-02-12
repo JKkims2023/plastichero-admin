@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import jwt from 'jsonwebtoken';
 import { jwtVerify } from 'jose';
 import { TextEncoder, TextDecoder } from 'util'; // util 모듈에서 가져오기
+import { Buffer } from 'buffer'; // buffer 모듈 import
 
 
 const JWT_SECRET = 'plastichero!*1'; // 실제 환경에서는 안전하게 관리해야 합니다.
@@ -25,11 +26,17 @@ export async function middleware(request) {
 
   // 1. publicPaths에 해당하는 경로는 인증 검사 없이 통과
   if (publicPaths.includes(pathname)) {
+
+    console.log('jk free pass');
+
     return NextResponse.next();
   }
 
   // 2. 토큰이 없으면 로그인 페이지로 리다이렉트
   if (!token) {
+
+    console.log('jk empty');
+
     return NextResponse.redirect(new URL('/login', request.url));
   }
 
@@ -37,8 +44,12 @@ export async function middleware(request) {
   try {
 //    jwt.verify(token, JWT_SECRET);
 
+    console.log('jk verify before');
+
     // JWT 검증
-    await jwtVerify(token, new TextEncoder().encode(JWT_SECRET));
+    await jwtVerify(token, Buffer.from(JWT_SECRET));
+
+    console.log('jk verifiy after');
 
     return NextResponse.next();
 

@@ -4,6 +4,7 @@ import jwt from 'jsonwebtoken';
 import { serialize } from 'cookie';
 import { SignJWT, jwtVerify } from 'jose';
 import { TextEncoder, TextDecoder } from 'util'; // util 모듈에서 가져오기
+import { Buffer } from 'buffer'; // buffer 모듈 import
 
 
 const JWT_SECRET = 'plastichero!*1'; // 실제 환경에서는 안전하게 관리해야 합니다.
@@ -26,7 +27,7 @@ export async function POST(request) {
   .setProtectedHeader({ alg: 'HS256' })
   .setIssuedAt()
   .setExpirationTime('12h')
-  .sign(new TextEncoder().encode(JWT_SECRET));
+  .sign(Buffer.from(JWT_SECRET));
 
     // 쿠키 설정
     /*

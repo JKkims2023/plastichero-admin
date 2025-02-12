@@ -22,7 +22,7 @@ export default function RootLayout({ children }) {
     console.log(router);
     console.log('router.pathname : ' + router.pathname);
 
-    if (!isLoggedIn && router.pathname !== '/login') {
+    if (!isLoggedIn){// && router.pathname !== '/login') {
     
       router.push('/login');
 
