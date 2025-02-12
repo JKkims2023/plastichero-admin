@@ -1,0 +1,48 @@
+/* src/components/Sidebar.module.css */
+.sidebar {
+    width: 200px;
+    background-color: #1f1f26;
+    padding: 20px;
+  }
+  
+  .sidebar ul {
+    list-style: none;
+    padding: 0;
+  }
+  
+  .sidebar li {
+    margin-bottom: 10px;
+  }
+  
+  .menuButton {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: inherit;
+    padding: 0;
+    margin: 0;
+    display: block;
+    width: 100%;
+    text-align: left;
+  }
+  
+  .subMenu {
+    margin-left: 20px;
+    height: 0; /* 기본적으로 숨김 */
+    overflow: hidden;
+    transition: height 0.3s ease; /* 애니메이션 효과 */
+  }
+  
+  .subMenu.open {
+    height: auto; /* 높이 자동 조정 */
+    overflow: visible;
+  }
+  
+  .sidebar a {
+    text-decoration: none;
+    color: blue;
+  }
+  
+  .sidebar a:hover {
+    text-decoration: underline;
+  }
