@@ -3,10 +3,12 @@
 
 import './globals.css';
 import Sidebar from './components/Sidebar';
+import Header from './components/Header';
 import useAuthStore from './store/authStore';
-import LoginPage from './login/page';
+import LoginPage from './page/login/page';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
+import {parseCookies} from 'nookies';
 
 
 export default function RootLayout({ children }) {
@@ -15,32 +17,60 @@ export default function RootLayout({ children }) {
   const router = useRouter();
 
   useEffect(() => {
-    // 초기 로딩 시 로그인 페이지가 아닌 다른 페이지에 접근했을 때
-    // 로그인 상태가 아니면 로그인 페이지로 리디렉션
-
+    
     console.log('isLoggedIn : ' + isLoggedIn);
-    console.log(router);
     console.log('router.pathname : ' + router.pathname);
 
+    /*
     if (!isLoggedIn){// && router.pathname !== '/login') {
     
       router.push('/login');
 
     }
+    */
 
-    console.log(children);
+    checkAuth();
+
   
   }, [isLoggedIn, router]);
+
+  const checkAuth = async () => {
+
+    const cookies = parseCookies();
+    const token = cookies.token;
+
+    console.log('main inside');
+    console.log(cookies);
+    console.log('token');
+    console.log(token);
+    
+    if (!token) {
+    
+      router.push('/page/login');
+      return;
+    
+    }
+
+    checkAuth();
+
+  };
+
 
 
   return (
     <html lang="en">
-      <body>
+      <body style={{width:'100%', height:'100%'}}>
         {isLoggedIn ? (
-          <div className="container">
-            <Sidebar />
-            <main>{children}</main>
+          <div style={{display:'flex', flexDirection:'column'}}>
+            <Header/>
+            <div className="container" style={{width:'100%', height:'100%', backgroundColor:'white'}}>
+              <Sidebar />
+              <div style={{display:'flex', flex:1, flexDirection:'column', width:'100vh'}}>
+                <main>{children}</main>
+              </div>
+            </div>
           </div>
+ 
         ) : (
           <LoginPage />
         )}
