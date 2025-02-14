@@ -20,7 +20,7 @@ import { GridEventListener } from '@mui/x-data-grid';
 import UserInfoView from '../../../components/UserInfoView';
 import PointHistoryView from '../../../components/PointHistoryView';
 import WalletInfoView from '../../../components/WalletInfoView';
-import { get } from "http";
+
 
 type Anchor = 'bottom';
 
@@ -110,8 +110,8 @@ const columns: GridColDef<(typeof rows)[number]>[] = [
       editable: false,
   },
   {
-      field: 'mb_wallet',
-      headerName: '지갑주소',
+      field: 'wallet_address',
+      headerName: '지갑주소(노드)',
       type: 'string',
       flex: 2,
       disableColumnMenu: true,
@@ -155,7 +155,10 @@ export default function Home() {
     const [filterContentTypeValueMethod, setFilterContentTypeValueMethod] = React.useState('all');
     const [stateBottom, setStateBottom] = React.useState(false);
 
-    const page_info = 'Home > 회원관리 > 일반반 이용자 리스트';
+    const [file, setFile] = React.useState(null);
+    const [message, setMessage] = React.useState('');
+
+    const page_info = 'Home > 회원관리 > 노드 이용자 리스트';
 
     React.useEffect(()=>{
   
@@ -194,7 +197,7 @@ export default function Home() {
 
       try{
 
-        const response = await fetch('/api/user', {
+        const response = await fetch('/api/user/nodeUser', {
 
           method: 'POST',
           headers: {
@@ -317,7 +320,7 @@ export default function Home() {
     };
 
     const handleClickSearch = () => {
-
+      
       try{
 
 
@@ -361,6 +364,37 @@ export default function Home() {
 
     };
 
+    const handleSubmit = async (e) => {
+      e.preventDefault();
+  
+      if (!file) {
+        setMessage('Please select a file.');
+        return;
+      }
+  
+      const formData = new FormData();
+      formData.append('excelFile', file); // 'excelFile'은 API Route에서 사용하는 필드 이름
+  
+      try {
+        const response = await fetch('/api/excel', {
+          method: 'POST',
+          body: formData,
+        });
+  
+        const data = await response.json();
+        setMessage(data.message);
+  
+      } catch (error) {
+        console.error(error);
+        setMessage('Error uploading file.');
+      }
+    };
+
+    const handleFileChange = (e) => {
+      setFile(e.target.files[0]);
+    };
+  
+
   return (
 
     <div style={{display:'flex', flexDirection:'column',  width:'100%', height:'100vh',  paddingLeft:'20px', paddingRight:'20px',}}>
@@ -373,9 +407,15 @@ export default function Home() {
 
       <div style={{}}>
           <Typography sx={{fontSize:"20px",  color: '#1f1f26', marginLeft:"0px", marginTop:"10px", fontWeight:'bold' }}>
-              어플 사용자 리스트
+              노드 사용자 리스트
           </Typography>
       </div>
+
+
+      <form style={{display:'none'}} onSubmit={handleSubmit}>
+        <input type="file" accept=".xlsx, .xls" onChange={handleFileChange} />
+        <button type="submit">Upload</button>
+      </form>
 
       <div style={{
         

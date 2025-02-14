@@ -38,12 +38,7 @@ export default function RootLayout({ children }) {
 
     const cookies = parseCookies();
     const token = cookies.token;
-
-    console.log('main inside');
-    console.log(cookies);
-    console.log('token');
-    console.log(token);
-    
+ 
     if (!token) {
     
       router.push('/page/login');
@@ -59,22 +54,22 @@ export default function RootLayout({ children }) {
 
   return (
     <html lang="en">
-      <body style={{width:'100%', height:'100%'}}>
-        {isLoggedIn ? (
-          <div style={{display:'flex', flexDirection:'column'}}>
-            <Header/>
-            <div className="container" style={{width:'100%', height:'100%', backgroundColor:'white'}}>
-              <Sidebar />
-              <div style={{display:'flex', flex:1, flexDirection:'column', width:'100vh'}}>
-                <main>{children}</main>
-              </div>
+    <body style={{width:'100%', height:'100%'}}>
+      {isLoggedIn ? (
+        <div style={{display:'flex', flexDirection:'column', height: '100vh', overflow: 'hidden'}}>
+          <Header/>
+          <div className="container" style={{width:'100%', height:'100%', backgroundColor:'white', display: 'flex'}}>
+            <Sidebar />
+            <div style={{display:'flex', flex:1, flexDirection:'column', width:'100%', overflow: 'auto'}}>
+              <main>{children}</main>
             </div>
           </div>
- 
-        ) : (
-          <LoginPage />
-        )}
-      </body>
-    </html>
+        </div>
+
+      ) : (
+        <LoginPage />
+      )}
+    </body>
+  </html>
   );
 }
