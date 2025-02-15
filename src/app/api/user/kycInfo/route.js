@@ -12,34 +12,45 @@ export async function POST(request) {
 
   try{
 
-    const { pagingIdx, filterInfo, matchInfo } = await request.json();
+    const { pagingIdx, filterInfo } = await request.json();
 
     const connection = await getConnection();
 
+    let sql_filter = '';
+
+    if(filterInfo != ''){
+
+      sql_filter = `and approval_yn = '${filterInfo}'`;
+
+    }
+
     const sql = `
     
-      SELECT
-
-        DATE_FORMAT(N.reg_date , '%Y-%m-%d %H:%i:%S') as mb_datetime,
-          mb_email,
-          mb_invite_code,
-          mb_invite_code as invite_code,
-          wallet_address
-
-
-          from g5_node_member as N
-
-        order by N.reg_date desc
+      SELECT 
+      
+        key_no, 
+        mb_user_key, 
+        mb_id, 
+        if(kyc_type = '0', '주민등록증', if(kyc_type = '1', '면허증', '여권')) as kyc_type, 
+        kyc_path,
+        kyc_path2,
+        kyc_path3, 
+        kyc_name, 
+        kyc_birth, 
+        approval_yn,
+        if(approval_yn = 'Y', '승인완료', if(approval_yn = 'N', '승인거부', '승인대기')) as approval_yn_text, 
+        reject_comment, 
+        DATE_FORMAT(reg_date , '%Y-%m-%d %H:%i:%S') as reg_date 
         
+        from g5_member_kyc
+
+        where 1=1 ${sql_filter}
+      
+      order by reg_date desc
+      
       ;
 
     `;
-
-
- //   (select mb_no from g5_member where mb_email = N.mb_email and mb_leave_date <> '' ) as mb_no,
- //   (select mb_id from g5_member where mb_email = N.mb_email and mb_leave_date <> '' ) as mb_id,
- //   (select mb_name from g5_member where mb_email = N.mb_email and mb_leave_date <> '' ) as mb_name,
- //   (select mb_hp from g5_member where mb_email = N.mb_email and mb_leave_date <> '' ) as mb_hp
 
     const [rows, fields] = await connection.execute(sql);
 

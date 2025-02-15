@@ -48,12 +48,9 @@ export default function LoginPage() {
 
       const data = await response.json();
 
-      console.log(data);
-
-
       if (response.ok) {
 
-        login({ data }); // 로그인 성공
+        login( data ); // 로그인 성공
         router.push('/'); // 홈페이지로 리디렉션
         console.log('jk login3');
         

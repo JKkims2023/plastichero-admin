@@ -60,80 +60,7 @@ const StripedDataGrid = styled(DataGrid)(({ theme }) => ({
     },
 }));
 
-// @ts-ignore
-const columns: GridColDef<(typeof rows)[number]>[] = [
-  {   
-      field: 'id', 
-      headerName: 'No', 
-      type: 'string',
-      flex: 0.3,             
-      disableColumnMenu: true, 
-  },
-  {
-      field: 'mb_id',
-      headerName: '유저 아이디',
-      type: 'string',
-      flex: 1,
-      disableColumnMenu: true,
-      editable: false,
-  },
-  {
-      field: 'mb_name',
-      headerName: '유저명',
-      type: 'string',
-      flex: 1,
-      disableColumnMenu: true,
-      editable: false,
-  },
-  {
-      field: 'mb_email',
-      headerName: '이메일',
-      type: 'string',
-      flex: 1.2,
-      disableColumnMenu: true,
-      editable: false,
-  },
-  {
-      field: 'mb_point',
-      headerName: '보유포인트',
-      type: 'string',
-      flex: 0.8,
-      disableColumnMenu: true,
-      editable: false,
-  },
-  {
-      field: 'mb_pth',
-      headerName: '보유 PTH',
-      type: 'string',
-      flex: 0.8,
-      disableColumnMenu: true,
-      editable: false,
-  },
-  {
-      field: 'mb_wallet',
-      headerName: '지갑주소',
-      type: 'string',
-      flex: 2,
-      disableColumnMenu: true,
-      editable: false,
-  },
-  {
-      field: 'mb_today_login',
-      headerName: '최근 접속일',
-      type: 'string',
-      flex: 1,
-      disableColumnMenu: true,
-      editable: false,
-  },
-  {
-      field: 'mb_datetime',
-      headerName: '가입일',
-      type: 'string',
-      flex: 1,
-      disableColumnMenu: true,
-      editable: false,
-  },
-];
+
 
 export default function Home() {
 
@@ -155,7 +82,98 @@ export default function Home() {
     const [filterContentTypeValueMethod, setFilterContentTypeValueMethod] = React.useState('all');
     const [stateBottom, setStateBottom] = React.useState(false);
 
-    const page_info = 'Home > 회원관리 > 일반반 이용자 리스트';
+    const page_info = 'Home > 회원관리 > 일반 사용자 관리';
+
+    // @ts-ignore
+    const columns: GridColDef<(typeof rows)[number]>[] = [
+      {   
+          field: 'id', 
+          headerName: 'No', 
+          type: 'string',
+          flex: 0.3,             
+          disableColumnMenu: true, 
+      },
+      {
+          field: 'mb_id',
+          headerName: '유저 아이디',
+          type: 'string',
+          flex: 1,
+          disableColumnMenu: true,
+          editable: false,
+      },
+      {
+          field: 'mb_name',
+          headerName: '유저명',
+          type: 'string',
+          flex: 0.6,
+          disableColumnMenu: true,
+          editable: false,
+      },
+      {
+          field: 'mb_email',
+          headerName: '이메일',
+          type: 'string',
+          flex: 1.2,
+          disableColumnMenu: true,
+          editable: false,
+      },
+      {
+          field: 'mb_point',
+          headerName: '보유포인트',
+          type: 'string',
+          flex: 0.6,
+          disableColumnMenu: true,
+          editable: false,
+      },
+      {
+          field: 'mb_wallet',
+          headerName: '지갑주소',
+          type: 'string',
+          flex: 2,
+          disableColumnMenu: true,
+          editable: false,
+      },
+      {
+          field: 'mb_today_login',
+          headerName: '최근 접속일',
+          type: 'string',
+          flex: 1,
+          disableColumnMenu: true,
+          editable: false,
+      },
+      {
+          field: 'mb_datetime',
+          headerName: '가입일',
+          type: 'string',
+          flex: 1,
+          disableColumnMenu: true,
+          editable: false,
+      },
+      {
+        field: 'detail',
+        headerName: '상세정보',
+        flex: 0.5,
+        disableColumnMenu: true,
+        renderCell: (params) => (
+            <Button
+                variant="contained"
+                size="small"
+                sx={{ fontSize: '12px' }}
+                onClick={(event) => {
+                  
+                    event.stopPropagation();
+                    
+                    setStateBottom(true);
+                    
+                    setSelectedContent(filterUserList[params.row.id - 1]);
+                    setStateBottom(true);
+                }}
+            >
+                보기
+            </Button>
+        ),
+      },
+    ];
 
     React.useEffect(()=>{
   
@@ -283,24 +301,7 @@ export default function Home() {
         }
     };
 
-    // @ts-ignore    
-    const handleClickContentList : GridEventListener<'rowClick'> = (params) => {
-
-      try{
-
-          let rIdx = parseInt(params.row.id) - 1;
-          
-          setSelectedContent(filterUserList[rIdx]);
-          
-          setStateBottom(true);
-
-      }catch(error){
-
-          console.log(error);
-
-      }
-
-    };
+ 
 
     const handleClickDeleteKeyword = () => {
 
@@ -373,7 +374,7 @@ export default function Home() {
 
       <div style={{}}>
           <Typography sx={{fontSize:"20px",  color: '#1f1f26', marginLeft:"0px", marginTop:"10px", fontWeight:'bold' }}>
-              어플 사용자 리스트
+              일반 사용자 관리
           </Typography>
       </div>
 
@@ -394,7 +395,9 @@ export default function Home() {
         alignItems:'center',
         
         }}>
-              
+          
+          <a style={{fontSize:14, marginRight:"10px", color:'black', marginLeft:'10px', fontWeight:900}}>총 가입자 : {userList.length}</a>
+
           <div style={{display:"flex", float:"left", marginLeft:"auto", alignContent:'center', alignItems:'center', justifyContent:'center'}}>
                 
               <div style={{display:"flex", float:"left"}}>
@@ -436,25 +439,19 @@ export default function Home() {
                 id="keywordInfoField"
                 type='text'
                 value={filterInfo}
-                onChange={(text)=>{
-
+                onChange={(text)=>{ 
                   setFilterInfo(text.target.value);
-
                 }}
                 endAdornment={
                   <InputAdornment position="end">
-                    <ClearIcon
-
-                      onClick={handleClickDeleteKeyword}
-                    />
-                
+                    <ClearIcon onClick={handleClickDeleteKeyword} />
                   </InputAdornment>
                 }
-                label="Password"
+                label="키워드를 입력하세요"
               />
             </FormControl>
           </Box>
-          <Button id="keyBtns" variant="outlined" style={{color:"black", borderColor:"#CBCBCB" ,height:"33px" , marginRight:"10px"}}  onClick={handleClickSearch}>
+          <Button id="keyBtns" variant="outlined" style={{color:"white",backgroundColor:"#1f1f26", borderColor:"#CBCBCB" ,height:"33px" , marginRight:"10px"}}  onClick={handleClickSearch}>
             검색
           </Button>
 
@@ -485,13 +482,12 @@ export default function Home() {
                   display: 'none',
                   },
                   "& .MuiDataGrid-columnHeader": {
-//                      backgroundColor: "#f0f0f0",
                       borderTopColor:"green",
                       borderBlockColor:"green",
                       color: "#000000",
                       fontSize:13.5,
-                      fontFamily:'bold',
-                      fontWeight: "bold",
+                      fontWeight: 900,
+                      WebkitFontSmoothing: 'antialiased',
                   },
                   '& .super-app-theme--Open': {
                       '&.Mui-selected': { backgroundColor: 'black'},
@@ -545,7 +541,7 @@ export default function Home() {
                 marginTop:'20px',
 
               }}
-              onRowClick={handleClickContentList}
+
           />
 
       </div>

@@ -20,7 +20,7 @@ import { GridEventListener } from '@mui/x-data-grid';
 import UserInfoView from '../../../components/UserInfoView';
 import PointHistoryView from '../../../components/PointHistoryView';
 import WalletInfoView from '../../../components/WalletInfoView';
-
+import { get } from "http";
 
 type Anchor = 'bottom';
 
@@ -60,12 +60,85 @@ const StripedDataGrid = styled(DataGrid)(({ theme }) => ({
     },
 }));
 
+// @ts-ignore
+const columns: GridColDef<(typeof rows)[number]>[] = [
+  {   
+      field: 'id', 
+      headerName: 'No', 
+      type: 'string',
+      flex: 0.3,             
+      disableColumnMenu: true, 
+  },
+  {
+      field: 'mb_id',
+      headerName: '유저 아이디',
+      type: 'string',
+      flex: 1,
+      disableColumnMenu: true,
+      editable: false,
+  },
+  {
+      field: 'mb_name',
+      headerName: '유저명',
+      type: 'string',
+      flex: 1,
+      disableColumnMenu: true,
+      editable: false,
+  },
+  {
+      field: 'mb_email',
+      headerName: '이메일',
+      type: 'string',
+      flex: 1.2,
+      disableColumnMenu: true,
+      editable: false,
+  },
+  {
+      field: 'mb_point',
+      headerName: '보유포인트',
+      type: 'string',
+      flex: 0.8,
+      disableColumnMenu: true,
+      editable: false,
+  },
+  {
+      field: 'mb_pth',
+      headerName: '보유 PTH',
+      type: 'string',
+      flex: 0.8,
+      disableColumnMenu: true,
+      editable: false,
+  },
+  {
+      field: 'mb_wallet',
+      headerName: '지갑주소',
+      type: 'string',
+      flex: 2,
+      disableColumnMenu: true,
+      editable: false,
+  },
+  {
+      field: 'mb_today_login',
+      headerName: '최근 접속일',
+      type: 'string',
+      flex: 1,
+      disableColumnMenu: true,
+      editable: false,
+  },
+  {
+      field: 'mb_datetime',
+      headerName: '가입일',
+      type: 'string',
+      flex: 1,
+      disableColumnMenu: true,
+      editable: false,
+  },
+];
 
 export default function Home() {
 
     const ref_Div = React.useRef<HTMLDivElement>(null);
     const ref_Grid = React.useRef(0);
-    const ref_matchInfo = React.useRef('');
 
     const [pagingIdx, setPaginIdx] = React.useState('0');
     const [filterInfo, setFilterInfo] = React.useState('');
@@ -82,79 +155,7 @@ export default function Home() {
     const [filterContentTypeValueMethod, setFilterContentTypeValueMethod] = React.useState('all');
     const [stateBottom, setStateBottom] = React.useState(false);
 
-    const [file, setFile] = React.useState(null);
-    const [message, setMessage] = React.useState('');
-
-    const page_info = 'Home > 회원관리 > 노드 사용자 관리';
-
-    // @ts-ignore
-    const columns: GridColDef<(typeof rows)[number]>[] = [
-      {   
-          field: 'id', 
-          headerName: 'No', 
-          type: 'string',
-          flex: 0.3,             
-          disableColumnMenu: true, 
-      },
-      {
-          field: 'mb_email',
-          headerName: '이메일',
-          type: 'string',
-          flex: 1.2,
-          disableColumnMenu: true,
-          editable: false,
-      },
-      {
-          field: 'wallet_address',
-          headerName: '지갑주소(노드)',
-          type: 'string',
-          flex: 2,
-          disableColumnMenu: true,
-          editable: false,
-      },
-      {
-          field: 'invite_code',
-          headerName: '추천코드',
-          type: 'string',
-          flex: 1,
-          disableColumnMenu: true,
-          editable: false,
-      },
-      {
-          field: 'mb_datetime',
-          headerName: '가입일',
-          type: 'string',
-          flex: 1,
-          disableColumnMenu: true,
-          editable: false,
-      },
-      {
-        field: 'detail',
-        headerName: '상세정보',
-        flex: 0.5,
-        disableColumnMenu: true,
-        renderCell: (params) => (
-            <Button
-                variant="contained"
-                size="small"
-                sx={{ fontSize: '12px' }}
-                onClick={(event) => {
-
-                    event.stopPropagation();
-                    
-                    setStateBottom(true);
-                    
-                    setSelectedContent(filterUserList[params.row.id - 1]);
-                    setStateBottom(true);
-
-                }}
-            >
-                보기
-            </Button>
-        ),
-      },
-    ];
-
+    const page_info = 'Home > 키오스크 관리 > 플라스틱 수거현황';
 
     React.useEffect(()=>{
   
@@ -193,8 +194,7 @@ export default function Home() {
 
       try{
 
-        const matchInfo = ref_matchInfo.current;
-        const response = await fetch('/api/user/nodeUser', {
+        const response = await fetch('/api/user', {
 
           method: 'POST',
           headers: {
@@ -203,7 +203,7 @@ export default function Home() {
           
           },
           
-          body: JSON.stringify({ pagingIdx, filterInfo, matchInfo }),
+          body: JSON.stringify({ pagingIdx, filterInfo }),
         
         });
   
@@ -283,6 +283,25 @@ export default function Home() {
         }
     };
 
+    // @ts-ignore    
+    const handleClickContentList : GridEventListener<'rowClick'> = (params) => {
+
+      try{
+
+          let rIdx = parseInt(params.row.id) - 1;
+          
+          setSelectedContent(filterUserList[rIdx]);
+          
+          setStateBottom(true);
+
+      }catch(error){
+
+          console.log(error);
+
+      }
+
+    };
+
     const handleClickDeleteKeyword = () => {
 
       try{
@@ -298,7 +317,7 @@ export default function Home() {
     };
 
     const handleClickSearch = () => {
-      
+
       try{
 
 
@@ -342,37 +361,6 @@ export default function Home() {
 
     };
 
-    const handleSubmit = async (e) => {
-      e.preventDefault();
-  
-      if (!file) {
-        setMessage('Please select a file.');
-        return;
-      }
-  
-      const formData = new FormData();
-      formData.append('excelFile', file); // 'excelFile'은 API Route에서 사용하는 필드 이름
-  
-      try {
-        const response = await fetch('/api/excel', {
-          method: 'POST',
-          body: formData,
-        });
-  
-        const data = await response.json();
-        setMessage(data.message);
-  
-      } catch (error) {
-        console.error(error);
-        setMessage('Error uploading file.');
-      }
-    };
-
-    const handleFileChange = (e) => {
-      setFile(e.target.files[0]);
-    };
-  
-
   return (
 
     <div style={{display:'flex', flexDirection:'column',  width:'100%', height:'100vh',  paddingLeft:'20px', paddingRight:'20px',}}>
@@ -385,15 +373,9 @@ export default function Home() {
 
       <div style={{}}>
           <Typography sx={{fontSize:"20px",  color: '#1f1f26', marginLeft:"0px", marginTop:"10px", fontWeight:'bold' }}>
-              노드 사용자 관리
+              플라스틱 수거현황
           </Typography>
       </div>
-
-
-      <form style={{display:'none'}} onSubmit={handleSubmit}>
-        <input type="file" accept=".xlsx, .xls" onChange={handleFileChange} />
-        <button type="submit">Upload</button>
-      </form>
 
       <div style={{
         
@@ -412,9 +394,9 @@ export default function Home() {
         alignItems:'center',
         
         }}>
-              
+          
           <a style={{fontSize:14, marginRight:"10px", color:'black', marginLeft:'10px', fontWeight:900}}>총 가입자 : {userList.length}</a>
-
+          
           <div style={{display:"flex", float:"left", marginLeft:"auto", alignContent:'center', alignItems:'center', justifyContent:'center'}}>
                 
               <div style={{display:"flex", float:"left"}}>
@@ -441,13 +423,13 @@ export default function Home() {
           </div>
 
           <Box
-
             component="form"
             marginLeft="10px"
             marginRight="5px"
             noValidate
             style={{marginLeft:'5px'}}
             autoComplete="off">
+
 
             <FormControl sx={{minWidth: '300px' }} variant="outlined">
               <InputLabel id='keywordLabel' size="small" sx={{height:"40px",}}>키워드를 입력하세요</InputLabel>
@@ -456,19 +438,25 @@ export default function Home() {
                 id="keywordInfoField"
                 type='text'
                 value={filterInfo}
-                onChange={(text)=>{ 
+                onChange={(text)=>{
+
                   setFilterInfo(text.target.value);
+
                 }}
                 endAdornment={
                   <InputAdornment position="end">
-                    <ClearIcon onClick={handleClickDeleteKeyword} />
+                    <ClearIcon
+
+                      onClick={handleClickDeleteKeyword}
+                    />
+                
                   </InputAdornment>
                 }
-                label="키워드를 입력하세요"
+                label="Password"
               />
             </FormControl>
           </Box>
-          <Button id="keyBtns" variant="outlined" style={{color:"white", backgroundColor:"#1f1f26", borderColor:"#CBCBCB" ,height:"33px" , marginRight:"10px"}}  onClick={handleClickSearch}>
+          <Button id="keyBtns" variant="outlined" style={{color:"white",backgroundColor:"#1f1f26", borderColor:"#CBCBCB" ,height:"33px" , marginRight:"10px"}}  onClick={handleClickSearch}>
             검색
           </Button>
 
@@ -499,13 +487,12 @@ export default function Home() {
                   display: 'none',
                   },
                   "& .MuiDataGrid-columnHeader": {
-//                      backgroundColor: "#f0f0f0",
                       borderTopColor:"green",
                       borderBlockColor:"green",
                       color: "#000000",
                       fontSize:13.5,
-                      fontFamily:'bold',
-                      fontWeight: "bold",
+                      fontWeight: 900,
+                      WebkitFontSmoothing: 'antialiased',
                   },
                   '& .super-app-theme--Open': {
                       '&.Mui-selected': { backgroundColor: 'black'},
@@ -559,7 +546,7 @@ export default function Home() {
                 marginTop:'20px',
 
               }}
-
+              onRowClick={handleClickContentList}
           />
 
       </div>

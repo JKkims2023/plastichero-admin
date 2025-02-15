@@ -1,6 +1,6 @@
 /* src/components/Sidebar.module.css */
 .sidebar {
-    width: 300px;
+    width: 250px;
     background-color: #1f1f26;
     padding: 0px;
   }
@@ -45,4 +45,35 @@
   
   .sidebar a:hover {
     text-decoration: underline;
+  }
+
+  .submenuLink {
+    color: white !important;
+    text-decoration: none;
+  }
+
+  .submenuLink:hover,
+  .submenuLink:focus {
+    color: #4CAF50 !important;
+  }
+
+  .menuRow {
+    transition: background-color 0.2s ease;
+    border-radius: 0px;
+  }
+
+  .menuRow:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    cursor: pointer;
+  }
+
+  .menuButton {
+    background: none;
+    border: none;
+    color: white;
+    cursor: pointer;
+  }
+
+  .menuButton:hover {
+    color: #4CAF50;
   }

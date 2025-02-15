@@ -20,7 +20,7 @@ import { GridEventListener } from '@mui/x-data-grid';
 import UserInfoView from '../../../components/UserInfoView';
 import PointHistoryView from '../../../components/PointHistoryView';
 import WalletInfoView from '../../../components/WalletInfoView';
-
+import { get } from "http";
 
 type Anchor = 'bottom';
 
@@ -60,17 +60,90 @@ const StripedDataGrid = styled(DataGrid)(({ theme }) => ({
     },
 }));
 
+// @ts-ignore
+const columns: GridColDef<(typeof rows)[number]>[] = [
+  {   
+      field: 'id', 
+      headerName: 'No', 
+      type: 'string',
+      flex: 0.3,             
+      disableColumnMenu: true, 
+  },
+  {
+      field: 'kc_name',
+      headerName: '국가',
+      type: 'string',
+      flex: 0.5,
+      disableColumnMenu: true,
+      editable: false,
+  },
+  {
+      field: 'sell_status',
+      headerName: '상태',
+      type: 'string',
+      flex: 0.6,
+      disableColumnMenu: true,
+      editable: false,
+  },
+  {
+      field: 'kc_kiosk_id',
+      headerName: '키오스크ID',
+      type: 'string',
+      flex: 1.5,
+      disableColumnMenu: true,
+      editable: false,
+  },
+  {
+      field: 'kc_addr',
+      headerName: '배치장소',
+      type: 'string',
+      flex: 5,
+      disableColumnMenu: true,
+      editable: false,
+  },
+  {
+      field: 'kc_engineer',
+      headerName: '관리자ID',
+      type: 'string',
+      flex: 0.8,
+      disableColumnMenu: true,
+      editable: false,
+  },
+  {
+      field: 'owner_id',
+      headerName: '소유자ID',
+      type: 'string',
+      flex: 0.8,
+      disableColumnMenu: true,
+      editable: false,
+  },
+  {
+      field: 'mb_today_login',
+      headerName: '만료일',
+      type: 'string',
+      flex: 1,
+      disableColumnMenu: true,
+      editable: false,
+  },
+  {
+      field: 'manage_btn',
+      headerName: '관리',
+      type: 'string',
+      flex: 1,
+      disableColumnMenu: true,
+      editable: false,
+  },
+];
 
 export default function Home() {
 
     const ref_Div = React.useRef<HTMLDivElement>(null);
     const ref_Grid = React.useRef(0);
-    const ref_matchInfo = React.useRef('');
 
     const [pagingIdx, setPaginIdx] = React.useState('0');
     const [filterInfo, setFilterInfo] = React.useState('');
-    const [userList, setUserList] = React.useState([]);
-    const [filterUserList, setFilterUserList] = React.useState([]);
+    const [kioskList, setKioskList] = React.useState([]);
+    const [filterKioskList, setFilterKioskList] = React.useState([]);
     const [selectedContent, setSelectedContent] = React.useState({
 
         contentID : '',
@@ -80,81 +153,11 @@ export default function Home() {
 
     const [filterContentTypeMethod, setFilterContentTypeMethod] = React.useState(10);
     const [filterContentTypeValueMethod, setFilterContentTypeValueMethod] = React.useState('all');
+    const [filterSellStatusMethod, setFilterSellStatusMethod] = React.useState(10);
+    const [filterSellStatusValueMethod, setFilterSellStatusValueMethod] = React.useState('all');
     const [stateBottom, setStateBottom] = React.useState(false);
 
-    const [file, setFile] = React.useState(null);
-    const [message, setMessage] = React.useState('');
-
-    const page_info = 'Home > 회원관리 > 노드 사용자 관리';
-
-    // @ts-ignore
-    const columns: GridColDef<(typeof rows)[number]>[] = [
-      {   
-          field: 'id', 
-          headerName: 'No', 
-          type: 'string',
-          flex: 0.3,             
-          disableColumnMenu: true, 
-      },
-      {
-          field: 'mb_email',
-          headerName: '이메일',
-          type: 'string',
-          flex: 1.2,
-          disableColumnMenu: true,
-          editable: false,
-      },
-      {
-          field: 'wallet_address',
-          headerName: '지갑주소(노드)',
-          type: 'string',
-          flex: 2,
-          disableColumnMenu: true,
-          editable: false,
-      },
-      {
-          field: 'invite_code',
-          headerName: '추천코드',
-          type: 'string',
-          flex: 1,
-          disableColumnMenu: true,
-          editable: false,
-      },
-      {
-          field: 'mb_datetime',
-          headerName: '가입일',
-          type: 'string',
-          flex: 1,
-          disableColumnMenu: true,
-          editable: false,
-      },
-      {
-        field: 'detail',
-        headerName: '상세정보',
-        flex: 0.5,
-        disableColumnMenu: true,
-        renderCell: (params) => (
-            <Button
-                variant="contained"
-                size="small"
-                sx={{ fontSize: '12px' }}
-                onClick={(event) => {
-
-                    event.stopPropagation();
-                    
-                    setStateBottom(true);
-                    
-                    setSelectedContent(filterUserList[params.row.id - 1]);
-                    setStateBottom(true);
-
-                }}
-            >
-                보기
-            </Button>
-        ),
-      },
-    ];
-
+    const page_info = 'Home > 키오스크 관리 > 소유자 관리';
 
     React.useEffect(()=>{
   
@@ -183,18 +186,17 @@ export default function Home() {
 
     React.useEffect(()=>{
 
-    },[userList]);
+    },[kioskList]);
 
     React.useEffect(()=>{
 
-    },[filterUserList]);
+    },[filterKioskList]);
 
     const get_UserInfo = async() => {
 
       try{
 
-        const matchInfo = ref_matchInfo.current;
-        const response = await fetch('/api/user/nodeUser', {
+        const response = await fetch('/api/kiosk/ownerInfo', {
 
           method: 'POST',
           headers: {
@@ -203,7 +205,7 @@ export default function Home() {
           
           },
           
-          body: JSON.stringify({ pagingIdx, filterInfo, matchInfo }),
+          body: JSON.stringify({ pagingIdx, filterInfo }),
         
         });
   
@@ -211,9 +213,9 @@ export default function Home() {
   
         if (response.ok) {
 
-          setUserList(data.result_data.map((data, idx) => ({ id: idx + 1, ...data })));
+          setKioskList(data.result_data.map((data, idx) => ({ id: idx + 1, ...data })));
 
-          setFilterUserList(data.result_data.map((data, idx) => ({ id: idx + 1, ...data })));
+          setFilterKioskList(data.result_data.map((data, idx) => ({ id: idx + 1, ...data })));
           
         } else {
   
@@ -250,27 +252,19 @@ export default function Home() {
           switch(event.target.value){
 
             case 10:{
-              console.log('all');
+
               setFilterContentTypeValueMethod('all');
             }break;
             case 20:{
-              console.log('id');
+
               setFilterContentTypeValueMethod('id');
             }break;
             case 30:{
-              console.log('name');
-              setFilterContentTypeValueMethod('name');
-            }break;
-            case 40:{
-              console.log('email');
-              setFilterContentTypeValueMethod('email');
-            }break;
-            case 50:{
-              console.log('wallet');
-              setFilterContentTypeValueMethod('wallet');
+
+              setFilterContentTypeValueMethod('location');
             }break;
             default:{ 
-              console.log('default');
+
               setFilterContentTypeValueMethod('all');
             }break;  
 
@@ -281,6 +275,62 @@ export default function Home() {
             console.log(error);
 
         }
+    };
+
+    const handleChangeFilterSellStatus = (event: SelectChangeEvent<number>) => {
+
+      try{
+
+        setFilterSellStatusMethod(Number(event.target.value));
+
+        switch(event.target.value){
+
+          case 10:{
+            setFilterSellStatusValueMethod('all');
+          }break;
+          case 20:{
+            setFilterSellStatusValueMethod('0 ');
+          }break;
+          case 30:{
+            setFilterSellStatusValueMethod('1');
+          }break;
+          case 40:{
+            setFilterSellStatusValueMethod('2');
+          }break;
+          case 50:{
+            setFilterSellStatusValueMethod('3');
+          }break;
+          default:{
+            setFilterSellStatusValueMethod('all');
+          }break;
+
+        }
+
+      }catch(error){  
+
+        console.log(error);
+
+      } 
+
+    };  
+
+    // @ts-ignore    
+    const handleClickContentList : GridEventListener<'rowClick'> = (params) => {
+
+      try{
+
+          let rIdx = parseInt(params.row.id) - 1;
+          
+          setSelectedContent(filterKioskList[rIdx]);
+          
+          setStateBottom(true);
+
+      }catch(error){
+
+          console.log(error);
+
+      }
+
     };
 
     const handleClickDeleteKeyword = () => {
@@ -298,7 +348,7 @@ export default function Home() {
     };
 
     const handleClickSearch = () => {
-      
+
       try{
 
 
@@ -307,30 +357,22 @@ export default function Home() {
           switch(filterContentTypeValueMethod){
 
             case 'id':{
-              setFilterUserList(userList.filter((user) => user.mb_id.includes(filterInfo))
+              setFilterKioskList(kioskList.filter((user) => user.mb_id.includes(filterInfo))
                 .map((user, idx) => ({ ...user, id: idx + 1 })));
             }break;
-            case 'name':{
-              setFilterUserList(userList.filter((user) => user.mb_name.includes(filterInfo))
-                .map((user, idx) => ({ ...user, id: idx + 1 })));
-            }break;
-            case 'email':{
-              setFilterUserList(userList.filter((user) => user.mb_email.includes(filterInfo))
-                .map((user, idx) => ({ ...user, id: idx + 1 })));
-            }break;
-            case 'wallet':{
-              setFilterUserList(userList.filter((user) => user.mb_wallet.includes(filterInfo))
+            case 'location':{
+              setFilterKioskList(kioskList.filter((user) => user.kc_addr.includes(filterInfo))
                 .map((user, idx) => ({ ...user, id: idx + 1 })));
             }break;
             default:{
-              setFilterUserList(userList.map((user, idx) => ({ ...user, id: idx + 1 })));
+              setFilterKioskList(kioskList.map((user, idx) => ({ ...user, id: idx + 1 })));
             }break;
           
           }
 
         }else{
 
-          setFilterUserList(userList);
+          setFilterKioskList(kioskList);
 
         } 
         
@@ -341,37 +383,6 @@ export default function Home() {
       }
 
     };
-
-    const handleSubmit = async (e) => {
-      e.preventDefault();
-  
-      if (!file) {
-        setMessage('Please select a file.');
-        return;
-      }
-  
-      const formData = new FormData();
-      formData.append('excelFile', file); // 'excelFile'은 API Route에서 사용하는 필드 이름
-  
-      try {
-        const response = await fetch('/api/excel', {
-          method: 'POST',
-          body: formData,
-        });
-  
-        const data = await response.json();
-        setMessage(data.message);
-  
-      } catch (error) {
-        console.error(error);
-        setMessage('Error uploading file.');
-      }
-    };
-
-    const handleFileChange = (e) => {
-      setFile(e.target.files[0]);
-    };
-  
 
   return (
 
@@ -385,15 +396,9 @@ export default function Home() {
 
       <div style={{}}>
           <Typography sx={{fontSize:"20px",  color: '#1f1f26', marginLeft:"0px", marginTop:"10px", fontWeight:'bold' }}>
-              노드 사용자 관리
+              소유자 관리
           </Typography>
       </div>
-
-
-      <form style={{display:'none'}} onSubmit={handleSubmit}>
-        <input type="file" accept=".xlsx, .xls" onChange={handleFileChange} />
-        <button type="submit">Upload</button>
-      </form>
 
       <div style={{
         
@@ -412,42 +417,58 @@ export default function Home() {
         alignItems:'center',
         
         }}>
-              
-          <a style={{fontSize:14, marginRight:"10px", color:'black', marginLeft:'10px', fontWeight:900}}>총 가입자 : {userList.length}</a>
+          
+          <a style={{fontSize:14, marginRight:"10px", color:'black', marginLeft:'10px', fontWeight:900, width:100}}>총 : {kioskList.length}</a>
+    
+          <div style={{display:"flex", float:"left"}}>
 
-          <div style={{display:"flex", float:"left", marginLeft:"auto", alignContent:'center', alignItems:'center', justifyContent:'center'}}>
-                
-              <div style={{display:"flex", float:"left"}}>
+            <FormControl fullWidth  style={{ width:"175px",marginTop:"0px", marginLeft:"8px", backgroundColor:'white', color:'black'}}>
+                <Select
+                labelId="demo-simple-select-label"
+                id="demo-simple-select"
+                style={{color:'black'}}
+                value={filterSellStatusMethod}
+                size="small"
+                onChange={handleChangeFilterSellStatus}
+                >
+                <MenuItem style={{fontSize:13}} value={10}>전체</MenuItem>
+                <MenuItem style={{fontSize:13}} value={20}>판매전</MenuItem>
+                <MenuItem style={{fontSize:13}} value={30}>판매중</MenuItem>
+                <MenuItem style={{fontSize:13}} value={40}>판매완료(직접채굴)</MenuItem>
+                <MenuItem style={{fontSize:13}} value={50}>판매완료(운영지원금)</MenuItem>
+                </Select>
+            </FormControl>
 
-                  <FormControl fullWidth  style={{ width:"110px",marginTop:"0px", marginLeft:"8px", backgroundColor:'white', color:'black'}}>
-                      <Select
-                      labelId="demo-simple-select-label"
-                      id="demo-simple-select"
-                      style={{color:'black'}}
-                      value={filterContentTypeMethod}
-                      size="small"
-                      onChange={handleChangeFilterContentType}
-                      >
-                      <MenuItem style={{fontSize:13}} value={10}>전체</MenuItem>
-                      <MenuItem style={{fontSize:13}} value={20}>유저 아이디</MenuItem>
-                      <MenuItem style={{fontSize:13}} value={30}>유저명</MenuItem>
-                      <MenuItem style={{fontSize:13}} value={40}>이메일</MenuItem>
-                      <MenuItem style={{fontSize:13}} value={50}>지갑주소</MenuItem>
+          </div>
 
 
-                      </Select>
-                  </FormControl>
-              </div>
+          <div style={{display:"flex", float:"left", marginLeft:"auto", width:"100%"}}>
+
+            <FormControl fullWidth  style={{ width:"110px",marginTop:"0px", marginLeft:"auto", backgroundColor:'white', color:'black'}}>
+                <Select
+                labelId="demo-simple-select-label"
+                id="demo-simple-select"
+                style={{color:'black'}}
+                value={filterContentTypeMethod}
+                size="small"
+                onChange={handleChangeFilterContentType}
+                >
+                <MenuItem style={{fontSize:13}} value={10}>전체</MenuItem>
+                <MenuItem style={{fontSize:13}} value={20}>키오스크ID</MenuItem>
+                <MenuItem style={{fontSize:13}} value={30}>배치장소</MenuItem>
+
+                </Select>
+            </FormControl>
           </div>
 
           <Box
-
             component="form"
             marginLeft="10px"
             marginRight="5px"
             noValidate
             style={{marginLeft:'5px'}}
             autoComplete="off">
+
 
             <FormControl sx={{minWidth: '300px' }} variant="outlined">
               <InputLabel id='keywordLabel' size="small" sx={{height:"40px",}}>키워드를 입력하세요</InputLabel>
@@ -456,29 +477,41 @@ export default function Home() {
                 id="keywordInfoField"
                 type='text'
                 value={filterInfo}
-                onChange={(text)=>{ 
+                onChange={(text)=>{
+
                   setFilterInfo(text.target.value);
+
                 }}
                 endAdornment={
                   <InputAdornment position="end">
-                    <ClearIcon onClick={handleClickDeleteKeyword} />
+                    <ClearIcon
+
+                      onClick={handleClickDeleteKeyword}
+                    />
+                
                   </InputAdornment>
                 }
-                label="키워드를 입력하세요"
+                label="Password"
               />
             </FormControl>
           </Box>
-          <Button id="keyBtns" variant="outlined" style={{color:"white", backgroundColor:"#1f1f26", borderColor:"#CBCBCB" ,height:"33px" , marginRight:"10px"}}  onClick={handleClickSearch}>
+          <Button id="keyBtns" variant="outlined" style={{color:"white",backgroundColor:"#1f1f26", borderColor:"#CBCBCB" ,height:"33px" , marginRight:"10px"}}  onClick={handleClickSearch}>
             검색
           </Button>
 
       </div>
 
-      <div ref={ref_Div} style={{flex:1, height:'100%', marginTop:'0px', paddingLeft:"0px",}}>
+      <div ref={ref_Div} style={{
+        flex: 1, 
+        height: '100%', 
+        marginTop: '0px', 
+        paddingLeft: "0px",
+        width: '100%'
+      }}>
 
           <StripedDataGrid 
 
-              rows={filterUserList}
+              rows={filterKioskList}
               columns={columns}
               autoHeight={true}
               
@@ -494,18 +527,23 @@ export default function Home() {
               columnHeaderHeight={45}
               
               sx={{
-
-                  '.MuiDataGrid-columnSeparator': {
+                  width: '100%',
+                  '& .MuiDataGrid-main': {
+                    width: '100%'
+                  },
+                  '& .MuiDataGrid-columnHeaders': {
+                    width: '100%'
+                  },
+                  '& .MuiDataGrid-columnSeparator': {
                   display: 'none',
                   },
                   "& .MuiDataGrid-columnHeader": {
-//                      backgroundColor: "#f0f0f0",
                       borderTopColor:"green",
                       borderBlockColor:"green",
                       color: "#000000",
                       fontSize:13.5,
-                      fontFamily:'bold',
-                      fontWeight: "bold",
+                      fontWeight: 900,
+                      WebkitFontSmoothing: 'antialiased',
                   },
                   '& .super-app-theme--Open': {
                       '&.Mui-selected': { backgroundColor: 'black'},
@@ -559,7 +597,7 @@ export default function Home() {
                 marginTop:'20px',
 
               }}
-
+              onRowClick={handleClickContentList}
           />
 
       </div>

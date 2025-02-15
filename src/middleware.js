@@ -1,8 +1,8 @@
 // src/middleware.js
 import { NextResponse } from 'next/server';
 import { jwtVerify } from 'jose';
-import { TextEncoder, TextDecoder } from 'util'; // util 모듈에서 가져오기
-import { Buffer } from 'buffer'; // buffer 모듈 import
+import useAuthStore from './app/store/authStore';
+
 
 const JWT_SECRET = 'plastichero!*1'; // 실제 환경에서는 안전하게 관리해야 합니다.
 
@@ -11,18 +11,12 @@ const publicPaths = ['/page/login', '/api/login', '/api/logout'];
 
 export async function middleware(request) {
 
-  global.TextEncoder = TextEncoder;
-  global.TextDecoder = TextDecoder;
-
   console.log('middleware inside');
   console.log('middleware inside pathname');
-
-  console.log(request.nextUrl.pathname);
 
 
   const token = request.cookies.get('token')?.value;
   const pathname = request.nextUrl.pathname;
-
 
   // 1. publicPaths에 해당하는 경로는 인증 검사 없이 통과
   if (publicPaths.includes(pathname)) {
@@ -32,6 +26,10 @@ export async function middleware(request) {
     return NextResponse.next();
   }
 
+  console.log('middleware check before2');
+
+  console.log('token', token);
+
   // 2. 토큰이 없으면 로그인 페이지로 리다이렉트
   if (!token) {
 
@@ -40,14 +38,31 @@ export async function middleware(request) {
     return NextResponse.redirect(new URL('/page/login', request.url));
   }
 
+  console.log('middleware check before3');
+
   // 3. 토큰 검증
   try {
 //    jwt.verify(token, JWT_SECRET);
 
     console.log('jk verify before');
 
+    // 토큰이 'Bearer ' 접두사를 포함하고 있는지 확인하고 제거
+    const actualToken = token.startsWith('Bearer ') ? token.split(' ')[1] : token;
+      
+    // secret key 생성 방식 변경
+    const secret = new Uint8Array(JWT_SECRET.length);
+
+    for (let i = 0; i < JWT_SECRET.length; i++) {
+      
+      secret[i] = JWT_SECRET.charCodeAt(i);
+    
+    }
+
     // JWT 검증
-    await jwtVerify(token, Buffer.from(JWT_SECRET));
+    const { payload } = await jwtVerify(actualToken, secret);
+
+    console.log('Decoded payload:', payload);
+
 
     console.log('jk verifiy after');
 
