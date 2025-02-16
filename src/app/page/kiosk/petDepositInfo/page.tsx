@@ -21,6 +21,21 @@ import UserInfoView from '../../../components/UserInfoView';
 import PointHistoryView from '../../../components/PointHistoryView';
 import WalletInfoView from '../../../components/WalletInfoView';
 import { get } from "http";
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import dayjs from 'dayjs';
+import CircularProgress from '@mui/material/CircularProgress';
+import Backdrop from '@mui/material/Backdrop';
+import FirstPageIcon from '@mui/icons-material/FirstPage';
+import { 
+    gridPageCountSelector, 
+    gridPageSelector, 
+    useGridApiContext, 
+    useGridSelector,
+    GridPagination
+} from '@mui/x-data-grid';
+import IconButton from '@mui/material/IconButton';
 
 type Anchor = 'bottom';
 
@@ -70,70 +85,102 @@ const columns: GridColDef<(typeof rows)[number]>[] = [
       disableColumnMenu: true, 
   },
   {
+      field: 'memo',
+      headerName: '키오스크 ID',
+      type: 'string',
+      flex: 1,
+      disableColumnMenu: true,
+      editable: false,
+  },
+  {
       field: 'mb_id',
-      headerName: '유저 아이디',
+      headerName: '투입계정 ID',
       type: 'string',
       flex: 1,
       disableColumnMenu: true,
       editable: false,
   },
   {
-      field: 'mb_name',
-      headerName: '유저명',
-      type: 'string',
-      flex: 1,
-      disableColumnMenu: true,
-      editable: false,
-  },
-  {
-      field: 'mb_email',
-      headerName: '이메일',
+      field: 'tx_id',
+      headerName: 'TXID',
       type: 'string',
       flex: 1.2,
       disableColumnMenu: true,
       editable: false,
   },
   {
-      field: 'mb_point',
-      headerName: '보유포인트',
+      field: 'amount',
+      headerName: 'PTH 수량',
       type: 'string',
       flex: 0.8,
       disableColumnMenu: true,
       editable: false,
+      renderCell: (params) => {
+          const amount = parseFloat(params.value);
+          return amount.toLocaleString('ko-KR', { maximumFractionDigits: 2 });
+      }
   },
   {
-      field: 'mb_pth',
-      headerName: '보유 PTH',
+      field: 'reg_date_text',
+      headerName: '투입일',
       type: 'string',
       flex: 0.8,
       disableColumnMenu: true,
       editable: false,
+  
   },
   {
-      field: 'mb_wallet',
-      headerName: '지갑주소',
-      type: 'string',
-      flex: 2,
-      disableColumnMenu: true,
-      editable: false,
-  },
-  {
-      field: 'mb_today_login',
-      headerName: '최근 접속일',
-      type: 'string',
-      flex: 1,
-      disableColumnMenu: true,
-      editable: false,
-  },
-  {
-      field: 'mb_datetime',
-      headerName: '가입일',
-      type: 'string',
-      flex: 1,
-      disableColumnMenu: true,
-      editable: false,
-  },
+    field: 'detail',
+    headerName: '상세정보',
+    flex: 0.5,
+    disableColumnMenu: true,
+    align: 'center',
+    headerAlign: 'center',
+    renderCell: (params) => (
+        <Box sx={{ 
+            width: '100%', 
+            height: '100%',  // 높이를 100%로 설정
+            display: 'flex', 
+            justifyContent: 'center',
+            alignItems: 'center'  // 수직 중앙 정렬 추가
+        }}>
+            <Button
+                variant="contained"
+                size="small"
+                sx={{ fontSize: '12px' }}
+                onClick={(event) => {
+                    event.stopPropagation();
+                //    setSelectedContent(filterPointList[params.row.id - 1]);
+                //    handleOpenDialog();
+                }}
+            >
+                보기
+            </Button>
+        </Box>
+    ),
+},
+  
 ];
+
+// Custom Pagination Component
+function CustomPagination() {
+    const apiRef = useGridApiContext();
+    const page = useGridSelector(apiRef, gridPageSelector);
+    const pageCount = useGridSelector(apiRef, gridPageCountSelector);
+
+    return (
+        <div style={{ display: 'flex', alignItems: 'center' }}>
+            <IconButton
+                onClick={() => apiRef.current.setPage(0)}
+                disabled={page === 0}
+                sx={{ padding: '4px' }}
+            >
+                <FirstPageIcon />
+            </IconButton>
+            <GridPagination />
+        </div>
+    );
+}
 
 export default function Home() {
 
@@ -154,8 +201,17 @@ export default function Home() {
     const [filterContentTypeMethod, setFilterContentTypeMethod] = React.useState(10);
     const [filterContentTypeValueMethod, setFilterContentTypeValueMethod] = React.useState('all');
     const [stateBottom, setStateBottom] = React.useState(false);
+    const [selectedDate, setSelectedDate] = React.useState(dayjs());
 
     const page_info = 'Home > 키오스크 관리 > 플라스틱 수거현황';
+
+    const [summaryData, setSummaryData] = React.useState({
+        totalAmount: 0,
+        totalDeposits: 0,
+        totalUsers: 0
+    });
+
+    const [isLoading, setIsLoading] = React.useState(false);
 
     React.useEffect(()=>{
   
@@ -190,43 +246,66 @@ export default function Home() {
 
     },[filterUserList]);
 
-    const get_UserInfo = async() => {
+    React.useEffect(()=>{
 
-      try{
+      get_UserInfo();
 
-        const response = await fetch('/api/user', {
+    },[selectedDate]);
 
-          method: 'POST',
-          headers: {
-          
-            'Content-Type': 'application/json',
-          
-          },
-          
-          body: JSON.stringify({ pagingIdx, filterInfo }),
-        
-        });
-  
-        const data = await response.json(); 
-  
-        if (response.ok) {
-
-          setUserList(data.result_data.map((data, idx) => ({ id: idx + 1, ...data })));
-
-          setFilterUserList(data.result_data.map((data, idx) => ({ id: idx + 1, ...data })));
-          
+    React.useEffect(() => {
+        if (filterUserList.length > 0) {
+            // 총 수량 계산
+            const totalAmount = filterUserList.reduce((sum, item) => sum + parseFloat(item.amount), 0);
+            
+            // 중복되지 않은 사용자 ID 배열 생성
+            const uniqueUsers = [...new Set(filterUserList.map(item => item.mb_id))];
+            
+            setSummaryData({
+                totalAmount: totalAmount,
+                totalDeposits: filterUserList.length,
+                totalUsers: uniqueUsers.length
+            });
         } else {
-  
-          alert(data.message);
-        
+            // 데이터가 없을 경우 초기화
+            setSummaryData({
+                totalAmount: 0,
+                totalDeposits: 0,
+                totalUsers: 0
+            });
         }
+    }, [filterUserList]);
 
-      }catch(error){
+    const get_UserInfo = async() => {
+        try {
+            setIsLoading(true); // 로딩 시작
+            
+            const response = await fetch('/api/kiosk/petDepositInfo', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ 
+                    pagingIdx, 
+                    filterInfo, 
+                    fromDate: selectedDate.subtract(1,'day'),
+                    toDate: selectedDate.add(1,'day') 
+                }),
+            });
 
-        console.log(error);
+            const data = await response.json(); 
 
-      }
-
+            if (response.ok) {
+                setUserList(data.result_data.map((data, idx) => ({ id: idx + 1, ...data })));
+                setFilterUserList(data.result_data.map((data, idx) => ({ id: idx + 1, ...data })));
+            } else {
+                alert(data.message);
+            }
+        } catch(error) {
+            console.log(error);
+            alert('데이터 로딩 중 오류가 발생했습니다.');
+        } finally {
+            setIsLoading(false); // 로딩 종료
+        }
     };
 
     const toggleDrawer = (anchor: Anchor, open: boolean) => (event: React.KeyboardEvent | React.MouseEvent) => {
@@ -316,49 +395,41 @@ export default function Home() {
 
     };
 
-    const handleClickSearch = () => {
-
-      try{
-
-
-        if(filterInfo.length > 0){
-
-          switch(filterContentTypeValueMethod){
-
-            case 'id':{
-              setFilterUserList(userList.filter((user) => user.mb_id.includes(filterInfo))
-                .map((user, idx) => ({ ...user, id: idx + 1 })));
-            }break;
-            case 'name':{
-              setFilterUserList(userList.filter((user) => user.mb_name.includes(filterInfo))
-                .map((user, idx) => ({ ...user, id: idx + 1 })));
-            }break;
-            case 'email':{
-              setFilterUserList(userList.filter((user) => user.mb_email.includes(filterInfo))
-                .map((user, idx) => ({ ...user, id: idx + 1 })));
-            }break;
-            case 'wallet':{
-              setFilterUserList(userList.filter((user) => user.mb_wallet.includes(filterInfo))
-                .map((user, idx) => ({ ...user, id: idx + 1 })));
-            }break;
-            default:{
-              setFilterUserList(userList.map((user, idx) => ({ ...user, id: idx + 1 })));
-            }break;
-          
-          }
-
-        }else{
-
-          setFilterUserList(userList);
-
-        } 
-        
-      }catch(error){
-
-        console.log(error);
-
-      }
-
+    const handleClickSearch = async () => {
+        try {
+            setIsLoading(true); // 로딩 시작
+            
+            if(filterInfo.length > 0) {
+                switch(filterContentTypeValueMethod) {
+                    case 'id': {
+                        setFilterUserList(userList.filter((user) => user.mb_id.includes(filterInfo))
+                            .map((user, idx) => ({ ...user, id: idx + 1 })));
+                    } break;
+                    case 'name':{
+                      setFilterUserList(userList.filter((user) => user.mb_name.includes(filterInfo))
+                        .map((user, idx) => ({ ...user, id: idx + 1 })));
+                    }break;
+                    case 'email':{
+                      setFilterUserList(userList.filter((user) => user.mb_email.includes(filterInfo))
+                        .map((user, idx) => ({ ...user, id: idx + 1 })));
+                    }break;
+                    case 'wallet':{
+                      setFilterUserList(userList.filter((user) => user.mb_wallet.includes(filterInfo))
+                        .map((user, idx) => ({ ...user, id: idx + 1 })));
+                    }break;
+                    default:{
+                      setFilterUserList(userList.map((user, idx) => ({ ...user, id: idx + 1 })));
+                    }break;
+                }
+            } else {
+                setFilterUserList(userList);
+            }
+        } catch(error) {
+            console.log(error);
+            alert('검색 중 오류가 발생했습니다.');
+        } finally {
+            setIsLoading(false); // 로딩 종료
+        }
     };
 
   return (
@@ -378,6 +449,61 @@ export default function Home() {
       </div>
 
       <div style={{
+        display: 'flex',
+        gap: '20px',
+        marginTop: '5px',
+        marginBottom: '5px'
+      }}>
+        <div style={{
+          flex: 1,
+          padding: '20px',
+          backgroundColor: '#f8f9fa',
+          borderRadius: '8px',
+          boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+          textAlign: 'left'
+        }}>
+          <Typography sx={{fontSize: '14px', color: '#666', marginBottom: '8px'}}>
+            총 보상 PTH
+          </Typography>
+          <Typography sx={{fontSize: '24px', fontWeight: 'bold', color: '#1f1f26'}}>
+            {(summaryData?.totalAmount || 0).toLocaleString('ko-KR', { maximumFractionDigits: 2 })} PTH
+          </Typography>
+        </div>
+        
+        <div style={{
+          flex: 1,
+          padding: '20px',
+          backgroundColor: '#f8f9fa',
+          borderRadius: '8px',
+          boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+          textAlign: 'left'
+        }}>
+          <Typography sx={{fontSize: '14px', color: '#666', marginBottom: '8px'}}>
+            투입 횟수
+          </Typography>
+          <Typography sx={{fontSize: '24px', fontWeight: 'bold', color: '#1f1f26'}}>
+            {summaryData.totalDeposits.toLocaleString('ko-KR')}회
+          </Typography>
+        </div>
+        
+        <div style={{
+          flex: 1,
+          padding: '20px',
+          backgroundColor: '#f8f9fa',
+          borderRadius: '8px',
+          boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+          textAlign: 'left'
+        }}>
+          <Typography sx={{fontSize: '14px', color: '#666', marginBottom: '8px'}}>
+            이용자 수
+          </Typography>
+          <Typography sx={{fontSize: '24px', fontWeight: 'bold', color: '#1f1f26'}}>
+            {summaryData.totalUsers.toLocaleString('ko-KR')}명
+          </Typography>
+        </div>
+      </div>
+
+      <div style={{
         
         display:"flex", 
         float:"left",  
@@ -394,9 +520,26 @@ export default function Home() {
         alignItems:'center',
         
         }}>
-          
-          <a style={{fontSize:14, marginRight:"10px", color:'black', marginLeft:'10px', fontWeight:900}}>총 가입자 : {userList.length}</a>
-          
+                    
+          <LocalizationProvider dateAdapter={AdapterDayjs}>
+              <DatePicker 
+
+                  value={selectedDate}
+                  onChange={(newValue) => setSelectedDate(newValue)}
+                  format="YYYY-MM-DD"
+                  slotProps={{ 
+                      textField: { 
+                          size: 'small',
+                          sx: { 
+                              backgroundColor: 'white',
+                              width: '150px',
+                              marginRight: '10px'
+                          }
+                      }
+                  }}
+              />
+          </LocalizationProvider>
+
           <div style={{display:"flex", float:"left", marginLeft:"auto", alignContent:'center', alignItems:'center', justifyContent:'center'}}>
                 
               <div style={{display:"flex", float:"left"}}>
@@ -481,6 +624,36 @@ export default function Home() {
               rowHeight={42}
               columnHeaderHeight={45}
               
+              slots={{
+                  pagination: CustomPagination,
+              }}
+              
+              localeText={{
+                  toolbarExportCSV: "CVS 파일 저장",
+                  toolbarColumns: "헤더설정",
+                  toolbarFilters: "내부필터링",
+                  toolbarExport: "다운로드",
+                  MuiTablePagination: {
+                      labelDisplayedRows: ({ from, to, count }) => {
+                          if (from === undefined || to === undefined || count === undefined) {
+                              return '0-0 / 0';
+                          }
+                          return `${from.toLocaleString('ko-KR')}-${to.toLocaleString('ko-KR')} / ${count.toLocaleString('ko-KR')}`;
+                      }
+                  }
+              }}
+              
+              slotProps={{
+                  toolbar: {
+                      printOptions: { disableToolbarButton: true },
+                      csvOptions: { disableToolbarButton: true },
+                  },
+                  pagination: {
+                      labelRowsPerPage: "페이지당 행:",
+                      labelDisplayedRows: ({ from, to, count }) => 
+                          `${from.toLocaleString('ko-KR')}-${to.toLocaleString('ko-KR')} / ${count.toLocaleString('ko-KR')}`
+                  }
+              }}
               sx={{
 
                   '.MuiDataGrid-columnSeparator': {
@@ -523,21 +696,22 @@ export default function Home() {
                       '& .MuiDataGrid-filterForm': {
                           bgcolor: 'lightblue',
                       },
+                  '& .MuiTablePagination-root': {
+                      fontSize: '14px',
+                  },
+                  '& .MuiTablePagination-selectLabel': {
+                      fontSize: '14px',
+                  },
+                  '& .MuiTablePagination-displayedRows': {
+                      fontSize: '14px',
+                  },
+                  '& .MuiTablePagination-select': {
+                      fontSize: '14px',
+                  },
+                  '& .MuiTablePagination-menuItem': {
+                      fontSize: '14px',
+                  },
               }}
-
-              localeText={{
-                  toolbarExportCSV: "CVS 파일 저장",
-                  toolbarColumns: "헤더설정",
-                  toolbarFilters: "내부필터링",
-                  toolbarExport: "다운로드"
-                  
-              }}
-              slotProps={{
-                  toolbar: {
-                      printOptions: { disableToolbarButton: true },
-                      csvOptions: { disableToolbarButton: true },
-                      
-              }}}
               getRowClassName={(params) =>
                   params.indexRelativeToCurrentPage % 2 === 1 ? 'even' : 'odd'
               }
@@ -587,6 +761,27 @@ export default function Home() {
           </Drawer>
       
       </React.Fragment>
+
+      <Backdrop
+        sx={{ 
+            color: '#fff', 
+            zIndex: (theme) => theme.zIndex.drawer + 1,
+            backgroundColor: 'rgba(0, 0, 0, 0.7)'
+        }}
+        open={isLoading}
+      >
+        <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '10px'
+        }}>
+            <CircularProgress color="inherit" />
+            <Typography sx={{ color: 'white', mt: 2 }}>
+                플라스틱 수거 정보를 불러오는 중입니다.
+            </Typography>
+        </div>
+      </Backdrop>
 
     </div>
   );

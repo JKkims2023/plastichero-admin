@@ -23,12 +23,17 @@ import logoPath from '../../../public/logo.svg';
 
 export default function Sidebar() {
 
-  const isLoggedIn = useAuthStore((state) => state.isLoggedIn);
   const [menu_auth, setMenu_auth] = useState(useAuthStore((state) => state.user));
   const [sidebarData, setSidebarData] = useState([]);
   const [openMenu, setOpenMenu] = useState(null);
-  const logout = useAuthStore((state) => state.logout);
   const router = useRouter();
+
+  const login = useAuthStore((state) => state.login);
+  const logout = useAuthStore((state) => state.logout);
+  const isLoggedIn = useAuthStore((state) => state.isLoggedIn);
+
+
+
 
   useEffect(()=>{
 
@@ -71,8 +76,9 @@ export default function Sidebar() {
         {
           label: '포인트관리',
           children: [
-            { href: '/page/point/pointList', label: '• 포인트 사용내역' },
-            { href: '/page/point/swapList', label: '• 포인트 전환내역' },
+            { href: '/page/point/pointRewardInfo', label: '• 포인트 제공내역' },
+            { href: '/page/point/pointHistoryInfo', label: '• 포인트 사용내역' },
+            { href: '/page/point/pointSwapInfo', label: '• 포인트 전환내역' },
           ],
         },
         {
@@ -128,8 +134,9 @@ export default function Sidebar() {
         {
           label: '포인트관리',
           children: [
-            { href: '/page/point/pointList', label: '• 포인트 사용내역' },
-            { href: '/page/point/swapList', label: '• 포인트 전환내역' },
+            { href: '/page/point/pointRewardInfo', label: '• 포인트 제공내역' },
+            { href: '/page/point/pointHistoryInfo', label: '• 포인트 사용내역' },
+            { href: '/page/point/pointSwapInfo', label: '• 포인트 전환내역' },
           ],
         },
         {
@@ -179,6 +186,16 @@ export default function Sidebar() {
 
   },[sidebarData]);
 
+  useEffect(()=>{
+
+    console.log('isLoggedIn effect sidebar : ' + isLoggedIn);
+
+    if(isLoggedIn){
+
+      router.push('/');
+    }
+
+  },[isLoggedIn]);
 
   const toggleMenu = (index) => {
     setOpenMenu(openMenu === index ? null : index);

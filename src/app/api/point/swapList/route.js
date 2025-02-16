@@ -12,49 +12,49 @@ export async function POST(request) {
 
   try{
 
-    const { pagingIdx, filterInfo } = await request.json();
-
-    console.log(pagingIdx);
-    console.log(filterInfo);
+    const { pagingIdx, fromDate, toDate } = await request.json();
 
     const connection = await getConnection();
+
+
+    const sql_datetime = `and po_datetime > '${fromDate.substring(0,10)}' and po_datetime < '${toDate.substring(0,10)}' `;
+
 
     const sql = `
     
       SELECT 
 
-        K.kc_no, 
-        K.kc_kiosk_id, 
-        K.kc_engineer, 
-        K.kc_zip1, 
-        K.kc_zip2, 
-        K.kc_addr1, 
-        K.kc_addr2, 
-        K.kc_addr3, 
-        CONCAT(K.kc_addr1, ' ', K.kc_addr2, ' ', K.kc_addr3) as kc_addr,
-        K.kc_addr_jibeon, 
-        K.kc_lat, 
-        K.kc_lng, 
-        K.kc_start, 
-        K.kc_end, 
-        K.kc_datetime, 
-        K.kg_no,
-        K.kctry_no,
-        K.owner_id,
-        K.manager_mail,
-        if(K.owner_key = 0, '판매전', '판매중') as sell_status,
-        (select kc_name from g5_kiosk_country where kctry_no = K.kctry_no) as kc_name
+        po_id, 
+        mb_id,
+        DATE_FORMAT(po_datetime , '%Y-%m-%d %H:%i:%S') as po_datetime, 
+        po_content, 
+        po_point, 
+        po_use_point, 
+        po_expired, 
+        po_expire_date, 
+        po_mb_point, 
+        po_rel_table, 
+        po_rel_id, 
+        po_rel_action, 
+        po_reward_type, 
+        po_pth, 
+        po_mb_pth, 
+        po_txid,
+        point_type, 
+        swap_pth
 
-        FROM ecocentre0.g5_kiosk as K order by K.kc_no asc;
+        FROM g5_point
+        
+        where point_type = 6  ${sql_datetime}
 
+        order by po_datetime desc
+        
       
       ;
 
     `;
 
     const [rows, fields] = await connection.execute(sql);
-
-    console.log('total length : ' + rows.length );
 
     const response = NextResponse.json({ 
         

@@ -459,26 +459,35 @@ export default function Home() {
           editable: false,
       },
       {
-        field: 'kyc_path',
-        headerName: '첨부파일',
-        flex: 0.5,
-        disableColumnMenu: true,
-        renderCell: (params) => (
-            <Button
-                variant="contained"
-                size="small"
-                sx={{ fontSize: '12px' }}
-                onClick={(event) => {
-                    event.stopPropagation();
-                    setSelectedContent(filterKycList[params.row.id - 1]);
-                    handleOpenDialog();
-                }}
-            >
-                보기
-            </Button>
-        ),
+          field: 'kyc_path',
+          headerName: '상세정보',
+          flex: 0.5,
+          disableColumnMenu: true,
+          align: 'center',
+          headerAlign: 'center',
+          renderCell: (params) => (
+              <Box sx={{ 
+                  width: '100%', 
+                  height: '100%',  // 높이를 100%로 설정
+                  display: 'flex', 
+                  justifyContent: 'center',
+                  alignItems: 'center'  // 수직 중앙 정렬 추가
+              }}>
+                  <Button
+                      variant="contained"
+                      size="small"
+                      sx={{ fontSize: '12px' }}
+                      onClick={(event) => {
+                          event.stopPropagation();
+                          setSelectedContent(filterKycList[params.row.id - 1]);
+                          handleOpenDialog();
+                      }}
+                  >
+                      보기
+                  </Button>
+              </Box>
+          ),
       },
-
     ];
 
   return (

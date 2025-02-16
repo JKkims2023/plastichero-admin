@@ -1,7 +1,26 @@
 'use client';
 
 import React from "react";
-import { DataGrid, GridToolbar, GridRowsProp, GridColDef, GridToolbarContainer, GridToolbarExport, GridToolbarColumnsButton, GridToolbarFilterButton, gridClasses} from '@mui/x-data-grid';
+import FirstPageIcon from '@mui/icons-material/FirstPage';
+import { 
+    DataGrid,
+    GridToolbar, 
+    GridRowsProp, 
+    GridColDef, 
+    GridToolbarContainer, 
+    GridToolbarExport, 
+    GridToolbarColumnsButton, 
+    GridToolbarFilterButton,
+    gridClasses,
+    gridPageCountSelector,
+    gridPageSelector,
+    useGridApiContext,
+    useGridSelector,
+    GridPagination
+} from '@mui/x-data-grid';
+import IconButton from '@mui/material/IconButton';
+
+
 import Typography from '@mui/material/Typography';
 import MenuItem from '@mui/material/MenuItem';
 import FormControl from '@mui/material/FormControl';
@@ -21,6 +40,7 @@ import UserInfoView from '../../../components/UserInfoView';
 import PointHistoryView from '../../../components/PointHistoryView';
 import WalletInfoView from '../../../components/WalletInfoView';
 import { get } from "http";
+import CircularProgress from '@mui/material/CircularProgress';
 
 type Anchor = 'bottom';
 
@@ -81,6 +101,7 @@ export default function Home() {
     const [filterContentTypeMethod, setFilterContentTypeMethod] = React.useState(10);
     const [filterContentTypeValueMethod, setFilterContentTypeValueMethod] = React.useState('all');
     const [stateBottom, setStateBottom] = React.useState(false);
+    const [isLoading, setIsLoading] = React.useState(false);
 
     const page_info = 'Home > 회원관리 > 일반 사용자 관리';
 
@@ -154,23 +175,23 @@ export default function Home() {
         headerName: '상세정보',
         flex: 0.5,
         disableColumnMenu: true,
+        align: 'center',
+        headerAlign: 'center',
         renderCell: (params) => (
-            <Button
-                variant="contained"
-                size="small"
-                sx={{ fontSize: '12px' }}
-                onClick={(event) => {
-                  
-                    event.stopPropagation();
-                    
-                    setStateBottom(true);
-                    
-                    setSelectedContent(filterUserList[params.row.id - 1]);
-                    setStateBottom(true);
-                }}
-            >
-                보기
-            </Button>
+            <div style={{ width: '100%', textAlign: 'center' }}>
+                <Button
+                    variant="contained"
+                    size="small"
+                    sx={{ fontSize: '12px' }}
+                    onClick={(event) => {
+                        event.stopPropagation();
+                        setSelectedContent(filterUserList[params.row.id - 1]);
+                        setStateBottom(true);
+                    }}
+                >
+                    보기
+                </Button>
+            </div>
         ),
       },
     ];
@@ -211,7 +232,7 @@ export default function Home() {
     const get_UserInfo = async() => {
 
       try{
-
+        setIsLoading(true);
         const response = await fetch('/api/user', {
 
           method: 'POST',
@@ -243,6 +264,8 @@ export default function Home() {
 
         console.log(error);
 
+      } finally {
+        setIsLoading(false);
       }
 
     };
@@ -318,14 +341,9 @@ export default function Home() {
     };
 
     const handleClickSearch = () => {
-
-      try{
-
-
+      try {
         if(filterInfo.length > 0){
-
           switch(filterContentTypeValueMethod){
-
             case 'id':{
               setFilterUserList(userList.filter((user) => user.mb_id.includes(filterInfo))
                 .map((user, idx) => ({ ...user, id: idx + 1 })));
@@ -345,27 +363,56 @@ export default function Home() {
             default:{
               setFilterUserList(userList.map((user, idx) => ({ ...user, id: idx + 1 })));
             }break;
-          
           }
-
         }else{
-
           setFilterUserList(userList);
-
         } 
-        
       }catch(error){
-
         console.log(error);
-
       }
-
+    
     };
+
+    // Custom Pagination Component 추가
+    function CustomPagination() {
+      const apiRef = useGridApiContext();
+      const page = useGridSelector(apiRef, gridPageSelector);
+      const pageCount = useGridSelector(apiRef, gridPageCountSelector);
+
+      return (
+          <div style={{ display: 'flex', alignItems: 'center' }}>
+              <IconButton
+                  onClick={() => apiRef.current.setPage(0)}
+                  disabled={page === 0}
+                  sx={{ padding: '4px' }}
+              >
+                  <FirstPageIcon />
+              </IconButton>
+              <GridPagination />
+          </div>
+      );
+    }
+
 
   return (
 
-    <div style={{display:'flex', flexDirection:'column',  width:'100%', height:'100vh',  paddingLeft:'20px', paddingRight:'20px',}}>
-
+    <div style={{display:'flex', flexDirection:'column',  width:'100%', height:'100vh',  paddingLeft:'20px', paddingRight:'20px', position: 'relative'}}>
+      {isLoading && (
+        <div style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          backgroundColor: 'rgba(255, 255, 255, 0.7)',
+          zIndex: 9999
+        }}>
+          <CircularProgress />
+        </div>
+      )}
       <div style={{display:'flex', flexDirection:'row', marginTop:'20px'}}>
 
           <p style={{color:'#1f1f26', fontSize:13}}>{page_info}</p>
@@ -396,7 +443,9 @@ export default function Home() {
         
         }}>
           
-          <a style={{fontSize:14, marginRight:"10px", color:'black', marginLeft:'10px', fontWeight:900}}>총 가입자 : {userList.length}</a>
+          <a style={{fontSize:14, marginRight:"10px", color:'black', marginLeft:'10px', fontWeight:900}}>
+            총 가입자 : {userList.length}
+          </a>
 
           <div style={{display:"flex", float:"left", marginLeft:"auto", alignContent:'center', alignItems:'center', justifyContent:'center'}}>
                 
@@ -509,15 +558,31 @@ export default function Home() {
                       fontSize:13.5,
                   },
                   '& .MuiMenuItem-root': {
-                          fontSize: 1,
-                      },
-                      '& .MuiTypography-root': {
-                          color: 'dodgerblue',
-                          fontSize: 1,
-                      },
-                      '& .MuiDataGrid-filterForm': {
-                          bgcolor: 'lightblue',
-                      },
+                      fontSize: 1,
+                  },
+                  '& .MuiTypography-root': {
+                      color: 'dodgerblue',
+                      fontSize: 1,
+                  },
+                  '& .MuiDataGrid-filterForm': {
+                      bgcolor: 'lightblue',
+                  },
+                  "& .MuiTablePagination-root": {
+                      fontSize: "14px",
+                  },
+                  "& .MuiTablePagination-selectLabel": {
+                      fontSize: "14px",
+                  },
+                  "& .MuiTablePagination-displayedRows": {
+                      fontSize: "14px",
+                  },
+                  "& .MuiTablePagination-select": {
+                      fontSize: "14px",
+                  },
+                  "& .MuiTablePagination-menuItem": {
+                      fontSize: "14px",
+                  },
+        
               }}
 
               localeText={{
@@ -540,6 +605,10 @@ export default function Home() {
 
                 marginTop:'20px',
 
+              }}
+
+              slots={{
+                  pagination: CustomPagination,
               }}
 
           />

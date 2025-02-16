@@ -65,8 +65,6 @@ export async function POST(request) {
 
       });
 
-      // Set-Cookie 헤더 설정
-      response.headers.set('Set-Cookie', serializedCookie);
 
       connection.release(); // 연결 반환
     

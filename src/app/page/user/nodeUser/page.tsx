@@ -133,20 +133,20 @@ export default function Home() {
         headerName: '상세정보',
         flex: 0.5,
         disableColumnMenu: true,
+        align: 'center',
+        headerAlign: 'center',
         renderCell: (params) => (
             <Button
                 variant="contained"
                 size="small"
-                sx={{ fontSize: '12px' }}
+                sx={{ 
+                    fontSize: '12px',
+                    margin: '0 auto'  // 버튼 자체를 중앙 정렬
+                }}
                 onClick={(event) => {
-
                     event.stopPropagation();
-                    
-                    setStateBottom(true);
-                    
                     setSelectedContent(filterUserList[params.row.id - 1]);
                     setStateBottom(true);
-
                 }}
             >
                 보기

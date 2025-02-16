@@ -1,7 +1,25 @@
 'use client';
 
 import React from "react";
-import { DataGrid, GridToolbar, GridRowsProp, GridColDef, GridToolbarContainer, GridToolbarExport, GridToolbarColumnsButton, GridToolbarFilterButton, gridClasses} from '@mui/x-data-grid';
+// Import 추가
+import FirstPageIcon from '@mui/icons-material/FirstPage';
+import { 
+    DataGrid,
+    GridToolbar, 
+    GridRowsProp, 
+    GridColDef, 
+    GridToolbarContainer, 
+    GridToolbarExport, 
+    GridToolbarColumnsButton, 
+    GridToolbarFilterButton,
+    gridClasses,
+    gridPageCountSelector,
+    gridPageSelector,
+    useGridApiContext,
+    useGridSelector,
+    GridPagination
+} from '@mui/x-data-grid';
+import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
 import MenuItem from '@mui/material/MenuItem';
 import FormControl from '@mui/material/FormControl';
@@ -60,80 +78,7 @@ const StripedDataGrid = styled(DataGrid)(({ theme }) => ({
     },
 }));
 
-// @ts-ignore
-const columns: GridColDef<(typeof rows)[number]>[] = [
-  {   
-      field: 'id', 
-      headerName: 'No', 
-      type: 'string',
-      flex: 0.3,             
-      disableColumnMenu: true, 
-  },
-  {
-      field: 'kc_name',
-      headerName: '국가',
-      type: 'string',
-      flex: 0.5,
-      disableColumnMenu: true,
-      editable: false,
-  },
-  {
-      field: 'sell_status',
-      headerName: '상태',
-      type: 'string',
-      flex: 0.6,
-      disableColumnMenu: true,
-      editable: false,
-  },
-  {
-      field: 'kc_kiosk_id',
-      headerName: '키오스크ID',
-      type: 'string',
-      flex: 1.5,
-      disableColumnMenu: true,
-      editable: false,
-  },
-  {
-      field: 'kc_addr',
-      headerName: '배치장소',
-      type: 'string',
-      flex: 5,
-      disableColumnMenu: true,
-      editable: false,
-  },
-  {
-      field: 'kc_engineer',
-      headerName: '관리자ID',
-      type: 'string',
-      flex: 0.8,
-      disableColumnMenu: true,
-      editable: false,
-  },
-  {
-      field: 'owner_id',
-      headerName: '소유자ID',
-      type: 'string',
-      flex: 0.8,
-      disableColumnMenu: true,
-      editable: false,
-  },
-  {
-      field: 'mb_today_login',
-      headerName: '만료일',
-      type: 'string',
-      flex: 1,
-      disableColumnMenu: true,
-      editable: false,
-  },
-  {
-      field: 'manage_btn',
-      headerName: '관리',
-      type: 'string',
-      flex: 1,
-      disableColumnMenu: true,
-      editable: false,
-  },
-];
+
 
 export default function Home() {
 
@@ -158,6 +103,95 @@ export default function Home() {
     const [stateBottom, setStateBottom] = React.useState(false);
 
     const page_info = 'Home > 키오스크 관리 > 소유자 관리';
+
+    // @ts-ignore
+    const columns: GridColDef<(typeof rows)[number]>[] = [
+      {   
+          field: 'id', 
+          headerName: 'No', 
+          type: 'string',
+          flex: 0.3,             
+          disableColumnMenu: true, 
+      },
+      {
+          field: 'kc_name',
+          headerName: '국가',
+          type: 'string',
+          flex: 0.5,
+          disableColumnMenu: true,
+          editable: false,
+      },
+      {
+          field: 'sell_status',
+          headerName: '상태',
+          type: 'string',
+          flex: 0.6,
+          disableColumnMenu: true,
+          editable: false,
+      },
+      {
+          field: 'kc_kiosk_id',
+          headerName: '키오스크ID',
+          type: 'string',
+          flex: 1.5,
+          disableColumnMenu: true,
+          editable: false,
+      },
+      {
+          field: 'kc_addr',
+          headerName: '배치장소',
+          type: 'string',
+          flex: 5,
+          disableColumnMenu: true,
+          editable: false,
+      },
+      {
+          field: 'manager_mail',
+          headerName: '관리자ID',
+          type: 'string',
+          flex: 1,
+          disableColumnMenu: true,
+          editable: false,
+      },
+      {
+          field: 'owner_id',
+          headerName: '소유자ID',
+          type: 'string',
+          flex: 1,
+          disableColumnMenu: true,
+          editable: false,
+      },
+      {
+          field: 'mb_today_login',
+          headerName: '만료일',
+          type: 'string',
+          flex: 0.7,
+          disableColumnMenu: true,
+          editable: false,
+      },
+      {
+        field: 'detail',
+        headerName: '상세정보',
+        flex: 0.7,
+        disableColumnMenu: true,
+        renderCell: (params) => (
+            <Button
+                variant="contained"
+                size="small"
+                sx={{ fontSize: '12px' }}
+                onClick={(event) => {
+                  
+                    event.stopPropagation();
+                    
+                    setSelectedContent(filterKioskList[params.row.id - 1]);
+                    setStateBottom(true);
+                }}
+            >
+                관리
+            </Button>
+        ),
+      },
+    ];
 
     React.useEffect(()=>{
   
@@ -314,25 +348,6 @@ export default function Home() {
 
     };  
 
-    // @ts-ignore    
-    const handleClickContentList : GridEventListener<'rowClick'> = (params) => {
-
-      try{
-
-          let rIdx = parseInt(params.row.id) - 1;
-          
-          setSelectedContent(filterKioskList[rIdx]);
-          
-          setStateBottom(true);
-
-      }catch(error){
-
-          console.log(error);
-
-      }
-
-    };
-
     const handleClickDeleteKeyword = () => {
 
       try{
@@ -383,6 +398,27 @@ export default function Home() {
       }
 
     };
+
+    // Custom Pagination Component 추가
+    function CustomPagination() {
+      const apiRef = useGridApiContext();
+      const page = useGridSelector(apiRef, gridPageSelector);
+      const pageCount = useGridSelector(apiRef, gridPageCountSelector);
+
+      return (
+          <div style={{ display: 'flex', alignItems: 'center' }}>
+              <IconButton
+                  onClick={() => apiRef.current.setPage(0)}
+                  disabled={page === 0}
+                  sx={{ padding: '4px' }}
+              >
+                  <FirstPageIcon />
+              </IconButton>
+              <GridPagination />
+          </div>
+      );
+    }
+
 
   return (
 
@@ -574,21 +610,51 @@ export default function Home() {
                       '& .MuiDataGrid-filterForm': {
                           bgcolor: 'lightblue',
                       },
-              }}
 
-              localeText={{
-                  toolbarExportCSV: "CVS 파일 저장",
-                  toolbarColumns: "헤더설정",
-                  toolbarFilters: "내부필터링",
-                  toolbarExport: "다운로드"
-                  
+                      "& .MuiTablePagination-root": {
+                        fontSize: "14px",
+                    },
+                    "& .MuiTablePagination-selectLabel": {
+                        fontSize: "14px",
+                    },
+                    "& .MuiTablePagination-displayedRows": {
+                        fontSize: "14px",
+                    },
+                    "& .MuiTablePagination-select": {
+                        fontSize: "14px",
+                    },
+                    "& .MuiTablePagination-menuItem": {
+                        fontSize: "14px",
+                    },
               }}
-              slotProps={{
-                  toolbar: {
-                      printOptions: { disableToolbarButton: true },
-                      csvOptions: { disableToolbarButton: true },
-                      
-              }}}
+              slots={{
+                pagination: CustomPagination,
+            }}
+            
+            localeText={{
+                toolbarExportCSV: "CVS 파일 저장",
+                toolbarColumns: "헤더설정",
+                toolbarFilters: "내부필터링",
+                toolbarExport: "다운로드",
+                MuiTablePagination: {
+                    labelDisplayedRows: ({ from, to, count }) => 
+                        `${from?.toLocaleString('ko-KR') || 0}-${to?.toLocaleString('ko-KR') || 0} / ${count?.toLocaleString('ko-KR') || 0}`
+                }
+            }}
+            
+            slotProps={{
+                toolbar: {
+                    printOptions: { disableToolbarButton: true },
+                    csvOptions: { disableToolbarButton: true },
+                },
+                pagination: {
+                    labelRowsPerPage: "페이지당 행:",
+                    labelDisplayedRows: ({ from, to, count }) => 
+                        `${from?.toLocaleString('ko-KR') || 0}-${to?.toLocaleString('ko-KR') || 0} / ${count?.toLocaleString('ko-KR') || 0}`
+                }
+            }}
+            
+    
               getRowClassName={(params) =>
                   params.indexRelativeToCurrentPage % 2 === 1 ? 'even' : 'odd'
               }
@@ -597,7 +663,7 @@ export default function Home() {
                 marginTop:'20px',
 
               }}
-              onRowClick={handleClickContentList}
+              
           />
 
       </div>

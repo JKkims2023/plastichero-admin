@@ -1,7 +1,7 @@
 // src/middleware.js
 import { NextResponse } from 'next/server';
 import { jwtVerify } from 'jose';
-import useAuthStore from './app/store/authStore';
+import sessionStore from './app/store/sessionStore';
 
 
 const JWT_SECRET = 'plastichero!*1'; // 실제 환경에서는 안전하게 관리해야 합니다.
@@ -17,6 +17,7 @@ export async function middleware(request) {
 
   const token = request.cookies.get('token')?.value;
   const pathname = request.nextUrl.pathname;
+
 
   // 1. publicPaths에 해당하는 경로는 인증 검사 없이 통과
   if (publicPaths.includes(pathname)) {
@@ -37,8 +38,6 @@ export async function middleware(request) {
 
     return NextResponse.redirect(new URL('/page/login', request.url));
   }
-
-  console.log('middleware check before3');
 
   // 3. 토큰 검증
   try {
@@ -63,10 +62,26 @@ export async function middleware(request) {
 
     console.log('Decoded payload:', payload);
 
+    const sessionResult = await sessionStore(payload.username);
 
-    console.log('jk verifiy after');
+    console.log('sessionResult : ' + sessionResult);
 
-    return NextResponse.next();
+    console.log(sessionResult);
+
+
+    if (sessionResult.result == 'success') {
+
+      console.log('jk verifiy after');
+
+      return NextResponse.next();
+      
+    } else {
+
+      console.error('JWT verification failed:', sessionResult.message);
+      return NextResponse.redirect(new URL('/page/login', request.url));
+    
+    }
+
 
   } catch (error) {
     
