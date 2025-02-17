@@ -65,9 +65,9 @@ export async function POST(request) {
 
     `;
 
+    console.log(sql);
+    
     const [rows, fields] = await connection.execute(sql);
-
-    console.log('total length : ' + rows.length );
 
     const response = NextResponse.json({ 
         

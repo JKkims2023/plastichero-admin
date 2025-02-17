@@ -11,14 +11,12 @@ export async function POST(request) {
 
     const connection = await getConnection();
 
-    console.log('md_idx : ' + md_idx);
-    console.log('target_wallet : ' + target_wallet);
     
     if(target_wallet != ''){
 
       const sql = `
     
-        SELECT user_idx, name, email, address, reg_date, is_main, active
+        SELECT idx, user_idx, name, email, address, reg_date, is_main, active
 
           from tbl_pth_wallet_info
 
@@ -59,7 +57,7 @@ export async function POST(request) {
 
       const sql = `
     
-        SELECT user_idx, name, email, address, reg_date, is_main, active
+        SELECT idx, user_idx, name, email, address, reg_date, is_main, active
 
           from tbl_pth_wallet_info
 

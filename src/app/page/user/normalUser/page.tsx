@@ -2,6 +2,7 @@
 
 import React from "react";
 import FirstPageIcon from '@mui/icons-material/FirstPage';
+import LastPageIcon from '@mui/icons-material/LastPage';
 import { 
     DataGrid,
     GridToolbar, 
@@ -41,6 +42,7 @@ import PointHistoryView from '../../../components/PointHistoryView';
 import WalletInfoView from '../../../components/WalletInfoView';
 import { get } from "http";
 import CircularProgress from '@mui/material/CircularProgress';
+import Backdrop from "@mui/material/Backdrop";
 
 type Anchor = 'bottom';
 
@@ -232,7 +234,9 @@ export default function Home() {
     const get_UserInfo = async() => {
 
       try{
+
         setIsLoading(true);
+        
         const response = await fetch('/api/user', {
 
           method: 'POST',
@@ -324,8 +328,6 @@ export default function Home() {
         }
     };
 
- 
-
     const handleClickDeleteKeyword = () => {
 
       try{
@@ -341,8 +343,11 @@ export default function Home() {
     };
 
     const handleClickSearch = () => {
+
       try {
+      
         if(filterInfo.length > 0){
+      
           switch(filterContentTypeValueMethod){
             case 'id':{
               setFilterUserList(userList.filter((user) => user.mb_id.includes(filterInfo))
@@ -373,46 +378,50 @@ export default function Home() {
     
     };
 
-    // Custom Pagination Component 추가
+    // Custom Pagination Component
     function CustomPagination() {
+      
       const apiRef = useGridApiContext();
       const page = useGridSelector(apiRef, gridPageSelector);
       const pageCount = useGridSelector(apiRef, gridPageCountSelector);
 
       return (
-          <div style={{ display: 'flex', alignItems: 'center' }}>
-              <IconButton
-                  onClick={() => apiRef.current.setPage(0)}
-                  disabled={page === 0}
-                  sx={{ padding: '4px' }}
-              >
-                  <FirstPageIcon />
-              </IconButton>
-              <GridPagination />
-          </div>
+        <Box
+            sx={{
+                display: 'flex',
+                width: 'auto',
+                marginLeft: 'auto',
+                marginRight: 'auto',
+                justifyContent: 'center',
+                alignItems: 'center',
+                gap: 2
+            }}
+        >
+            <IconButton
+                onClick={() => apiRef.current.setPage(0)}
+                disabled={page === 0}
+                sx={{ padding: '4px' }}
+            >
+                <FirstPageIcon />
+            </IconButton>
+            <GridPagination />
+            <IconButton
+                onClick={() => apiRef.current.setPage(pageCount - 1)}
+                disabled={page === pageCount - 1}
+                sx={{ padding: '4px' }}
+            >
+                <LastPageIcon />
+            </IconButton>
+        </Box>
       );
-    }
+    
+    };
 
 
   return (
 
     <div style={{display:'flex', flexDirection:'column',  width:'100%', height:'100vh',  paddingLeft:'20px', paddingRight:'20px', position: 'relative'}}>
-      {isLoading && (
-        <div style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          backgroundColor: 'rgba(255, 255, 255, 0.7)',
-          zIndex: 9999
-        }}>
-          <CircularProgress />
-        </div>
-      )}
+            
       <div style={{display:'flex', flexDirection:'row', marginTop:'20px'}}>
 
           <p style={{color:'#1f1f26', fontSize:13}}>{page_info}</p>
@@ -508,56 +517,86 @@ export default function Home() {
 
       <div ref={ref_Div} style={{flex:1, height:'100%', marginTop:'0px', paddingLeft:"0px",}}>
 
-          <StripedDataGrid 
+        <StripedDataGrid 
 
-              rows={filterUserList}
-              columns={columns}
-              autoHeight={true}
-              
-              initialState={{
-                  pagination: {
-                      paginationModel: {
-                      pageSize: 10,
-                      },
-                  },
-              }}
-              pageSizeOptions={[10]}
-              rowHeight={42}
-              columnHeaderHeight={45}
-              
-              sx={{
+          rows={filterUserList}
+          columns={columns}
+          autoHeight={true}
 
-                  '.MuiDataGrid-columnSeparator': {
-                  display: 'none',
+          initialState={{
+              pagination: {
+                  paginationModel: {
+                  pageSize: 10,
                   },
-                  "& .MuiDataGrid-columnHeader": {
-                      borderTopColor:"green",
-                      borderBlockColor:"green",
-                      color: "#000000",
-                      fontSize:13.5,
-                      fontWeight: 900,
-                      WebkitFontSmoothing: 'antialiased',
-                  },
-                  '& .super-app-theme--Open': {
-                      '&.Mui-selected': { backgroundColor: 'black'},
-                  },
-                  '& .super-app-theme--Filled': {
-                      '&.Mui-selected': { backgroundColor: 'black'},
-                  },
-                  '& .super-app-theme--PartiallyFilled': {
-                      '&.Mui-selected': { backgroundColor: 'black'},
-                  },
-                  '& .super-app-theme--Rejected': {
-                      '&.Mui-selected': { backgroundColor: 'black'},
-                  },
-                  "& .MuiDataGrid-cell": {
-                      border: 1,
-                      borderColor:"#f4f6f6",
-                      borderRight: 0,
-                      borderTop: 0,
-                      fontSize:13.5,
-                  },
-                  '& .MuiMenuItem-root': {
+              },
+          }}
+          pageSizeOptions={[10]}
+          rowHeight={42}
+          columnHeaderHeight={45}
+
+          slots={{
+              pagination: CustomPagination,
+          }}
+
+          localeText={{
+              toolbarExportCSV: "CVS 파일 저장",
+              toolbarColumns: "헤더설정",
+              toolbarFilters: "내부필터링",
+              toolbarExport: "다운로드",
+              MuiTablePagination: {
+                  labelDisplayedRows: ({ from, to, count }) => {
+                      if (from === undefined || to === undefined || count === undefined) {
+                          return '0-0 / 0';
+                      }
+                      return `${from.toLocaleString('ko-KR')}-${to.toLocaleString('ko-KR')} / ${count.toLocaleString('ko-KR')}`;
+                  }
+              }
+          }}
+
+          slotProps={{
+              toolbar: {
+                  printOptions: { disableToolbarButton: true },
+                  csvOptions: { disableToolbarButton: true },
+              },
+              pagination: {
+                  labelRowsPerPage: "페이지당 행:",
+                  labelDisplayedRows: ({ from, to, count }) => 
+                      `${from.toLocaleString('ko-KR')}-${to.toLocaleString('ko-KR')} / ${count.toLocaleString('ko-KR')}`
+              }
+          }}
+          sx={{
+
+              '.MuiDataGrid-columnSeparator': {
+              display: 'none',
+              },
+              "& .MuiDataGrid-columnHeader": {
+                  borderTopColor:"green",
+                  borderBlockColor:"green",
+                  color: "#000000",
+                  fontSize:13.5,
+                  fontWeight: 900,
+                  WebkitFontSmoothing: 'antialiased',
+              },
+              '& .super-app-theme--Open': {
+                  '&.Mui-selected': { backgroundColor: 'black'},
+              },
+              '& .super-app-theme--Filled': {
+                  '&.Mui-selected': { backgroundColor: 'black'},
+              },
+              '& .super-app-theme--PartiallyFilled': {
+                  '&.Mui-selected': { backgroundColor: 'black'},
+              },
+              '& .super-app-theme--Rejected': {
+                  '&.Mui-selected': { backgroundColor: 'black'},
+              },
+              "& .MuiDataGrid-cell": {
+                  border: 1,
+                  borderColor:"#f4f6f6",
+                  borderRight: 0,
+                  borderTop: 0,
+                  fontSize:13.5,
+              },
+              '& .MuiMenuItem-root': {
                       fontSize: 1,
                   },
                   '& .MuiTypography-root': {
@@ -567,51 +606,42 @@ export default function Home() {
                   '& .MuiDataGrid-filterForm': {
                       bgcolor: 'lightblue',
                   },
-                  "& .MuiTablePagination-root": {
-                      fontSize: "14px",
-                  },
-                  "& .MuiTablePagination-selectLabel": {
-                      fontSize: "14px",
-                  },
-                  "& .MuiTablePagination-displayedRows": {
-                      fontSize: "14px",
-                  },
-                  "& .MuiTablePagination-select": {
-                      fontSize: "14px",
-                  },
-                  "& .MuiTablePagination-menuItem": {
-                      fontSize: "14px",
-                  },
-        
-              }}
+              '& .MuiDataGrid-footerContainer': {
+                  justifyContent: 'center',
+              },
+              '& .MuiTablePagination-root': {
+                  fontSize: '13.5px',
+                  display: 'flex',
+                  justifyContent: 'center',
+                  width: '100%',
+              },
+              '& .MuiTablePagination-toolbar': {
+                  justifyContent: 'center',
+                  width: '100%',
+              },
+              '& .MuiTablePagination-actions': {
+                  marginLeft: '0px',
+              },
+              '& .MuiTablePagination-displayedRows': {
+                  fontSize: '13.5px',
+              },
+              '& .MuiTablePagination-selectLabel': {
+                  fontSize: '13.5px',
+              },
+              '& .MuiTablePagination-select': {
+                  fontSize: '13.5px',
+              },
+          }}
+          getRowClassName={(params) =>
+              params.indexRelativeToCurrentPage % 2 === 1 ? 'even' : 'odd'
+          }
+          style={{
 
-              localeText={{
-                  toolbarExportCSV: "CVS 파일 저장",
-                  toolbarColumns: "헤더설정",
-                  toolbarFilters: "내부필터링",
-                  toolbarExport: "다운로드"
-                  
-              }}
-              slotProps={{
-                  toolbar: {
-                      printOptions: { disableToolbarButton: true },
-                      csvOptions: { disableToolbarButton: true },
-                      
-              }}}
-              getRowClassName={(params) =>
-                  params.indexRelativeToCurrentPage % 2 === 1 ? 'even' : 'odd'
-              }
-              style={{
+            marginTop:'20px',
 
-                marginTop:'20px',
+          }}
 
-              }}
-
-              slots={{
-                  pagination: CustomPagination,
-              }}
-
-          />
+        />
 
       </div>
    
@@ -651,6 +681,23 @@ export default function Home() {
           </Drawer>
       
       </React.Fragment>
+
+      {/* 로딩 Backdrop 추가 */}
+      <Backdrop
+
+        sx={{ 
+          color: '#fff', 
+          zIndex: (theme) => theme.zIndex.drawer + 1,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 2
+        }}
+        open={isLoading}
+      >
+        <CircularProgress color="inherit" />
+        <Typography variant="h6" color="inherit">일반 사용자 정보를 불러오는 중입니다</Typography>
+    
+      </Backdrop>
 
     </div>
   );

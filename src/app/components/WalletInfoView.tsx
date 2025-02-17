@@ -46,113 +46,19 @@ const StripedDataGrid = styled(DataGrid)(({ theme }) => ({
     },
 }));
 
-// @ts-ignore
-const columns: GridColDef<(typeof rows)[number]>[] = [
-  {   
-      field: 'id', 
-      headerName: 'No', 
-      type: 'string',
-      flex: 0.5,             // flex 값 조정
-      disableColumnMenu: true, 
-      headerAlign: 'center', // 헤더 정렬 추가
-      align: 'center',       // 셀 정렬 추가
-  },
-  {
-      field: 'is_main',
-      headerName: '메인지갑',
-      type: 'string',
-      flex: 1,              // flex 값 조정
-      disableColumnMenu: true,
-      editable: false,
-      headerAlign: 'center',
-      align: 'center',
-  },
-  {
-      field: 'address',
-      headerName: '지갑주소',
-      type: 'string',
-      flex: 7,              // flex 값 조정
-      disableColumnMenu: true,
-      editable: false,
-      headerAlign: 'center',
-      align: 'left',
-  },
-  
-  {
-    field: 'email',
-    headerName: '매칭이메일',
-    type: 'string',
-    flex: 3,              // flex 값 조정
-    disableColumnMenu: true,
-    editable: false,
-    headerAlign: 'center',
-    align: 'left',
-},
-];
-
-// @ts-ignore
-const columns_history: GridColDef<(typeof rows)[number]>[] = [
-  {   
-      field: 'id', 
-      headerName: 'No', 
-      type: 'string',
-      flex: 0.5,             // flex 값 조정
-      disableColumnMenu: true, 
-      headerAlign: 'center', // 헤더 정렬 추가
-      align: 'center',       // 셀 정렬 추가
-  },
-  {
-      field: 'update_date',
-      headerName: '거래일자',
-      type: 'string',
-      flex: 1.2,              // flex 값 조정
-      disableColumnMenu: true,
-      editable: false,
-      headerAlign: 'center',
-      align: 'left',
-  },
-  {
-    field: 'transaction_type',
-    headerName: '거래구분',
-    type: 'string',
-    flex: 1,              // flex 값 조정
-    disableColumnMenu: true,
-    editable: false,
-    headerAlign: 'center',
-    align: 'left',
-  },
-  {
-    field: 'amount',
-    headerName: '수량',
-    type: 'string',
-    flex: 0.3,              // flex 값 조정
-    disableColumnMenu: true,
-    editable: false,
-    headerAlign: 'center',
-    align: 'left',
-  },
-  {
-    field: 'tx_id',
-    headerName: 'TxID',
-    type: 'string',
-    flex: 3,              // flex 값 조정
-    disableColumnMenu: true,
-    editable: false,
-    headerAlign: 'center',
-    align: 'left',
-  },
-];
 
 const WalletInfoView = ({walletInfo}) => {
 
     const ref_Filter = useRef('0');
     const ref_TargetWallet = useRef('');
+    const ref_TargetWallet_Idx = useRef(0);
 
     const [pagingIdx, setPagingIdx] = useState(0);
     const [filterInfo, setFilterInfo] = useState('-1');
     const [walletList, setWalletList] = useState([]);
     const [walletHistoryList, setWalletHistroyList] = useState([]);
     const [walletCnt, setWalletCnt] = useState('0');
+    const [detailAddress, setDetailAddress] = useState('');
     const [progressPoint, setProgressPoint] = useState(true);
     const [filterContentTypeMethod, setFilterContentTypeMethod] = React.useState(10);
     const [filterContentTypeValueMethod, setFilterContentTypeValueMethod] = React.useState('0');
@@ -163,7 +69,7 @@ const WalletInfoView = ({walletInfo}) => {
     },[]);
 
     React.useEffect(() => {
-
+        
         if(walletInfo.mb_id !== undefined && walletInfo.mb_id !== null){
 
           get_WalletHistory();
@@ -211,11 +117,7 @@ const WalletInfoView = ({walletInfo}) => {
           const data = await response.json(); 
     
           if (response.ok) {
-    
-            console.log('response success');
-
-            console.log(data);
-  
+      
             // @ts-ignore
             setWalletList(data.result_data.map((data, idx) => ({ id: idx + 1, ...data })));
 
@@ -246,17 +148,11 @@ const WalletInfoView = ({walletInfo}) => {
 
       try{
 
-        let md_idx = walletInfo.address;
+        console.log(walletList);
+
+        let md_idx = walletList[ref_TargetWallet_Idx.current].idx;
         
-        if(ref_TargetWallet.current != ''){
-
-          md_idx  = ref_TargetWallet.current;
-
-        }
-
         setProgressPoint(true)
-
-        setFilterInfo(ref_Filter.current);
 
         const response = await fetch('/api/user/walletInfo/detailWalletInfo', {
 
@@ -296,133 +192,146 @@ const WalletInfoView = ({walletInfo}) => {
 
       }
   
-  };
+    };
 
-    
-    const handleChangeFilterContentType = async(event: SelectChangeEvent<number>) => {
+    // @ts-ignore    
+    const handleDetailClickContentList : GridEventListener<'rowClick'> = (params) => {
 
       try{
 
-        setFilterContentTypeMethod(Number(event.target.value));
-      
-        switch(event.target.value){
-
-          case 10:{
-            setFilterContentTypeValueMethod('0');
-            ref_Filter.current = '0';
-          }break;
-          case 20:{
-            setFilterContentTypeValueMethod('1');
-            ref_Filter.current = '1';
-          }break;
-          case 30:{
-            setFilterContentTypeValueMethod('2');
-            ref_Filter.current = '2';
-          }break;
-          case 40:{
-            setFilterContentTypeValueMethod('3');
-            ref_Filter.current = '3';
-          }break;
-          case 50:{
-            setFilterContentTypeValueMethod('4');
-            ref_Filter.current = '4';
-          }break;
-          case 60:{
-            setFilterContentTypeValueMethod('5');
-            ref_Filter.current = '5';
-          }break;
-          case 70:{
-            setFilterContentTypeValueMethod('6');
-            ref_Filter.current = '6';
-          }break;
-          case 80:{
-            setFilterContentTypeValueMethod('7');
-            ref_Filter.current = '7';
-          }break;
-          default:{ 
-            setFilterContentTypeValueMethod('0');
-            ref_Filter.current = '0';
-          }break;  
-
-        }
-
-        get_WalletHistory();
-
       }catch(error){
 
-          console.log(error);
+        console.log(error);
 
       }
-  };
 
-
-
-    function phoneFomatter(num){
-    
-        var formatNum = '';
-        
-        try{
-         
-          if(num.length === 11){
-                
-            formatNum = num.replace(/(\d{3})(\d{4})(\d{4})/, '$1-$2-$3');
-          
-          }else if(num.length === 8){
-              
-            formatNum = num.replace(/(\d{4})(\d{4})/, '$1-$2');
-          
-          }else{
-    
-              if(num.indexOf('02')==0){
-                  formatNum = num.replace(/(\d{2})(\d{4})(\d{4})/, '$1-$2-$3');
-              }else{
-                  formatNum = num.replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3');
-              }
-          }
-          
-        }catch(error){
-    
-          console.log(error);
-    
-          formatNum = num;
-    
-        }
-    
-        return formatNum;
-    
     };
 
-      // @ts-ignore    
-      const handleClickContentList : GridEventListener<'rowClick'> = (params) => {
+    // @ts-ignore
+    const columns: GridColDef<(typeof rows)[number]>[] = [
+      {   
+          field: 'id', 
+          headerName: 'No', 
+          type: 'string',
+          flex: 0.5,             // flex 값 조정
+          disableColumnMenu: true, 
+          headerAlign: 'center', // 헤더 정렬 추가
+          align: 'center',       // 셀 정렬 추가
+      },
+      {
+          field: 'is_main',
+          headerName: '메인',
+          type: 'string',
+          flex: 0.5,              // flex 값 조정
+          disableColumnMenu: true,
+          editable: false,
+          headerAlign: 'center',
+          align: 'center',
+      },
+      {
+          field: 'address',
+          headerName: '지갑주소',
+          type: 'string',
+          flex: 4,              // flex 값 조정
+          disableColumnMenu: true,
+          editable: false,
+          headerAlign: 'center',
+          align: 'left',
+      },
+      
+      {
+          field: 'email',
+          headerName: '매칭이메일',
+          type: 'string',
+          flex: 2,              // flex 값 조정
+          disableColumnMenu: true,
+          editable: false,
+          headerAlign: 'center',
+          align: 'left',
+      },
+      {
+        field: 'detail',
+        headerName: '거래내역',
+        flex: 0.7,
+        disableColumnMenu: true,
+        renderCell: (params) => (
+            <Button
+                variant="contained"
+                size="small"
+                sx={{ fontSize: '12px' }}
+                onClick={(event) => {
+                  
+                    event.stopPropagation();
+                    
 
-        try{
+                    ref_TargetWallet_Idx.current = parseInt(params.row.id) - 1;
 
-            let rIdx = parseInt(params.row.id) - 1;
+                    setDetailAddress(' : ' + walletList[ref_TargetWallet_Idx.current].address);
+        
+                    get_WalletDetailHistory();
+        
+        
+                }}
+            >
+                조회
+            </Button>
+        ),
+      },
+    ];
 
-            ref_TargetWallet.current = params.row.wallet_idx;
+    // @ts-ignore
+    const columns_history: GridColDef<(typeof rows)[number]>[] = [
+      {   
+          field: 'id', 
+          headerName: 'No', 
+          type: 'string',
+          flex: 0.5,             // flex 값 조정
+          disableColumnMenu: true, 
+          headerAlign: 'center', // 헤더 정렬 추가
+          align: 'center',       // 셀 정렬 추가
+      },
+      {
+          field: 'update_date',
+          headerName: '거래일자',
+          type: 'string',
+          flex: 1.2,              // flex 값 조정
+          disableColumnMenu: true,
+          editable: false,
+          headerAlign: 'center',
+          align: 'left',
+      },
+      {
+        field: 'type_name',
+        headerName: '거래구분',
+        type: 'string',
+        flex: 1.5,              // flex 값 조정
+        disableColumnMenu: true,
+        editable: false,
+        headerAlign: 'center',
+        align: 'left',
+      },
+      {
+        field: 'amount',
+        headerName: '수량',
+        type: 'string',
+        flex: 1,              // flex 값 조정
+        disableColumnMenu: true,
+        editable: false,
+        headerAlign: 'center',
+        align: 'left',
+      },
+      {
+        field: 'tx_id',
+        headerName: 'TxID',
+        type: 'string',
+        flex: 3,              // flex 값 조정
+        disableColumnMenu: true,
+        editable: false,
+        headerAlign: 'center',
+        align: 'left',
+      },
+    ];
 
-            get_WalletDetailHistory();
-
-        }catch(error){
-
-            console.log(error);
-
-        }
-
-      };
-
-      // @ts-ignore    
-      const handleDetailClickContentList : GridEventListener<'rowClick'> = (params) => {
-
-        try{
-
-        }catch(error){
-
-          console.log(error);
-
-        }
-
-      };
 
     return (
 
@@ -478,11 +387,11 @@ const WalletInfoView = ({walletInfo}) => {
                     initialState={{
                         pagination: {
                             paginationModel: {
-                            pageSize: 10,
+                            pageSize: 3,
                             },
                         },
                     }}
-                    pageSizeOptions={[10]}
+                    pageSizeOptions={[3]}
                     rowHeight={42}
                     columnHeaderHeight={45}
 
@@ -550,13 +459,14 @@ const WalletInfoView = ({walletInfo}) => {
                     style={{
 
                       marginTop:'10px',
+                      height:'230px'
 
                     }}
-                    onRowClick={handleClickContentList}
+
                   />
 
                   <Typography fontWeight="medium" sx={{fontSize:14, fontWeight:"bold", color:"black", marginTop:"20px", marginLeft:"5px"}} >
-                      지갑 거래내역 
+                      지갑 거래내역 {detailAddress}
                   </Typography>
 
                   <StripedDataGrid 

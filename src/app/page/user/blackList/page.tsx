@@ -1,7 +1,27 @@
 'use client';
 
 import React from "react";
-import { DataGrid, GridToolbar, GridRowsProp, GridColDef, GridToolbarContainer, GridToolbarExport, GridToolbarColumnsButton, GridToolbarFilterButton, gridClasses} from '@mui/x-data-grid';
+import FirstPageIcon from '@mui/icons-material/FirstPage';
+import LastPageIcon from '@mui/icons-material/LastPage';
+import { 
+    DataGrid,
+    GridToolbar, 
+    GridRowsProp, 
+    GridColDef, 
+    GridToolbarContainer, 
+    GridToolbarExport, 
+    GridToolbarColumnsButton, 
+    GridToolbarFilterButton,
+    gridClasses,
+    gridPageCountSelector,
+    gridPageSelector,
+    useGridApiContext,
+    useGridSelector,
+    GridPagination
+} from '@mui/x-data-grid';
+import IconButton from '@mui/material/IconButton';
+
+
 import Typography from '@mui/material/Typography';
 import MenuItem from '@mui/material/MenuItem';
 import FormControl from '@mui/material/FormControl';
@@ -20,19 +40,9 @@ import { GridEventListener } from '@mui/x-data-grid';
 import UserInfoView from '../../../components/UserInfoView';
 import PointHistoryView from '../../../components/PointHistoryView';
 import WalletInfoView from '../../../components/WalletInfoView';
-import FirstPageIcon from '@mui/icons-material/FirstPage';
-import LastPageIcon from '@mui/icons-material/LastPage';
-import { 
-    gridPageCountSelector, 
-    gridPageSelector, 
-    useGridApiContext, 
-    useGridSelector,
-    GridPagination
-} from '@mui/x-data-grid';
-import IconButton from '@mui/material/IconButton';
+import { get } from "http";
 import CircularProgress from '@mui/material/CircularProgress';
-import Backdrop from "@mui/material/Backdrop";
-
+import Backdrop from '@mui/material/Backdrop';
 
 type Anchor = 'bottom';
 
@@ -72,12 +82,10 @@ const StripedDataGrid = styled(DataGrid)(({ theme }) => ({
     },
 }));
 
-
 export default function Home() {
 
     const ref_Div = React.useRef<HTMLDivElement>(null);
     const ref_Grid = React.useRef(0);
-    const ref_matchInfo = React.useRef('');
 
     const [pagingIdx, setPaginIdx] = React.useState('0');
     const [filterInfo, setFilterInfo] = React.useState('');
@@ -93,12 +101,9 @@ export default function Home() {
     const [filterContentTypeMethod, setFilterContentTypeMethod] = React.useState(10);
     const [filterContentTypeValueMethod, setFilterContentTypeValueMethod] = React.useState('all');
     const [stateBottom, setStateBottom] = React.useState(false);
-
-    const [file, setFile] = React.useState(null);
-    const [message, setMessage] = React.useState('');
     const [isLoading, setIsLoading] = React.useState(false);
 
-    const page_info = 'Home > 회원관리 > 노드 사용자 관리';
+    const page_info = 'Home > 회원관리 > 블랙리스트 관리';
 
     // @ts-ignore
     const columns: GridColDef<(typeof rows)[number]>[] = [
@@ -110,6 +115,22 @@ export default function Home() {
           disableColumnMenu: true, 
       },
       {
+          field: 'mb_id',
+          headerName: '유저 아이디',
+          type: 'string',
+          flex: 1,
+          disableColumnMenu: true,
+          editable: false,
+      },
+      {
+          field: 'mb_name',
+          headerName: '유저명',
+          type: 'string',
+          flex: 0.6,
+          disableColumnMenu: true,
+          editable: false,
+      },
+      {
           field: 'mb_email',
           headerName: '이메일',
           type: 'string',
@@ -118,24 +139,40 @@ export default function Home() {
           editable: false,
       },
       {
-          field: 'wallet_address',
-          headerName: '지갑주소(노드)',
+          field: 'block_type_text',
+          headerName: '등록사유',
+          type: 'string',
+          flex: 0.6,
+          disableColumnMenu: true,
+          editable: false,
+      },
+      {
+          field: 'mb_wallet',
+          headerName: '지갑주소',
           type: 'string',
           flex: 2,
           disableColumnMenu: true,
           editable: false,
       },
       {
-          field: 'invite_code',
-          headerName: '추천코드',
+          field: 'mb_today_login',
+          headerName: '최근 접속일',
           type: 'string',
           flex: 1,
           disableColumnMenu: true,
           editable: false,
       },
       {
-          field: 'mb_datetime',
-          headerName: '가입일',
+          field: 'reg_date',
+          headerName: '블랙리스트 등록일',
+          type: 'string',
+          flex: 1,
+          disableColumnMenu: true,
+          editable: false,
+      },
+      {
+          field: 'expire_date',
+          headerName: '해지 예정일',
           type: 'string',
           flex: 1,
           disableColumnMenu: true,
@@ -149,25 +186,24 @@ export default function Home() {
         align: 'center',
         headerAlign: 'center',
         renderCell: (params) => (
-            <Button
-                variant="contained"
-                size="small"
-                sx={{ 
-                    fontSize: '12px',
-                    margin: '0 auto'  // 버튼 자체를 중앙 정렬
-                }}
-                onClick={(event) => {
-                    event.stopPropagation();
-                    setSelectedContent(filterUserList[params.row.id - 1]);
-                    setStateBottom(true);
-                }}
-            >
-                보기
-            </Button>
+
+            <div style={{ width: '100%', textAlign: 'center' }}>
+                <Button
+                    variant="contained"
+                    size="small"
+                    sx={{ fontSize: '12px' }}
+                    onClick={(event) => {
+                        event.stopPropagation();
+                        setSelectedContent(filterUserList[params.row.id - 1]);
+                        setStateBottom(true);
+                    }}
+                >
+                    보기
+                </Button>
+            </div>
         ),
       },
     ];
-
 
     React.useEffect(()=>{
   
@@ -205,9 +241,10 @@ export default function Home() {
     const get_UserInfo = async() => {
 
       try{
-        setIsLoading(true);  // 로딩 시작
-        const matchInfo = ref_matchInfo.current;
-        const response = await fetch('/api/user/nodeUser', {
+
+        setIsLoading(true);
+        
+        const response = await fetch('/api/user/blackList', {
 
           method: 'POST',
           headers: {
@@ -216,7 +253,7 @@ export default function Home() {
           
           },
           
-          body: JSON.stringify({ pagingIdx, filterInfo, matchInfo }),
+          body: JSON.stringify({ pagingIdx, filterInfo }),
         
         });
   
@@ -239,7 +276,7 @@ export default function Home() {
         console.log(error);
 
       } finally {
-        setIsLoading(false);  // 로딩 종료
+        setIsLoading(false);
       }
 
     };
@@ -313,14 +350,12 @@ export default function Home() {
     };
 
     const handleClickSearch = () => {
-      
-      try{
 
+      try {
 
         if(filterInfo.length > 0){
-
+        
           switch(filterContentTypeValueMethod){
-
             case 'id':{
               setFilterUserList(userList.filter((user) => user.mb_id.includes(filterInfo))
                 .map((user, idx) => ({ ...user, id: idx + 1 })));
@@ -340,51 +375,15 @@ export default function Home() {
             default:{
               setFilterUserList(userList.map((user, idx) => ({ ...user, id: idx + 1 })));
             }break;
-          
           }
-
         }else{
-
           setFilterUserList(userList);
-
         } 
         
       }catch(error){
-
         console.log(error);
-
       }
-
-    };
-
-    const handleSubmit = async (e) => {
-      e.preventDefault();
-  
-      if (!file) {
-        setMessage('Please select a file.');
-        return;
-      }
-  
-      const formData = new FormData();
-      formData.append('excelFile', file); // 'excelFile'은 API Route에서 사용하는 필드 이름
-  
-      try {
-        const response = await fetch('/api/excel', {
-          method: 'POST',
-          body: formData,
-        });
-  
-        const data = await response.json();
-        setMessage(data.message);
-  
-      } catch (error) {
-        console.error(error);
-        setMessage('Error uploading file.');
-      }
-    };
-
-    const handleFileChange = (e) => {
-      setFile(e.target.files[0]);
+    
     };
 
     // Custom Pagination Component
@@ -425,11 +424,11 @@ export default function Home() {
       );
     
     };
-      
+
     return (
 
-      <div style={{display:'flex', flexDirection:'column',  width:'100%', height:'100vh',  paddingLeft:'20px', paddingRight:'20px',}}>
-
+      <div style={{display:'flex', flexDirection:'column',  width:'100%', height:'100vh',  paddingLeft:'20px', paddingRight:'20px', position: 'relative'}}>
+        
         <div style={{display:'flex', flexDirection:'row', marginTop:'20px'}}>
 
             <p style={{color:'#1f1f26', fontSize:13}}>{page_info}</p>
@@ -438,15 +437,9 @@ export default function Home() {
 
         <div style={{}}>
             <Typography sx={{fontSize:"20px",  color: '#1f1f26', marginLeft:"0px", marginTop:"10px", fontWeight:'bold' }}>
-                노드 사용자 관리
+                블랙리스트 관리
             </Typography>
         </div>
-
-
-        <form style={{display:'none'}} onSubmit={handleSubmit}>
-          <input type="file" accept=".xlsx, .xls" onChange={handleFileChange} />
-          <button type="submit">Upload</button>
-        </form>
 
         <div style={{
           
@@ -465,8 +458,10 @@ export default function Home() {
           alignItems:'center',
           
           }}>
-                
-            <a style={{fontSize:14, marginRight:"10px", color:'black', marginLeft:'10px', fontWeight:900}}>총 가입자 : {userList.length}</a>
+            
+            <a style={{fontSize:14, marginRight:"10px", color:'black', marginLeft:'10px', fontWeight:900}}>
+              총 가입자 : {userList.length}
+            </a>
 
             <div style={{display:"flex", float:"left", marginLeft:"auto", alignContent:'center', alignItems:'center', justifyContent:'center'}}>
                   
@@ -494,13 +489,13 @@ export default function Home() {
             </div>
 
             <Box
-
               component="form"
               marginLeft="10px"
               marginRight="5px"
               noValidate
               style={{marginLeft:'5px'}}
               autoComplete="off">
+
 
               <FormControl sx={{minWidth: '300px' }} variant="outlined">
                 <InputLabel id='keywordLabel' size="small" sx={{height:"40px",}}>키워드를 입력하세요</InputLabel>
@@ -521,14 +516,14 @@ export default function Home() {
                 />
               </FormControl>
             </Box>
-            <Button id="keyBtns" variant="outlined" style={{color:"white", backgroundColor:"#1f1f26", borderColor:"#CBCBCB" ,height:"33px" , marginRight:"10px"}}  onClick={handleClickSearch}>
+            <Button id="keyBtns" variant="outlined" style={{color:"white",backgroundColor:"#1f1f26", borderColor:"#CBCBCB" ,height:"33px" , marginRight:"10px"}}  onClick={handleClickSearch}>
               검색
             </Button>
 
         </div>
 
-        <div ref={ref_Div} style={{flex:1, height:'100%', marginTop:'0px', paddingLeft:"0px", position: 'relative'}}>
-        
+        <div ref={ref_Div} style={{flex:1, height:'100%', marginTop:'0px', paddingLeft:"0px",}}>
+
           <StripedDataGrid 
 
             rows={filterUserList}
@@ -654,7 +649,7 @@ export default function Home() {
             }}
 
           />
-
+          
         </div>
     
         <React.Fragment key='bottom'>
@@ -694,9 +689,8 @@ export default function Home() {
         
         </React.Fragment>
 
-        {/* 로딩 Backdrop 추가 */}
+        {/* Backdrop 컴포넌트 추가 */}
         <Backdrop
-
           sx={{ 
             color: '#fff', 
             zIndex: (theme) => theme.zIndex.drawer + 1,
@@ -705,10 +699,11 @@ export default function Home() {
             gap: 2
           }}
           open={isLoading}
-          >
+        >
           <CircularProgress color="inherit" />
-          <Typography variant="h6" color="inherit">노드 사용자 정보를 불러오는 중입니다</Typography>
-
+          <Typography variant="h6" component="div">
+            블랙리스트 정보를 불러오는 중입니다.
+          </Typography>
         </Backdrop>
 
       </div>

@@ -28,6 +28,7 @@ import dayjs from 'dayjs';
 import CircularProgress from '@mui/material/CircularProgress';
 import Backdrop from '@mui/material/Backdrop';
 import FirstPageIcon from '@mui/icons-material/FirstPage';
+import LastPageIcon from '@mui/icons-material/LastPage';
 import { 
     gridPageCountSelector, 
     gridPageSelector, 
@@ -75,112 +76,44 @@ const StripedDataGrid = styled(DataGrid)(({ theme }) => ({
     },
 }));
 
-// @ts-ignore
-const columns: GridColDef<(typeof rows)[number]>[] = [
-  {   
-      field: 'id', 
-      headerName: 'No', 
-      type: 'string',
-      flex: 0.3,             
-      disableColumnMenu: true, 
-  },
-  {
-      field: 'memo',
-      headerName: '키오스크 ID',
-      type: 'string',
-      flex: 1,
-      disableColumnMenu: true,
-      editable: false,
-  },
-  {
-      field: 'mb_id',
-      headerName: '투입계정 ID',
-      type: 'string',
-      flex: 1,
-      disableColumnMenu: true,
-      editable: false,
-  },
-  {
-      field: 'tx_id',
-      headerName: 'TXID',
-      type: 'string',
-      flex: 1.2,
-      disableColumnMenu: true,
-      editable: false,
-  },
-  {
-      field: 'amount',
-      headerName: 'PTH 수량',
-      type: 'string',
-      flex: 0.8,
-      disableColumnMenu: true,
-      editable: false,
-      renderCell: (params) => {
-          const amount = parseFloat(params.value);
-          return amount.toLocaleString('ko-KR', { maximumFractionDigits: 2 });
-      }
-  },
-  {
-      field: 'reg_date_text',
-      headerName: '투입일',
-      type: 'string',
-      flex: 0.8,
-      disableColumnMenu: true,
-      editable: false,
-  
-  },
-  {
-    field: 'detail',
-    headerName: '상세정보',
-    flex: 0.5,
-    disableColumnMenu: true,
-    align: 'center',
-    headerAlign: 'center',
-    renderCell: (params) => (
-        <Box sx={{ 
-            width: '100%', 
-            height: '100%',  // 높이를 100%로 설정
-            display: 'flex', 
-            justifyContent: 'center',
-            alignItems: 'center'  // 수직 중앙 정렬 추가
-        }}>
-            <Button
-                variant="contained"
-                size="small"
-                sx={{ fontSize: '12px' }}
-                onClick={(event) => {
-                    event.stopPropagation();
-                //    setSelectedContent(filterPointList[params.row.id - 1]);
-                //    handleOpenDialog();
-                }}
-            >
-                보기
-            </Button>
-        </Box>
-    ),
-},
-  
-];
-
 // Custom Pagination Component
 function CustomPagination() {
-    const apiRef = useGridApiContext();
-    const page = useGridSelector(apiRef, gridPageSelector);
-    const pageCount = useGridSelector(apiRef, gridPageCountSelector);
+  
+  const apiRef = useGridApiContext();
+  const page = useGridSelector(apiRef, gridPageSelector);
+  const pageCount = useGridSelector(apiRef, gridPageCountSelector);
 
-    return (
-        <div style={{ display: 'flex', alignItems: 'center' }}>
-            <IconButton
-                onClick={() => apiRef.current.setPage(0)}
-                disabled={page === 0}
-                sx={{ padding: '4px' }}
-            >
-                <FirstPageIcon />
-            </IconButton>
-            <GridPagination />
-        </div>
-    );
-}
+  return (
+    <Box
+        sx={{
+            display: 'flex',
+            width: 'auto',
+            marginLeft: 'auto',
+            marginRight: 'auto',
+            justifyContent: 'center',
+            alignItems: 'center',
+            gap: 2
+        }}
+    >
+        <IconButton
+            onClick={() => apiRef.current.setPage(0)}
+            disabled={page === 0}
+            sx={{ padding: '4px' }}
+        >
+            <FirstPageIcon />
+        </IconButton>
+        <GridPagination />
+        <IconButton
+            onClick={() => apiRef.current.setPage(pageCount - 1)}
+            disabled={page === pageCount - 1}
+            sx={{ padding: '4px' }}
+        >
+            <LastPageIcon />
+        </IconButton>
+    </Box>
+  );
+
+};
 
 export default function Home() {
 
@@ -362,25 +295,6 @@ export default function Home() {
         }
     };
 
-    // @ts-ignore    
-    const handleClickContentList : GridEventListener<'rowClick'> = (params) => {
-
-      try{
-
-          let rIdx = parseInt(params.row.id) - 1;
-          
-          setSelectedContent(filterUserList[rIdx]);
-          
-          setStateBottom(true);
-
-      }catch(error){
-
-          console.log(error);
-
-      }
-
-    };
-
     const handleClickDeleteKeyword = () => {
 
       try{
@@ -432,357 +346,469 @@ export default function Home() {
         }
     };
 
-  return (
-
-    <div style={{display:'flex', flexDirection:'column',  width:'100%', height:'100vh',  paddingLeft:'20px', paddingRight:'20px',}}>
-
-      <div style={{display:'flex', flexDirection:'row', marginTop:'20px'}}>
-
-          <p style={{color:'#1f1f26', fontSize:13}}>{page_info}</p>
-
-      </div>
-
-      <div style={{}}>
-          <Typography sx={{fontSize:"20px",  color: '#1f1f26', marginLeft:"0px", marginTop:"10px", fontWeight:'bold' }}>
-              플라스틱 수거현황
-          </Typography>
-      </div>
-
-      <div style={{
-        display: 'flex',
-        gap: '20px',
-        marginTop: '5px',
-        marginBottom: '5px'
-      }}>
-        <div style={{
+    // @ts-ignore
+    const columns: GridColDef<(typeof rows)[number]>[] = [
+      {   
+          field: 'id', 
+          headerName: 'No', 
+          type: 'string',
+          flex: 0.3,             
+          disableColumnMenu: true, 
+      },
+      {
+          field: 'memo',
+          headerName: '키오스크 ID',
+          type: 'string',
           flex: 1,
-          padding: '20px',
-          backgroundColor: '#f8f9fa',
-          borderRadius: '8px',
-          boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-          textAlign: 'left'
-        }}>
-          <Typography sx={{fontSize: '14px', color: '#666', marginBottom: '8px'}}>
-            총 보상 PTH
-          </Typography>
-          <Typography sx={{fontSize: '24px', fontWeight: 'bold', color: '#1f1f26'}}>
-            {(summaryData?.totalAmount || 0).toLocaleString('ko-KR', { maximumFractionDigits: 2 })} PTH
-          </Typography>
-        </div>
-        
-        <div style={{
+          disableColumnMenu: true,
+          editable: false,
+      },
+      {
+          field: 'mb_id',
+          headerName: '투입계정 ID',
+          type: 'string',
           flex: 1,
-          padding: '20px',
-          backgroundColor: '#f8f9fa',
-          borderRadius: '8px',
-          boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-          textAlign: 'left'
-        }}>
-          <Typography sx={{fontSize: '14px', color: '#666', marginBottom: '8px'}}>
-            투입 횟수
-          </Typography>
-          <Typography sx={{fontSize: '24px', fontWeight: 'bold', color: '#1f1f26'}}>
-            {summaryData.totalDeposits.toLocaleString('ko-KR')}회
-          </Typography>
+          disableColumnMenu: true,
+          editable: false,
+      },
+      {
+          field: 'tx_id',
+          headerName: 'TXID',
+          type: 'string',
+          flex: 1.2,
+          disableColumnMenu: true,
+          editable: false,
+      },
+      {
+          field: 'amount',
+          headerName: 'PTH 수량',
+          type: 'string',
+          flex: 0.8,
+          disableColumnMenu: true,
+          editable: false,
+          renderCell: (params) => {
+              const amount = parseFloat(params.value);
+              return amount.toLocaleString('ko-KR', { maximumFractionDigits: 2 });
+          }
+      },
+      {
+          field: 'reg_date_text',
+          headerName: '투입일',
+          type: 'string',
+          flex: 0.8,
+          disableColumnMenu: true,
+          editable: false,
+      
+      },
+      {
+        field: 'detail',
+        headerName: '상세정보',
+        flex: 0.5,
+        disableColumnMenu: true,
+        align: 'center',
+        headerAlign: 'center',
+        renderCell: (params) => (
+            <Box sx={{ 
+                width: '100%', 
+                height: '100%',  // 높이를 100%로 설정
+                display: 'flex', 
+                justifyContent: 'center',
+                alignItems: 'center'  // 수직 중앙 정렬 추가
+            }}>
+                <Button
+                    variant="contained"
+                    size="small"
+                    sx={{ fontSize: '12px' }}
+                    onClick={(event) => {
+
+                        event.stopPropagation();
+
+                        try{
+
+                            let rIdx = parseInt(params.row.id) - 1;
+                            
+                            setSelectedContent(filterUserList[rIdx]);
+                            
+                            setStateBottom(true);
+                  
+                        }catch(error){
+                  
+                            console.log(error);
+                  
+                        }
+                    }}
+                >
+                    보기
+                </Button>
+            </Box>
+        ),
+    },
+      
+    ];
+
+
+    return (
+
+      <div style={{display:'flex', flexDirection:'column',  width:'100%', height:'100vh',  paddingLeft:'20px', paddingRight:'20px',}}>
+
+        <div style={{display:'flex', flexDirection:'row', marginTop:'20px'}}>
+
+            <p style={{color:'#1f1f26', fontSize:13}}>{page_info}</p>
+
         </div>
-        
+
+        <div style={{}}>
+            <Typography sx={{fontSize:"20px",  color: '#1f1f26', marginLeft:"0px", marginTop:"10px", fontWeight:'bold' }}>
+                플라스틱 수거현황
+            </Typography>
+        </div>
+
         <div style={{
-          flex: 1,
-          padding: '20px',
-          backgroundColor: '#f8f9fa',
-          borderRadius: '8px',
-          boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-          textAlign: 'left'
+          display: 'flex',
+          gap: '20px',
+          marginTop: '5px',
+          marginBottom: '5px'
         }}>
-          <Typography sx={{fontSize: '14px', color: '#666', marginBottom: '8px'}}>
-            이용자 수
-          </Typography>
-          <Typography sx={{fontSize: '24px', fontWeight: 'bold', color: '#1f1f26'}}>
-            {summaryData.totalUsers.toLocaleString('ko-KR')}명
-          </Typography>
-        </div>
-      </div>
-
-      <div style={{
-        
-        display:"flex", 
-        float:"left",  
-        marginTop:'10px', 
-        paddingTop:"15px", 
-        paddingBottom:"10px", 
-        paddingLeft:"10px",
-        width:"100%", 
-        borderRadius:'5px', 
-        borderColor:'#f1f1f1', 
-        borderWidth:'2px', 
-        backgroundColor:'#efefef',
-        alignContent:'center',
-        alignItems:'center',
-        
-        }}>
-                    
-          <LocalizationProvider dateAdapter={AdapterDayjs}>
-              <DatePicker 
-
-                  value={selectedDate}
-                  onChange={(newValue) => setSelectedDate(newValue)}
-                  format="YYYY-MM-DD"
-                  slotProps={{ 
-                      textField: { 
-                          size: 'small',
-                          sx: { 
-                              backgroundColor: 'white',
-                              width: '150px',
-                              marginRight: '10px'
-                          }
-                      }
-                  }}
-              />
-          </LocalizationProvider>
-
-          <div style={{display:"flex", float:"left", marginLeft:"auto", alignContent:'center', alignItems:'center', justifyContent:'center'}}>
-                
-              <div style={{display:"flex", float:"left"}}>
-
-                  <FormControl fullWidth  style={{ width:"110px",marginTop:"0px", marginLeft:"8px", backgroundColor:'white', color:'black'}}>
-                      <Select
-                      labelId="demo-simple-select-label"
-                      id="demo-simple-select"
-                      style={{color:'black'}}
-                      value={filterContentTypeMethod}
-                      size="small"
-                      onChange={handleChangeFilterContentType}
-                      >
-                      <MenuItem style={{fontSize:13}} value={10}>전체</MenuItem>
-                      <MenuItem style={{fontSize:13}} value={20}>유저 아이디</MenuItem>
-                      <MenuItem style={{fontSize:13}} value={30}>유저명</MenuItem>
-                      <MenuItem style={{fontSize:13}} value={40}>이메일</MenuItem>
-                      <MenuItem style={{fontSize:13}} value={50}>지갑주소</MenuItem>
-
-
-                      </Select>
-                  </FormControl>
-              </div>
+          <div style={{
+            flex: 1,
+            padding: '20px',
+            backgroundColor: '#f8f9fa',
+            borderRadius: '8px',
+            boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+            textAlign: 'left'
+          }}>
+            <Typography sx={{fontSize: '14px', color: '#666', marginBottom: '8px'}}>
+              총 보상 PTH
+            </Typography>
+            <Typography sx={{fontSize: '24px', fontWeight: 'bold', color: '#1f1f26'}}>
+              {(summaryData?.totalAmount || 0).toLocaleString('ko-KR', { maximumFractionDigits: 2 })} PTH
+            </Typography>
           </div>
+          
+          <div style={{
+            flex: 1,
+            padding: '20px',
+            backgroundColor: '#f8f9fa',
+            borderRadius: '8px',
+            boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+            textAlign: 'left'
+          }}>
+            <Typography sx={{fontSize: '14px', color: '#666', marginBottom: '8px'}}>
+              투입 횟수
+            </Typography>
+            <Typography sx={{fontSize: '24px', fontWeight: 'bold', color: '#1f1f26'}}>
+              {summaryData.totalDeposits.toLocaleString('ko-KR')}회
+            </Typography>
+          </div>
+          
+          <div style={{
+            flex: 1,
+            padding: '20px',
+            backgroundColor: '#f8f9fa',
+            borderRadius: '8px',
+            boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+            textAlign: 'left'
+          }}>
+            <Typography sx={{fontSize: '14px', color: '#666', marginBottom: '8px'}}>
+              이용자 수
+            </Typography>
+            <Typography sx={{fontSize: '24px', fontWeight: 'bold', color: '#1f1f26'}}>
+              {summaryData.totalUsers.toLocaleString('ko-KR')}명
+            </Typography>
+          </div>
+        </div>
 
-          <Box
-            component="form"
-            marginLeft="10px"
-            marginRight="5px"
-            noValidate
-            style={{marginLeft:'5px'}}
-            autoComplete="off">
+        <div style={{
+          
+          display:"flex", 
+          float:"left",  
+          marginTop:'10px', 
+          paddingTop:"15px", 
+          paddingBottom:"10px", 
+          paddingLeft:"10px",
+          width:"100%", 
+          borderRadius:'5px', 
+          borderColor:'#f1f1f1', 
+          borderWidth:'2px', 
+          backgroundColor:'#efefef',
+          alignContent:'center',
+          alignItems:'center',
+          
+          }}>
+                      
+            <LocalizationProvider dateAdapter={AdapterDayjs}>
+                <DatePicker 
+
+                    value={selectedDate}
+                    onChange={(newValue) => setSelectedDate(newValue)}
+                    format="YYYY-MM-DD"
+                    slotProps={{ 
+                        textField: { 
+                            size: 'small',
+                            sx: { 
+                                backgroundColor: 'white',
+                                width: '150px',
+                                marginRight: '10px'
+                            }
+                        }
+                    }}
+                />
+            </LocalizationProvider>
+
+            <div style={{display:"flex", float:"left", marginLeft:"auto", alignContent:'center', alignItems:'center', justifyContent:'center'}}>
+                  
+                <div style={{display:"flex", float:"left"}}>
+
+                    <FormControl fullWidth  style={{ width:"110px",marginTop:"0px", marginLeft:"8px", backgroundColor:'white', color:'black'}}>
+                        <Select
+                        labelId="demo-simple-select-label"
+                        id="demo-simple-select"
+                        style={{color:'black'}}
+                        value={filterContentTypeMethod}
+                        size="small"
+                        onChange={handleChangeFilterContentType}
+                        >
+                        <MenuItem style={{fontSize:13}} value={10}>전체</MenuItem>
+                        <MenuItem style={{fontSize:13}} value={20}>유저 아이디</MenuItem>
+                        <MenuItem style={{fontSize:13}} value={30}>유저명</MenuItem>
+                        <MenuItem style={{fontSize:13}} value={40}>이메일</MenuItem>
+                        <MenuItem style={{fontSize:13}} value={50}>지갑주소</MenuItem>
 
 
-            <FormControl sx={{minWidth: '300px' }} variant="outlined">
-              <InputLabel id='keywordLabel' size="small" sx={{height:"40px",}}>키워드를 입력하세요</InputLabel>
-              <OutlinedInput
-                sx={{height:"33px", backgroundColor:'white'}}
-                id="keywordInfoField"
-                type='text'
-                value={filterInfo}
-                onChange={(text)=>{
+                        </Select>
+                    </FormControl>
+                </div>
+            </div>
 
-                  setFilterInfo(text.target.value);
+            <Box
+              component="form"
+              marginLeft="10px"
+              marginRight="5px"
+              noValidate
+              style={{marginLeft:'5px'}}
+              autoComplete="off">
 
-                }}
-                endAdornment={
-                  <InputAdornment position="end">
-                    <ClearIcon
 
-                      onClick={handleClickDeleteKeyword}
-                    />
-                
-                  </InputAdornment>
-                }
-                label="Password"
-              />
-            </FormControl>
-          </Box>
-          <Button id="keyBtns" variant="outlined" style={{color:"white",backgroundColor:"#1f1f26", borderColor:"#CBCBCB" ,height:"33px" , marginRight:"10px"}}  onClick={handleClickSearch}>
-            검색
-          </Button>
+              <FormControl sx={{minWidth: '300px' }} variant="outlined">
+                <InputLabel id='keywordLabel' size="small" sx={{height:"40px",}}>키워드를 입력하세요</InputLabel>
+                <OutlinedInput
+                  sx={{height:"33px", backgroundColor:'white'}}
+                  id="keywordInfoField"
+                  type='text'
+                  value={filterInfo}
+                  onChange={(text)=>{
 
-      </div>
+                    setFilterInfo(text.target.value);
 
-      <div ref={ref_Div} style={{flex:1, height:'100%', marginTop:'0px', paddingLeft:"0px",}}>
+                  }}
+                  endAdornment={
+                    <InputAdornment position="end">
+                      <ClearIcon
+
+                        onClick={handleClickDeleteKeyword}
+                      />
+                  
+                    </InputAdornment>
+                  }
+                  label="Password"
+                />
+              </FormControl>
+            </Box>
+            <Button id="keyBtns" variant="outlined" style={{color:"white",backgroundColor:"#1f1f26", borderColor:"#CBCBCB" ,height:"33px" , marginRight:"10px"}}  onClick={handleClickSearch}>
+              검색
+            </Button>
+
+        </div>
+
+        <div ref={ref_Div} style={{flex:1, height:'100%', marginTop:'0px', paddingLeft:"0px",}}>
 
           <StripedDataGrid 
 
-              rows={filterUserList}
-              columns={columns}
-              autoHeight={true}
-              
-              initialState={{
-                  pagination: {
-                      paginationModel: {
-                      pageSize: 10,
-                      },
+          rows={filterUserList}
+          columns={columns}
+          autoHeight={true}
+
+          initialState={{
+              pagination: {
+                  paginationModel: {
+                  pageSize: 10,
                   },
-              }}
-              pageSizeOptions={[10]}
-              rowHeight={42}
-              columnHeaderHeight={45}
-              
-              slots={{
-                  pagination: CustomPagination,
-              }}
-              
-              localeText={{
-                  toolbarExportCSV: "CVS 파일 저장",
-                  toolbarColumns: "헤더설정",
-                  toolbarFilters: "내부필터링",
-                  toolbarExport: "다운로드",
-                  MuiTablePagination: {
-                      labelDisplayedRows: ({ from, to, count }) => {
-                          if (from === undefined || to === undefined || count === undefined) {
-                              return '0-0 / 0';
-                          }
-                          return `${from.toLocaleString('ko-KR')}-${to.toLocaleString('ko-KR')} / ${count.toLocaleString('ko-KR')}`;
+              },
+          }}
+          pageSizeOptions={[10]}
+          rowHeight={42}
+          columnHeaderHeight={45}
+
+          slots={{
+              pagination: CustomPagination,
+          }}
+
+          localeText={{
+              toolbarExportCSV: "CVS 파일 저장",
+              toolbarColumns: "헤더설정",
+              toolbarFilters: "내부필터링",
+              toolbarExport: "다운로드",
+              MuiTablePagination: {
+                  labelDisplayedRows: ({ from, to, count }) => {
+                      if (from === undefined || to === undefined || count === undefined) {
+                          return '0-0 / 0';
                       }
+                      return `${from.toLocaleString('ko-KR')}-${to.toLocaleString('ko-KR')} / ${count.toLocaleString('ko-KR')}`;
                   }
-              }}
-              
-              slotProps={{
-                  toolbar: {
-                      printOptions: { disableToolbarButton: true },
-                      csvOptions: { disableToolbarButton: true },
-                  },
-                  pagination: {
-                      labelRowsPerPage: "페이지당 행:",
-                      labelDisplayedRows: ({ from, to, count }) => 
-                          `${from.toLocaleString('ko-KR')}-${to.toLocaleString('ko-KR')} / ${count.toLocaleString('ko-KR')}`
-                  }
-              }}
-              sx={{
-
-                  '.MuiDataGrid-columnSeparator': {
-                  display: 'none',
-                  },
-                  "& .MuiDataGrid-columnHeader": {
-                      borderTopColor:"green",
-                      borderBlockColor:"green",
-                      color: "#000000",
-                      fontSize:13.5,
-                      fontWeight: 900,
-                      WebkitFontSmoothing: 'antialiased',
-                  },
-                  '& .super-app-theme--Open': {
-                      '&.Mui-selected': { backgroundColor: 'black'},
-                  },
-                  '& .super-app-theme--Filled': {
-                      '&.Mui-selected': { backgroundColor: 'black'},
-                  },
-                  '& .super-app-theme--PartiallyFilled': {
-                      '&.Mui-selected': { backgroundColor: 'black'},
-                  },
-                  '& .super-app-theme--Rejected': {
-                      '&.Mui-selected': { backgroundColor: 'black'},
-                  },
-                  "& .MuiDataGrid-cell": {
-                      border: 1,
-                      borderColor:"#f4f6f6",
-                      borderRight: 0,
-                      borderTop: 0,
-                      fontSize:13.5,
-                  },
-                  '& .MuiMenuItem-root': {
-                          fontSize: 1,
-                      },
-                      '& .MuiTypography-root': {
-                          color: 'dodgerblue',
-                          fontSize: 1,
-                      },
-                      '& .MuiDataGrid-filterForm': {
-                          bgcolor: 'lightblue',
-                      },
-                  '& .MuiTablePagination-root': {
-                      fontSize: '14px',
-                  },
-                  '& .MuiTablePagination-selectLabel': {
-                      fontSize: '14px',
-                  },
-                  '& .MuiTablePagination-displayedRows': {
-                      fontSize: '14px',
-                  },
-                  '& .MuiTablePagination-select': {
-                      fontSize: '14px',
-                  },
-                  '& .MuiTablePagination-menuItem': {
-                      fontSize: '14px',
-                  },
-              }}
-              getRowClassName={(params) =>
-                  params.indexRelativeToCurrentPage % 2 === 1 ? 'even' : 'odd'
               }
-              style={{
+          }}
 
-                marginTop:'20px',
+          slotProps={{
+              toolbar: {
+                  printOptions: { disableToolbarButton: true },
+                  csvOptions: { disableToolbarButton: true },
+              },
+              pagination: {
+                  labelRowsPerPage: "페이지당 행:",
+                  labelDisplayedRows: ({ from, to, count }) => 
+                      `${from.toLocaleString('ko-KR')}-${to.toLocaleString('ko-KR')} / ${count.toLocaleString('ko-KR')}`
+              }
+          }}
+          sx={{
 
-              }}
-              onRowClick={handleClickContentList}
+              '.MuiDataGrid-columnSeparator': {
+              display: 'none',
+              },
+              "& .MuiDataGrid-columnHeader": {
+                  borderTopColor:"green",
+                  borderBlockColor:"green",
+                  color: "#000000",
+                  fontSize:13.5,
+                  fontWeight: 900,
+                  WebkitFontSmoothing: 'antialiased',
+              },
+              '& .super-app-theme--Open': {
+                  '&.Mui-selected': { backgroundColor: 'black'},
+              },
+              '& .super-app-theme--Filled': {
+                  '&.Mui-selected': { backgroundColor: 'black'},
+              },
+              '& .super-app-theme--PartiallyFilled': {
+                  '&.Mui-selected': { backgroundColor: 'black'},
+              },
+              '& .super-app-theme--Rejected': {
+                  '&.Mui-selected': { backgroundColor: 'black'},
+              },
+              "& .MuiDataGrid-cell": {
+                  border: 1,
+                  borderColor:"#f4f6f6",
+                  borderRight: 0,
+                  borderTop: 0,
+                  fontSize:13.5,
+              },
+              '& .MuiMenuItem-root': {
+                      fontSize: 1,
+                  },
+                  '& .MuiTypography-root': {
+                      color: 'dodgerblue',
+                      fontSize: 1,
+                  },
+                  '& .MuiDataGrid-filterForm': {
+                      bgcolor: 'lightblue',
+                  },
+              '& .MuiDataGrid-footerContainer': {
+                  justifyContent: 'center',
+              },
+              '& .MuiTablePagination-root': {
+                  fontSize: '13.5px',
+                  display: 'flex',
+                  justifyContent: 'center',
+                  width: '100%',
+              },
+              '& .MuiTablePagination-toolbar': {
+                  justifyContent: 'center',
+                  width: '100%',
+              },
+              '& .MuiTablePagination-actions': {
+                  marginLeft: '0px',
+              },
+              '& .MuiTablePagination-displayedRows': {
+                  fontSize: '13.5px',
+              },
+              '& .MuiTablePagination-selectLabel': {
+                  fontSize: '13.5px',
+              },
+              '& .MuiTablePagination-select': {
+                  fontSize: '13.5px',
+              },
+          }}
+          getRowClassName={(params) =>
+              params.indexRelativeToCurrentPage % 2 === 1 ? 'even' : 'odd'
+          }
+          style={{
+
+            marginTop:'20px',
+
+          }}
+
           />
 
-      </div>
-   
-      <React.Fragment key='bottom'>
-      
-          <Drawer
-              anchor='bottom'
-              open={stateBottom}
-              onClose={toggleDrawer('bottom', false)}>
-
-              <Box sx={{flexGrow:1, height:750}}>
-              <Grid container spacing={0} sx={{backgroundColor:"#034301", height:"100%"}}>
-                  <Grid item xs={2.4}>
-                      <div style={{height:"100%", paddingLeft:"5px", paddingBottom:"5px", paddingTop:"5px"}}>
-                      
-                        <UserInfoView userInfo={selectedContent} />
-
-                      </div>
-                  </Grid>
-                  <Grid item xs={3.6}>
-                      <div style={{height:"100%", paddingLeft:"5px", paddingBottom:"5px", paddingTop:"5px"}}>
-
-                        <PointHistoryView pointInfo={selectedContent} />
-
-                      </div>
-                  </Grid>
-                  <Grid item xs={6}>
-                      
-                      <div style={{height:"100%", paddingLeft:"5px", paddingTop:"5px", paddingRight:"5px", paddingBottom:"5px"}}>
-                          
-                        <WalletInfoView walletInfo={selectedContent} />
-
-                      </div>
-                  </Grid>
-              </Grid>
-              </Box>
-          </Drawer>
-      
-      </React.Fragment>
-
-      <Backdrop
-        sx={{ 
-            color: '#fff', 
-            zIndex: (theme) => theme.zIndex.drawer + 1,
-            backgroundColor: 'rgba(0, 0, 0, 0.7)'
-        }}
-        open={isLoading}
-      >
-        <div style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: '10px'
-        }}>
-            <CircularProgress color="inherit" />
-            <Typography sx={{ color: 'white', mt: 2 }}>
-                플라스틱 수거 정보를 불러오는 중입니다.
-            </Typography>
         </div>
-      </Backdrop>
+    
+        <React.Fragment key='bottom'>
+        
+            <Drawer
+                anchor='bottom'
+                open={stateBottom}
+                onClose={toggleDrawer('bottom', false)}>
 
-    </div>
-  );
+                <Box sx={{flexGrow:1, height:750}}>
+                <Grid container spacing={0} sx={{backgroundColor:"#034301", height:"100%"}}>
+                    <Grid item xs={2.4}>
+                        <div style={{height:"100%", paddingLeft:"5px", paddingBottom:"5px", paddingTop:"5px"}}>
+                        
+                          <UserInfoView userInfo={selectedContent} />
+
+                        </div>
+                    </Grid>
+                    <Grid item xs={3.6}>
+                        <div style={{height:"100%", paddingLeft:"5px", paddingBottom:"5px", paddingTop:"5px"}}>
+
+                          <PointHistoryView pointInfo={selectedContent} />
+
+                        </div>
+                    </Grid>
+                    <Grid item xs={6}>
+                        
+                        <div style={{height:"100%", paddingLeft:"5px", paddingTop:"5px", paddingRight:"5px", paddingBottom:"5px"}}>
+                            
+                          <WalletInfoView walletInfo={selectedContent} />
+
+                        </div>
+                    </Grid>
+                </Grid>
+                </Box>
+            </Drawer>
+        
+        </React.Fragment>
+
+        <Backdrop
+          sx={{ 
+              color: '#fff', 
+              zIndex: (theme) => theme.zIndex.drawer + 1,
+              backgroundColor: 'rgba(0, 0, 0, 0.7)'
+          }}
+          open={isLoading}
+        >
+          <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: '10px'
+          }}>
+              <CircularProgress color="inherit" />
+              <Typography sx={{ color: 'white', mt: 2 }}>
+                  플라스틱 수거 정보를 불러오는 중입니다.
+              </Typography>
+          </div>
+        </Backdrop>
+
+      </div>
+    );
+  
 }

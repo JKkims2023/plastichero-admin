@@ -14,40 +14,30 @@ export async function POST(request) {
 
     const { pagingIdx, filterInfo } = await request.json();
 
-    console.log(pagingIdx);
-    console.log(filterInfo);
-
     const connection = await getConnection();
 
     const sql = `
     
       SELECT 
+      
+        B.blacklist_no,
+        B.block_type,
+        if(B.block_type = '0', '불법접근', if(B.block_type = '1', '해킹시도', if(B.block_type = '9', '기타', ''))) as block_type_text,
+        B.memo,
+        B.reg_date,
+        B.expire_date,
+        M.mb_no, 
+        M.mb_id, 
+        M.mb_name, 
+        M.mb_email, 
 
-        K.kc_no, 
-        K.kc_kiosk_id, 
-        K.kc_engineer, 
-        K.kc_zip1, 
-        K.kc_zip2, 
-        K.kc_addr1, 
-        K.kc_addr2, 
-        K.kc_addr3, 
-        CONCAT(K.kc_addr1, ' ', K.kc_addr2, ' ', K.kc_addr3) as kc_addr,
-        K.kc_addr_jibeon, 
-        K.kc_lat, 
-        K.kc_lng, 
-        K.kc_start, 
-        K.kc_end, 
-        K.kc_datetime, 
-        K.kg_no,
-        K.kctry_no,
-        K.owner_id,
-        K.manager_mail,
-        K.sell_status,
-        if(K.sell_status = '0', '판매전', if(K.sell_status = '1', '판매중', if(K.sell_status = '2', '판매완료(직접채굴)', '판매완료(운영지원금)'))) as sell_status_text,
-        (select kc_name from g5_kiosk_country where kctry_no = K.kctry_no) as kc_name
+        DATE_FORMAT(M.mb_today_login , '%Y-%m-%d %H:%i:%S') as mb_today_login, 
+        W.address as mb_wallet
 
-        FROM ecocentre0.g5_kiosk as K order by K.kc_no asc;
-
+        
+      FROM g5_member_blacklist as B left outer join g5_member as M on B.mb_no = M.mb_no left outer join tbl_pth_wallet_info as W on M.mb_no = W.user_idx
+      
+      where B.delete_flag = 'N' and M.mb_leave_date = '' and W.is_main = 'O' and W.active = 'O'
       
       ;
 

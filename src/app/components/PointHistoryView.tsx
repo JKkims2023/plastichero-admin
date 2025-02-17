@@ -6,6 +6,7 @@ import Select, { SelectChangeEvent } from '@mui/material/Select';
 import Button from '@mui/material/Button';
 import { DataGrid, GridToolbar, GridRowsProp, GridColDef, GridToolbarContainer, GridToolbarExport, GridToolbarColumnsButton, GridToolbarFilterButton, gridClasses} from '@mui/x-data-grid';
 import { FormControl, MenuItem } from '@mui/material';
+import Paper from '@mui/material/Paper';
 
 const ODD_OPACITY = 0.2;
 
@@ -108,6 +109,22 @@ const PointInfoView = ({pointInfo}) => {
     const [filterContentTypeMethod, setFilterContentTypeMethod] = React.useState(10);
     const [filterContentTypeValueMethod, setFilterContentTypeValueMethod] = React.useState('0');
 
+    // Summary 정보 상태 추가
+    const [summary, setSummary] = useState({
+        totalCount: 0,
+        swappedPoints: 0,
+        swappedPTH: 0,
+    });
+
+    // Summary 정보를 업데이트하는 함수 추가
+    const updateSummary = (data) => {
+        setSummary({
+            totalCount: data.length,
+            swappedPoints: data.reduce((acc, item) => acc + (item.point_amount || 0), 0),
+            swappedPTH: data.reduce((acc, item) => acc + (item.po_reward_type === 'PTH' ? item.point_amount : 0), 0),
+        });
+    };
+
     React.useEffect(()=>{
 
 
@@ -163,7 +180,9 @@ const PointInfoView = ({pointInfo}) => {
             console.log('response success');
   
             // @ts-ignore
-            setPointList(data.result_data.map((data, idx) => ({ id: idx + 1, ...data })));
+            const resultData = data.result_data.map((data, idx) => ({ id: idx + 1, ...data }));
+            setPointList(resultData);
+     //       updateSummary(resultData); // Summary 업데이트
             
           } else {
     
@@ -298,11 +317,32 @@ const PointInfoView = ({pointInfo}) => {
     return (
 
         <div style={{width:"100%", height:"100%", backgroundColor:"white"}}>
+            
             <div style={{display:'flex', float:"left", width:"100%", background:"green", paddingTop:"10px", paddingBottom:"10px"}}>
                 <Typography fontWeight="medium" sx={{fontSize:16, fontWeight:"normal", color:"white", marginLeft:"10px"}} >
-                    포인트 히스토리 
+                    사용내역 통계 
                 </Typography>
             </div>
+            
+ 
+                {/* Summary 영역 추가 */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '10px', width: '100%', padding:"10px" }}>
+                    <Paper elevation={1} style={{ padding: '10px', flex: 1, minWidth: '100px', marginRight: '5px' }}>
+                        <Typography fontWeight="medium" sx={{fontSize:14, fontWeight:"normal", color:"black"}} >
+                            총 건수: {summary.totalCount}
+                        </Typography>
+                    </Paper>
+                    <Paper elevation={1} style={{ padding: '10px', flex: 1, minWidth: '100px', marginRight: '5px' }}>
+                        <Typography fontWeight="medium" sx={{fontSize:14, fontWeight:"normal", color:"black"}} >
+                            스왑된 포인트: {summary.swappedPoints}
+                        </Typography>
+                    </Paper>
+                    <Paper elevation={1} style={{ padding: '10px', flex: 1, minWidth: '100px' }}>
+                        <Typography fontWeight="medium" sx={{fontSize:14, fontWeight:"normal", color:"black"}} >
+                            스왑된 PTH: {summary.swappedPTH}
+                        </Typography>
+                    </Paper>
+                </div>
 
             <div style={{
                 display:'flex',
@@ -313,9 +353,8 @@ const PointInfoView = ({pointInfo}) => {
                 justifyContent:'center',
                 boxSizing: 'border-box',
                 gap: '10px',
-                height:'93%',
+                height:'calc(100% - 100px)', // 부모 크기에 맞게 조정
                 overflow:'hidden',
-
             }}>
 
             {
@@ -339,7 +378,7 @@ const PointInfoView = ({pointInfo}) => {
                : 
                 <div style={{width:"100%", height:"100%", backgroundColor:"white"}}>
                 
-                <div style={{display:"flex", flexDirection:"column", alignItems:"flex-end", marginTop:'10px'}}>
+                <div style={{display:"flex", flexDirection:"column", alignItems:"flex-end", marginTop:'0px'}}>
 
                   <FormControl fullWidth  style={{ width:"100%",marginTop:"0px", marginLeft:"8px", backgroundColor:'white', color:'black'}}>
                       <Select
@@ -442,9 +481,8 @@ const PointInfoView = ({pointInfo}) => {
                     params.indexRelativeToCurrentPage % 2 === 1 ? 'even' : 'odd'
                 }
                 style={{
-
-                  marginTop:'10px',
-
+                    height: '92%', // 부모 높이에 맞게 최대화
+                    marginTop:'10px',
                 }}
                 onRowClick={handleClickContentList}
               />
