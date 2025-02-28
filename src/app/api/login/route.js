@@ -20,6 +20,7 @@ export async function POST(request) {
     global.TextEncoder = TextEncoder;
     global.TextDecoder = TextDecoder;
   
+    console.log(username, password);
     
     const connection = await getConnection();
 
