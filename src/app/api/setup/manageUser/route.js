@@ -11,9 +11,8 @@ export async function POST(request) {
   try{
 
 
-    const { user_id, user_pw, user_type, user_name, manage_type, user_key} = await request.json();
+    const { user_id, user_pw, user_type, user_name, manage_type, user_key, menu_auth} = await request.json();
 
-    console.log(user_id, user_pw, user_type, user_name, manage_type, user_key);
 
     let user_keyInfo = '';
     
@@ -40,6 +39,8 @@ export async function POST(request) {
         crypto_pw = await bcryptjs.hash('plastichero1!', 10);
   
       }
+
+      const selectedMenuAuth = JSON.stringify(menu_auth);
   
       const sql = `
       
@@ -48,14 +49,69 @@ export async function POST(request) {
         user_id, 
         user_pw, 
         user_type, 
-        user_name, 
+        user_name,
+        menu_auth,
         delete_flag, 
         create_date)
-        VALUES('${user_keyInfo}', '${user_id}', '${crypto_pw}', '${user_type}', '${user_name}', 'N', CURRENT_TIMESTAMP);
+        VALUES('${user_keyInfo}', '${user_id}', '${crypto_pw}', '${user_type}', '${user_name}', '${selectedMenuAuth}', 'N', CURRENT_TIMESTAMP);
   
       `;
 
       const [rows, fields] = await connection.execute(sql);
+
+      /*
+      for(let i = 0; i < selectedMenuAuth.length; i++){
+
+        const menu_auth = selectedMenuAuth[i];
+
+        console.log(menu_auth);
+
+        if(menu_auth.checked){
+
+          const menu_auth_row = menu_auth.children;
+
+          for(let j = 0; j < menu_auth_row.length; j++){
+
+            const menu_auth_row_item = menu_auth_row[j];
+
+            const sql = `
+            
+                INSERT INTO tbl_system_user_menu_auth(
+                user_key,
+                menu_auth)
+                VALUES('${user_keyInfo}', '${menu_auth_row_item.id}');
+
+            `;
+
+            const [rows, fields] = await connection.execute(sql);
+
+          }
+
+        }else{
+
+          const menu_auth_row = menu_auth.children;
+
+          for(let j = 0; j < menu_auth_row.length; j++){
+
+            const menu_auth_row_item = menu_auth_row[j];
+
+            const sql = `
+            
+                INSERT INTO tbl_system_user_menu_auth(
+                user_key,
+                menu_auth)
+                VALUES('${user_keyInfo}', '${menu_auth_row_item.id}');
+
+            `;
+
+            const [rows, fields] = await connection.execute(sql);
+
+          }
+
+        }
+
+      }
+      */
 
       const response = NextResponse.json({ 
           
@@ -71,28 +127,21 @@ export async function POST(request) {
 
     }else if(manage_type == 'update'){
 
-      if(user_pw != ''){
+  
+      const selectedMenuAuth = JSON.stringify(menu_auth);
 
-        crypto_pw = await bcryptjs.hash(user_pw, 10);
-      
-      }else{
-  
-        crypto_pw = await bcryptjs.hash('plastichero1!', 10);
-  
-      }
-  
       const sql = `
-      
-        INSERT INTO tbl_system_user_main(
-        user_key,
-        user_id, 
-        user_pw, 
-        user_type, 
-        user_name, 
-        delete_flag, 
-        create_date)
-        VALUES('${user_key}', '${user_id}', '${crypto_pw}', '${user_type}', '${user_name}', 'N', CURRENT_TIMESTAMP);
-         
+ 
+        UPDATE tbl_system_user_main
+        
+        SET
+
+          user_name = '${user_name}',
+          user_type = '${user_type}',
+          menu_auth = '${selectedMenuAuth}'
+
+        WHERE user_key = '${user_key}';
+    
   
       `;
 

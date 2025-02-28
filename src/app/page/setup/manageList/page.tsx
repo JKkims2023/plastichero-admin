@@ -38,6 +38,14 @@ import {
 import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
 import { Stack } from '@mui/material';
+import { FormControlLabel, Checkbox, Divider } from '@mui/material';
+import FolderIcon from '@mui/icons-material/Folder';
+import SubdirectoryArrowRightIcon from '@mui/icons-material/SubdirectoryArrowRight';
+import PersonAddIcon from '@mui/icons-material/PersonAdd';
+import SaveIcon from '@mui/icons-material/Save';
+import CancelIcon from '@mui/icons-material/Cancel';
+import Chip from '@mui/material/Chip';
+import EditIcon from '@mui/icons-material/Edit';
 
 type Anchor = 'bottom';
 
@@ -77,6 +85,73 @@ const StripedDataGrid = styled(DataGrid)(({ theme }) => ({
     },
 }));
 
+
+const menuList = [
+
+  {
+    label: '회원관리',
+    children: [
+      { href: '/page/user/normalUser', label: '• 일반 회원리스트' },
+      { href: '/page/user/nodeUser', label: '• 노드 회원리스트' },
+      { href: '/page/user/kycInfo', label: '• KYC 정보관리' },
+
+    ],
+  },
+  {
+    label: '채굴(노드)관리',
+    children: [
+      { href: '/page/mining/setup', label: '• 채굴설정' },
+      { href: '/page/mining/history', label: '• 채굴내역' },
+      { href: '/page/mining/monitoring', label: '• 모니터링 / 재처리' },
+    ],
+  },
+  {
+    label: '포인트관리',
+    children: [
+      { href: '/page/point/pointRewardInfo', label: '• 포인트 제공내역' },
+      { href: '/page/point/pointHistoryInfo', label: '• 포인트 사용내역' },
+      { href: '/page/point/pointSwapInfo', label: '• 포인트 전환내역' },
+    ],
+  },
+  {
+    label: '코인전송관리',
+    children: [
+      { href: '/page/point/pointRewardInfo', label: '• 개별전송' },
+      { href: '/page/point/pointHistoryInfo', label: '• 노드전송' },
+      { href: '/page/point/pointSwapInfo', label: '• 대량전송' },
+      { href: '/page/point/pointSwapInfo', label: '• 전송내역 관리' },
+    ],
+  },
+  {
+    label: '운영관리',
+    children: [
+      { href: '/page/manage/noticeInfo', label: '• 공지 관리' },
+      { href: '/page/manage/mailInfo', label: '• 메일 인증내역' },
+      { href: '/page/manage/mailInfo', label: '• 메일 발송관리' },
+      { href: '/page/manage/smsInfo', label: '• SMS 인증내역' },
+      { href: '/page/manage/lockInfo', label: '• Lock 설정' },
+      { href: '/page/user/blackList', label: '• 블랙리스트 관리' },
+      { href: '/page/manage/appInfo', label: '• 앱 관리' },
+    ],
+  },
+  {
+    label: '키오스크관리',
+    children: [
+      { href: '/page/kiosk/ownerInfo', label: '• 소유자 관리' },
+      { href: '/page/kiosk/petDepositInfo', label: '• 플라스틱 수거현황' },
+    ],
+  },
+  {
+    label: '설정',
+    children: [
+      { href: '/page/setup/manageList', label: '• 시스템 사용자 관리' },
+      { href: '/page/setup/menuAuth', label: '• 메뉴권한 관리' },
+    ],
+  },
+  
+];
+
+
 // 타입 정의 개선
 interface KYCContent {
   kyc_path: string;
@@ -87,6 +162,248 @@ interface KYCContent {
   approval_yn: string;
   // ... other fields
 }
+
+// 메뉴 권한 관련 인터페이스 추가
+interface MenuAuthItem {
+  label: string;
+  checked: boolean;
+  show_yn: 'show' | 'hide';
+  children?: {
+    href: string;
+    label: string;
+    checked: boolean;
+  }[];
+}
+
+// 스타일 상수 추가
+const MenuAuthStyles = {
+  menuContainer: {
+    border: '1px solid #e0e0e0',
+    borderRadius: '8px',
+    backgroundColor: '#fafafa',
+    display: 'flex',
+    flexDirection: 'column',
+    height: '400px', // 고정 높이 설정
+  },
+  menuHeader: {
+    backgroundColor: '#f5f5f5',
+    p: 2,
+    borderBottom: '1px solid #e0e0e0',
+    position: 'sticky',
+    top: 0,
+    zIndex: 1,
+  },
+  menuContent: {
+    flex: 1,
+    overflowY: 'auto',
+    p: 2,
+    '&::-webkit-scrollbar': {
+      width: '8px',
+    },
+    '&::-webkit-scrollbar-track': {
+      background: '#f1f1f1',
+      borderRadius: '4px',
+    },
+    '&::-webkit-scrollbar-thumb': {
+      background: '#888',
+      borderRadius: '4px',
+    },
+  },
+  parentMenu: {
+    mb: 2,
+    p: 1.5,
+    borderRadius: '6px',
+    backgroundColor: '#fff',
+    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+    '&:hover': {
+      backgroundColor: '#f8f9fa',
+    },
+  },
+  childrenContainer: {
+    ml: 3,
+    mt: 1,
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
+    gap: 1,
+  },
+  childMenuItem: {
+    display: 'flex',
+    alignItems: 'center',
+    p: 0.5,
+    borderRadius: '4px',
+    '&:hover': {
+      backgroundColor: '#f0f0f0',
+    },
+  }
+};
+
+// 공통 MenuAuthSection 컴포넌트
+interface MenuAuthSectionProps {
+  menuItems: MenuAuthItem[];
+  onMenuChange: (newMenuItems: MenuAuthItem[]) => void;
+}
+
+const MenuAuthSection: React.FC<MenuAuthSectionProps> = ({ menuItems, onMenuChange }) => {
+  const handleParentCheck = (parentIndex: number, checked: boolean) => {
+    onMenuChange(menuItems.map((menu, idx) => 
+      idx === parentIndex ? {
+        ...menu,
+        checked,
+        children: menu.children?.map(child => ({
+          ...child,
+          checked
+        })),
+        show_yn: checked ? 'show' : 'hide'  // 부모 체크 시 show_yn 업데이트
+      } : menu
+    ));
+  };
+
+  const handleChildCheck = (parentIndex: number, childIndex: number, checked: boolean) => {
+    onMenuChange(menuItems.map((menu, idx) => {
+      if (idx === parentIndex) {
+        const newChildren = menu.children?.map((child, cIdx) => 
+          cIdx === childIndex ? { ...child, checked } : child
+        );
+        const hasCheckedChild = newChildren?.some(child => child.checked) ?? false;
+        return {
+          ...menu,
+          checked: newChildren?.every(child => child.checked) ?? false,
+          children: newChildren,
+          show_yn: hasCheckedChild ? 'show' : 'hide'  // 자식 체크 상태에 따라 show_yn 업데이트
+        };
+      }
+      return menu;
+    }));
+  };
+
+  return (
+    <Box sx={{
+      border: '1px solid #e0e0e0',
+      borderRadius: '8px',
+      backgroundColor: '#fafafa',
+      display: 'flex',
+      flexDirection: 'column',
+      height: '400px'
+    }}>
+      <Box sx={{
+        p: 2,
+        backgroundColor: '#f5f5f5',
+        borderBottom: '1px solid #e0e0e0'
+      }}>
+        <Typography component="div" sx={{
+          fontSize: '14px',
+          fontWeight: 'bold',
+          color: '#1976d2',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 1
+        }}>
+          <FolderIcon sx={{ fontSize: 20 }} />
+          메뉴 권한 설정
+        </Typography>
+      </Box>
+
+      <Box sx={{
+        flex: 1,
+        overflowY: 'auto',
+        p: 2,
+        '&::-webkit-scrollbar': { width: '8px' },
+        '&::-webkit-scrollbar-track': { background: '#f1f1f1', borderRadius: '4px' },
+        '&::-webkit-scrollbar-thumb': { background: '#888', borderRadius: '4px' }
+      }}>
+        {menuItems.map((menu, parentIndex) => (
+          <Box key={parentIndex} sx={{
+            mb: 2,
+            backgroundColor: '#fff',
+            borderRadius: '6px',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+          }}>
+            <Box
+              sx={{
+                p: 1.5,
+                display: 'flex',
+                alignItems: 'center',
+                borderBottom: '1px solid #eee'
+              }}
+              onClick={(e) => e.preventDefault()}
+            >
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={menu.checked || false}
+                    onChange={(e) => handleParentCheck(parentIndex, e.target.checked)}
+                    size="small"
+                    sx={{
+                      color: '#1976d2',
+                      '&.Mui-checked': { color: '#1976d2' }
+                    }}
+                  />
+                }
+                label={
+                  <Typography sx={{ fontSize: '14px', fontWeight: 'bold' }}>
+                    {menu.label}
+                  </Typography>
+                }
+                sx={{ margin: 0, flex: 1 }}
+              />
+              <Chip
+                size="small"
+                label={`${menu.children?.filter(c => c.checked).length || 0}/${menu.children?.length || 0}`}
+                sx={{
+                  backgroundColor: menu.checked ? '#e3f2fd' : '#f5f5f5',
+                  color: menu.checked ? '#1976d2' : '#666',
+                  fontSize: '12px'
+                }}
+              />
+            </Box>
+
+            <Box sx={{ p: 1.5 }}>
+              <Grid container spacing={1}>
+                {menu.children?.map((child, childIndex) => (
+                  <Grid item xs={12} sm={6} key={childIndex}>
+                    <FormControlLabel
+                      control={
+                        <Checkbox
+                          checked={child.checked || false}
+                          onChange={(e) => handleChildCheck(parentIndex, childIndex, e.target.checked)}
+                          size="small"
+                          sx={{
+                            color: '#78909c',
+                            '&.Mui-checked': { color: '#1976d2' }
+                          }}
+                        />
+                      }
+                      label={
+                        <Typography sx={{ fontSize: '13px' }}>
+                          {child.label.replace('• ', '')}
+                        </Typography>
+                      }
+                      sx={{ margin: 0 }}
+                    />
+                  </Grid>
+                ))}
+              </Grid>
+            </Box>
+          </Box>
+        ))}
+      </Box>
+    </Box>
+  );
+};
+
+// createInitialMenuAuth 함수를 컴포넌트 외부로 이동
+const createInitialMenuAuth = (menuListData: any[]) => {
+  return menuListData.map(menu => ({
+        label: menu.label,
+        checked: false,
+        show_yn: 'hide',
+        children: menu.children?.map(child => ({
+          href: child.href,
+          label: child.label,
+          checked: false
+        })) || []
+  }));
+};
 
 export default function Home() {
 
@@ -99,7 +416,7 @@ export default function Home() {
     const [filterInfo, setFilterInfo] = React.useState('');
     const [userList, setUserList] = React.useState([]);
     const [filterUserList, setFilterUserList] = React.useState([]);
-    const [selectedContent, setSelectedContent] = React.useState([]);    
+    const [selectedContent, setSelectedContent] = React.useState(null);    
     
 
     const [filterContentTypeMethod, setFilterContentTypeMethod] = React.useState(10);
@@ -107,8 +424,6 @@ export default function Home() {
     const [filterUserTypeMethod, setFilterUserTypeMethod] = React.useState(10);
     const [filterUserTypeValueMethod, setFilterUserTypeValueMethod] = React.useState('');
 
-    const [doneCount, setDoneCount] = React.useState('0');
-    const [waitCount, setWaitCount] = React.useState('0');
 
     const page_info = 'Home > 설정 > 사용자 관리';
 
@@ -121,6 +436,17 @@ export default function Home() {
     const [userName, setUserName] = useState('');
     const [userType, setUserType] = useState('');
     const [isIdChecked, setIsIdChecked] = useState(false);
+
+    // 메뉴 권한 상태 관리
+    // @ts-ignore
+    const [menuAuth, setMenuAuth] = useState<MenuAuthItem[]>(() => createInitialMenuAuth(menuList));
+    // @ts-ignore
+    const [editMenuAuth, setEditMenuAuth] = useState<MenuAuthItem[]>(() => createInitialMenuAuth(menuList));
+
+    const [openEditDialog, setOpenEditDialog] = useState(false);
+    const [editUserId, setEditUserId] = useState('');
+    const [editUserName, setEditUserName] = useState('');
+    const [editUserType, setEditUserType] = useState('');
 
     React.useEffect(()=>{
   
@@ -448,7 +774,9 @@ export default function Home() {
 
                           event.stopPropagation();
 
-                          setSelectedContent(filterUserList[params.row.id - 1]);
+                          const content = filterUserList[params.row.id - 1];
+                          setSelectedContent(content);
+                          handleOpenEditDialog(content);
 
                       }}
                   >
@@ -498,17 +826,59 @@ export default function Home() {
     
     };
 
-    const handleOpen = () => setOpen(true);
-    const handleClose = () => {
-      setOpen(false);
-      resetForm();
-    };
-
-    const resetForm = () => {
+    // 등록 다이얼로그 오픈 핸들러 수정
+    const handleOpen = () => {
       setUserId('');
       setUserName('');
       setUserType('');
       setIsIdChecked(false);
+      // @ts-ignore
+      setMenuAuth(createInitialMenuAuth(menuList));
+      setOpen(true);
+    };
+
+    // 수정 다이얼로그 오픈 핸들러
+    const handleOpenEditDialog = (content: any) => {
+      setEditUserId(content.user_id);
+      setEditUserName(content.user_name);
+      setEditUserType(content.user_type);
+      
+      // 기존 메뉴 권한 정보를 가져와서 설정
+      const userMenuAuth = content.menu_auth 
+        ? content.menu_auth.map((menu: any) => ({
+            ...menu,
+            checked: menu.checked || false,
+            show_yn: menu.show_yn || 'hide',
+            children: menu.children?.map((child: any) => ({
+              ...child,
+              checked: child.checked || false
+            })) || []
+          }))
+        : createInitialMenuAuth(menuList);
+
+      setEditMenuAuth(userMenuAuth);
+      setOpenEditDialog(true);
+    };
+
+    // 등록 다이얼로그 닫기 핸들러 수정
+    const handleClose = () => {
+      setOpen(false);
+      setUserId('');
+      setUserName('');
+      setUserType('');
+      setIsIdChecked(false);
+      // @ts-ignore
+      setMenuAuth(createInitialMenuAuth(menuList));
+    };
+
+    // 수정 다이얼로그 닫기 핸들러
+    const handleCloseEditDialog = () => {
+      setOpenEditDialog(false);
+      setEditUserId('');
+      setEditUserName('');
+      setEditUserType('');
+      // @ts-ignore
+      setEditMenuAuth(createInitialMenuAuth(menuList));
     };
 
     const handleIdCheck = async () => {
@@ -549,6 +919,16 @@ export default function Home() {
 
     };
 
+    // 등록 다이얼로그용 메뉴 변경 핸들러
+    const handleMenuAuthChange = (newMenuItems: MenuAuthItem[]) => {
+      setMenuAuth(newMenuItems);
+    };
+
+    // 수정 다이얼로그용 메뉴 변경 핸들러
+    const handleEditMenuAuthChange = (newMenuItems: MenuAuthItem[]) => {
+      setEditMenuAuth(newMenuItems);
+    };
+
     const handleSubmit = async () => {
 
       if (!isIdChecked) {
@@ -557,11 +937,24 @@ export default function Home() {
       }
       
       if (!userName || !userType) {
-       
         alert('모든 필드를 입력해주세요.');
         return;
-      
       }
+
+      // 선택된 메뉴 권한 정보 수집
+      const selectedMenuAuth = menuAuth.map(menu => {
+        const hasCheckedChild = menu.children?.some(child => child.checked) ?? false;
+        return {
+          label: menu.label,
+          checked: menu.checked,
+          show_yn: hasCheckedChild ? 'show' : 'hide',
+          children: menu.children?.map(child => ({
+            href: child.href,
+            label: child.label,
+            checked: child.checked
+          }))
+        };
+      });
 
       let userTypeValue = userType;
 
@@ -581,20 +974,20 @@ export default function Home() {
         }break;
       }
 
-      try {
+      console.log(selectedMenuAuth);
       
+      try {
         const response = await fetch('/api/setup/manageUser', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-
-            user_id : userId,
-            user_pw : '',
-            user_type : userType,
-            user_name : userName,
-            manage_type : 'add',
-            user_key : ''
-
+            user_id: userId,
+            user_pw: '',
+            user_type: userType,
+            user_name: userName,
+            manage_type: 'add',
+            user_key: '',
+            menu_auth: selectedMenuAuth
           })
         });
 
@@ -617,6 +1010,59 @@ export default function Home() {
         console.error('Error:', error);
         alert('사용자 등록 중 오류가 발생했습니다.');
       }
+    };
+
+    // 수정 처리
+    const handleEdit = async () => {
+      try {
+        // 수정된 메뉴 권한 정보 수집
+        const updatedMenuAuth = editMenuAuth.map(menu => {
+          const hasCheckedChild = menu.children?.some(child => child.checked) ?? false;
+          return {
+            label: menu.label,
+            checked: menu.checked,
+            show_yn: hasCheckedChild ? 'show' : 'hide',
+            children: menu.children?.map(child => ({
+              href: child.href,
+              label: child.label,
+              checked: child.checked
+            }))
+          };
+        });
+
+
+        const response = await fetch('/api/setup/manageUser', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            user_id: editUserId,
+            user_name: editUserName,
+            user_type: editUserType,
+            user_key: selectedContent.user_key,
+            menu_auth: updatedMenuAuth,
+            manage_type: 'update'
+          })
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.result === 'success') {
+
+          alert('수정이 완료되었습니다.');
+          handleCloseEditDialog();
+          get_UserInfo(); // 목록 새로고침
+        
+        } else {
+        
+          alert(data.message || '수정 중 오류가 발생했습니다.');
+        
+        }
+      
+      } catch (error) {
+        console.error('Error:', error);
+        alert('수정 중 오류가 발생했습니다.');
+      }
+    
     };
 
     return (
@@ -975,21 +1421,55 @@ export default function Home() {
         <Dialog 
           open={open} 
           onClose={handleClose}
-          maxWidth="sm"
+          maxWidth="md" 
           fullWidth
+          PaperProps={{
+            sx: {
+              maxHeight: '90vh',
+              display: 'flex',
+              flexDirection: 'column'
+            }
+          }}
         >
-          <DialogTitle sx={{ 
-            backgroundColor: '#f5f5f5',
-            borderBottom: '1px solid #ddd'
-          }}>
-            <Typography variant="h6" component="div">
+          <DialogTitle 
+            sx={{ 
+              backgroundColor: '#1976d2',
+              color: 'white',
+              p: 2,
+              flex: '0 0 auto'
+            }}
+          >
+            <Box sx={{ 
+              display: 'flex', 
+              alignItems: 'center',
+              gap: 1 
+            }}>
+              <PersonAddIcon />
+              <Typography 
+                component="span"
+                sx={{ 
+                  fontSize: '1.25rem',
+                  fontWeight: 'bold'
+                }}
+              >
               사용자 등록
             </Typography>
+            </Box>
           </DialogTitle>
           
-          <DialogContent sx={{ pt: 3, marginTop:"30px", paddingTop:"30px"}}>
-            <Stack spacing={3}>
-              <Box sx={{ display: 'flex', gap: 1}}>
+          <DialogContent 
+            sx={{ 
+              p: 3,
+              flex: '1 1 auto',
+              overflow: 'hidden',
+              display: 'flex',
+              flexDirection: 'column'
+            }}
+          >
+            <Box sx={{ mb: 3 }}>
+              <Grid container spacing={2} style={{marginTop:"10px", marginLeft:"-15px"}}>
+                <Grid item xs={12} md={8}>
+                  <Box sx={{ display: 'flex', gap: 1 }}>
                 <TextField
                   label="사용자 아이디"
                   value={userId}
@@ -1000,17 +1480,35 @@ export default function Home() {
                   fullWidth
                   required
                   size="small"
-                  sx={{ fontSize: '13px', label: { fontSize: '13px' } }}
+                      sx={{ fontSize: '13px' }}
                 />
                 <Button 
                   variant="contained"
                   onClick={handleIdCheck}
-                  sx={{ minWidth: '100px' }}
+                      sx={{ 
+                        minWidth: '100px',
+                        backgroundColor: isIdChecked ? '#4caf50' : undefined
+                      }}
                 >
-                  중복확인
+                      {isIdChecked ? '확인완료' : '중복확인'}
                 </Button>
               </Box>
-
+                </Grid>
+                <Grid item xs={12} md={4}>
+                  <FormControl fullWidth size="small" required>
+                    <InputLabel>사용자 타입</InputLabel>
+                    <Select
+                      value={userType}
+                      label="사용자 타입"
+                      onChange={(e) => setUserType(e.target.value)}
+                    >
+                      <MenuItem value="A">총괄관리자</MenuItem>
+                      <MenuItem value="M">어드민</MenuItem>
+                      <MenuItem value="N">일반사용자</MenuItem>
+                    </Select>
+                  </FormControl>
+                </Grid>
+                <Grid item xs={12}>
               <TextField
                 label="사용자명"
                 value={userName}
@@ -1018,43 +1516,226 @@ export default function Home() {
                 fullWidth
                 required
                 size="small"
-                sx={{ fontSize: '13px', label: { fontSize: '13px' } }}
-              />
+                  />
+                </Grid>
+              </Grid>
+            </Box>
 
-              <FormControl fullWidth size="small" required>
-                <InputLabel sx={{ fontSize: '13px' }}>사용자 타입</InputLabel>
-                <Select
-                  value={userType}
-                  label="사용자 타입"
-                  onChange={(e) => setUserType(e.target.value)}
-                  sx={{ fontSize: '13px', label: { fontSize: '13px' } }}
+            <Box
+              sx={{
+                flex: '1 1 auto',
+                overflow: 'hidden',
+                display: 'flex',
+                flexDirection: 'column',
+                border: '1px solid #e0e0e0',
+                borderRadius: '8px',
+              }}
+            >
+              <Box
+                sx={{
+                  p: 2,
+                  backgroundColor: '#f5f5f5',
+                  borderBottom: '1px solid #e0e0e0',
+                  flex: '0 0 auto'
+                }}
+              >
+                <Typography
+                  component="div"
+                  sx={{
+                    fontSize: '14px',
+                    fontWeight: 'bold',
+                    color: '#1976d2',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 1
+                  }}
                 >
-                  <MenuItem value="A" sx={{ fontSize: '13px' }}>총괄관리자</MenuItem>
-                  <MenuItem value="M" sx={{ fontSize: '13px' }}>어드민</MenuItem>
-                  <MenuItem value="N" sx={{ fontSize: '13px' }}>일반사용자</MenuItem>
-                </Select>
-              </FormControl>
-            </Stack>
+                  <FolderIcon sx={{ fontSize: 20 }} />
+                  메뉴 권한 설정
+                </Typography>
+              </Box>
+
+              <Box
+                sx={{
+                  flex: '1 1 auto',
+                  overflowY: 'auto',
+                  p: 2,
+                  backgroundColor: '#fafafa',
+                  '&::-webkit-scrollbar': {
+                    width: '8px'
+                  },
+                  '&::-webkit-scrollbar-track': {
+                    background: '#f1f1f1',
+                    borderRadius: '4px'
+                  },
+                  '&::-webkit-scrollbar-thumb': {
+                    background: '#888',
+                    borderRadius: '4px'
+                  }
+                }}
+              >
+                <MenuAuthSection 
+                  menuItems={menuAuth} 
+                  onMenuChange={handleMenuAuthChange} 
+                />
+              </Box>
+            </Box>
           </DialogContent>
 
-          <DialogActions sx={{ 
-            p: 2,
-            borderTop: '1px solid #ddd',
-            backgroundColor: '#f5f5f5'
-          }}>
+          <DialogActions 
+            sx={{ 
+              p: 2,
+              backgroundColor: '#f5f5f5',
+              borderTop: '1px solid #ddd',
+              flex: '0 0 auto'
+            }}
+          >
             <Button 
               onClick={handleClose}
               variant="outlined"
-              color="inherit"
+              startIcon={<CancelIcon />}
             >
               취소
             </Button>
             <Button 
               onClick={handleSubmit}
               variant="contained"
-              color="primary"
+              startIcon={<SaveIcon />}
             >
               등록
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* 수정 다이얼로그 추가 */}
+        <Dialog 
+          open={openEditDialog} 
+          onClose={handleCloseEditDialog} 
+          maxWidth="md" 
+          fullWidth
+          PaperProps={{
+            sx: {
+              maxHeight: '90vh',
+            }
+          }}
+        >
+          <DialogTitle 
+            sx={{ 
+              backgroundColor: '#1976d2',
+              color: 'white',
+              p: 2,
+              position: 'sticky',
+              top: 0,
+              zIndex: 2,
+            }}
+          >
+            <Box sx={{ 
+              display: 'flex', 
+              alignItems: 'center',
+              gap: 1 
+            }}>
+              <EditIcon />
+              <Typography 
+                component="span"
+                sx={{ 
+                  fontSize: '1.25rem',
+                  fontWeight: 'bold'
+                }}
+              >
+                사용자 정보 수정
+              </Typography>
+            </Box>
+          </DialogTitle>
+          
+          <DialogContent 
+            sx={{ 
+              p: 3,
+              '&::-webkit-scrollbar': {
+                width: '8px',
+              },
+              '&::-webkit-scrollbar-track': {
+                background: '#f1f1f1',
+                borderRadius: '4px',
+              },
+              '&::-webkit-scrollbar-thumb': {
+                background: '#888',
+                borderRadius: '4px',
+              },
+            }}
+          >
+            <Stack 
+              spacing={3} 
+              sx={{ 
+                position: 'relative',
+              }}
+            >
+              <Grid container spacing={2} style={{marginTop:"10px", marginLeft:"-15px"}}>
+                <Grid item xs={12} md={8}>
+                  <TextField
+                    label="사용자 아이디"
+                    value={editUserId}
+                    disabled
+                    fullWidth
+                    size="small"
+                    sx={{ fontSize: '13px' }}
+                  />
+                </Grid>
+                <Grid item xs={12} md={4}>
+              <FormControl fullWidth size="small" required>
+                    <InputLabel>사용자 타입</InputLabel>
+                <Select
+                      value={editUserType}
+                  label="사용자 타입"
+                      onChange={(e) => setEditUserType(e.target.value)}
+                    >
+                      <MenuItem value="A">총괄관리자</MenuItem>
+                      <MenuItem value="M">어드민</MenuItem>
+                      <MenuItem value="N">일반사용자</MenuItem>
+                </Select>
+              </FormControl>
+                </Grid>
+                <Grid item xs={12}>
+                  <TextField
+                    label="사용자명"
+                    value={editUserName}
+                    onChange={(e) => setEditUserName(e.target.value)}
+                    fullWidth
+                    required
+                    size="small"
+                  />
+                </Grid>
+              </Grid>
+
+              <MenuAuthSection 
+                menuItems={editMenuAuth} 
+                onMenuChange={handleEditMenuAuthChange} 
+              />
+            </Stack>
+          </DialogContent>
+
+          <DialogActions 
+            sx={{ 
+            p: 2,
+              backgroundColor: '#f5f5f5',
+            borderTop: '1px solid #ddd',
+              position: 'sticky',
+              bottom: 0,
+              zIndex: 2,
+            }}
+          >
+            <Button 
+              onClick={handleCloseEditDialog}
+              variant="outlined"
+              startIcon={<CancelIcon />}
+            >
+              취소
+            </Button>
+            <Button 
+              onClick={handleEdit}
+              variant="contained"
+              startIcon={<SaveIcon />}
+            >
+              수정
             </Button>
           </DialogActions>
         </Dialog>

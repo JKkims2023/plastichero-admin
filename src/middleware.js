@@ -30,6 +30,7 @@ export async function middleware(request) {
     console.log('middleware token empty');
 
     return NextResponse.redirect(new URL('/page/login', request.url));
+    
   }
 
   // 3. 토큰 검증

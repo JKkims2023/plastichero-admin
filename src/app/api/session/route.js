@@ -73,33 +73,6 @@ export async function POST(request) {
     }
 
     if (rows[0].user_id == payload.username) {
-
-
-          
-          const sql_menu_auth = `
-        
-            SELECT * FROM tbl_system_menu_auth 
-            
-            where user_key = '${rows[0].user_key}' 
-      
-            and delete_flag = 'N';
-      
-          `;
-    
-          const [rows_menu, fields_menu] = await connection.execute(sql_menu_auth);
-        
-          const data = { 
-              
-              message: 'Login successful',
-              user_id : payload.username,
-              user_name :  rows[0].user_name,
-              user_type : rows[0].user_type,
-              menu_auth : rows_menu,
-
-            };
-
-            //login( data ); // 로그인 성공
-
             
           const response = NextResponse.json({ 
               
@@ -107,7 +80,7 @@ export async function POST(request) {
             user_id : payload.username,
             user_name :  rows[0].user_name,
             user_type : rows[0].user_type,
-            menu_auth : rows_menu,
+            menu_auth : rows[0].menu_auth,
 
           });
 

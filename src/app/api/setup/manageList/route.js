@@ -26,7 +26,8 @@ export async function POST(request) {
         user_pw, 
         user_type,
         if(user_type = 'A', '총괄관리자', if(user_type = 'M', '어드민', '일반사용자')) as user_type_text,
-        user_name, 
+        user_name,
+        menu_auth,
         delete_flag,
         DATE_FORMAT(create_date, '%Y-%m-%d %H:%i:%S') as create_date  
       
@@ -36,6 +37,8 @@ export async function POST(request) {
 
     const [rows, fields] = await connection.execute(sql);
 
+    console.log(rows);
+    
     const response = NextResponse.json({ 
         
         result: 'success',

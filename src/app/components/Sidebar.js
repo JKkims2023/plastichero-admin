@@ -40,6 +40,7 @@ export default function Sidebar() {
 
   },[]);
 
+  /*
   useEffect(()=>{
 
     const cookies = parseCookies();
@@ -187,7 +188,7 @@ export default function Sidebar() {
     }
     
   },[menu_auth]);
-
+  */
 
   useEffect(()=>{
 
@@ -220,8 +221,10 @@ export default function Sidebar() {
 
       if (response.ok) {
 
-        console.log(data);
+        console.log(data.menu_auth);
         login(data);
+
+        setSidebarData(data.menu_auth);
 
       } else {
 
@@ -289,7 +292,7 @@ export default function Sidebar() {
                   <div 
                     className={styles.menuRow}
                     style={{
-                      display:'flex', 
+                      display:item.show_yn == 'show' ? 'flex' : 'none', 
                       flexDirection:'row',
                       paddingTop:'10px', 
                       paddingBottom:'10px',
@@ -302,14 +305,14 @@ export default function Sidebar() {
                     <button tabIndex="0" className={styles.menuButton} style={{fontSize:14, fontWeight:'bold'}} onClick={() => toggleMenu(index)}>
                       {item.label}
                     </button>
-                    <button style={{marginLeft:'auto', marginTop:'-5px'}}>
+                    <button style={{marginLeft:'auto', marginTop:'-5px',}}>
                       {openMenu === index ? '▲' : '▼'}
                     </button>
                   </div>
                   <ul className={`${styles.subMenu} ${openMenu === index ? styles.open : ''}`} style={{marginTop:'5px', marginLeft:'30px'}}> 
                     {item.children &&
                       item.children.map((child, childIndex) => (
-                        <li key={childIndex}>
+                        <li key={childIndex} style={{display:child.checked ? 'block' : 'none'}}>
                           <Link href={child.href} legacyBehavior>
                             <a className={styles.submenuLink} style={{fontSize:13, marginLeft:'25px', color: 'white'}}>{child.label}</a>
                           </Link>
