@@ -16,13 +16,12 @@ import MiningIcon from '@mui/icons-material/Build'; // Material UI 아이콘 사
 import PointIcon from '@mui/icons-material/Money'; // Material UI 아이콘 사용
 import OperationIcon from '@mui/icons-material/Build'; // Material UI 아이콘 사용
 import KeyIcon from '@mui/icons-material/Key'; // Material UI 아이콘 사용
-
+import AccountCircleIcon from '@mui/icons-material/AccountCircle';
+import Chip from '@mui/material/Chip';
 
 import logoPath from '../../../public/logo.svg';
 
-
 export default function Sidebar() {
-
 
   const [menu_auth, setMenu_auth] = useState(useAuthStore((state) => state.user));
   const [sidebarData, setSidebarData] = useState([]);
@@ -30,169 +29,14 @@ export default function Sidebar() {
   const isLoggedIn = useAuthStore((state) => state.isLoggedIn);
   const [isShow, setIsShow] = useState(false);
 
-
   const login = useAuthStore((state) => state.login);
   const logout = useAuthStore((state) => state.logout);
 
-  useEffect(()=>{
+  const user = useAuthStore((state) => state.user);
 
+  useEffect(()=>{
     getLoginStatus();
-
   },[]);
-
-  /*
-  useEffect(()=>{
-
-    const cookies = parseCookies();
-
-    if(menu_auth != null && menu_auth.menu_auth != 'undefined' && menu_auth.menu_auth.length > 0){
-
-      console.log('menu_ok');
-
-      setSidebarData([
-      
-        { href: '/', label: 'Overview' },
-        {
-          label: '회원관리',
-          children: [
-            { href: '/page/user/normalUser', label: '• 일반 회원리스트' },
-            { href: '/page/user/nodeUser', label: '• 노드 회원리스트' },
-            { href: '/page/user/kycInfo', label: '• KYC 정보관리' },
-
-          ],
-        },
-        {
-          label: '채굴(노드)관리',
-          children: [
-            { href: '/page/mining/setup', label: '• 채굴설정' },
-            { href: '/page/mining/history', label: '• 채굴내역' },
-            { href: '/page/mining/monitoring', label: '• 모니터링 / 재처리' },
-          ],
-        },
-        {
-          label: '포인트관리',
-          children: [
-            { href: '/page/point/pointRewardInfo', label: '• 포인트 제공내역' },
-            { href: '/page/point/pointHistoryInfo', label: '• 포인트 사용내역' },
-            { href: '/page/point/pointSwapInfo', label: '• 포인트 전환내역' },
-          ],
-        },
-        {
-          label: '코인전송관리',
-          children: [
-            { href: '/page/point/pointRewardInfo', label: '• 개별전송' },
-            { href: '/page/point/pointHistoryInfo', label: '• 노드전송' },
-            { href: '/page/point/pointSwapInfo', label: '• 대량전송' },
-            { href: '/page/point/pointSwapInfo', label: '• 전송내역 관리' },
-          ],
-        },
-        {
-          label: '운영관리',
-          children: [
-            { href: '/page/manage/noticeInfo', label: '• 공지 관리' },
-            { href: '/page/manage/mailInfo', label: '• 메일 인증내역' },
-            { href: '/page/manage/mailInfo', label: '• 메일 발송관리' },
-            { href: '/page/manage/smsInfo', label: '• SMS 인증내역' },
-            { href: '/page/manage/lockInfo', label: '• Lock 설정' },
-            { href: '/page/user/blackList', label: '• 블랙리스트 관리' },
-            { href: '/page/manage/appInfo', label: '• 앱 관리' },
-          ],
-        },
-        {
-          label: '키오스크관리',
-          children: [
-            { href: '/page/kiosk/ownerInfo', label: '• 소유자 관리' },
-            { href: '/page/kiosk/petDepositInfo', label: '• 플라스틱 수거현황' },
-          ],
-        },
-        {
-          label: '설정',
-          children: [
-            { href: '/page/setup/manageList', label: '• 시스템 사용자 관리' },
-            { href: '/page/setup/menuAuth', label: '• 메뉴권한 관리' },
-          ],
-        },
-      
-      
-      ]);
-
-    }else{
-    
-
-      setSidebarData([
-      
-        { href: '/', label: 'Overview' },
-        {
-          label: '회원관리',
-          children: [
-            { href: '/page/user/normalUser', label: '• 일반 회원리스트' },
-            { href: '/page/user/nodeUser', label: '• 노드 회원리스트' },
-            { href: '/page/user/kycInfo', label: '• KYC 정보관리' },
-          ],
-        },
-        {
-          label: '채굴(노드)관리',
-          children: [
-            { href: '/page/mining/setup', label: '• 채굴설정' },
-            { href: '/page/mining/history', label: '• 채굴내역' },
-            { href: '/page/mining/monitoring', label: '• 모니터링 / 재처리' },
-          ],
-        },
-        {
-          label: '포인트관리',
-          children: [
-            { href: '/page/point/pointRewardInfo', label: '• 포인트 제공내역' },
-            { href: '/page/point/pointHistoryInfo', label: '• 포인트 사용내역' },
-            { href: '/page/point/pointSwapInfo', label: '• 포인트 전환내역' },
-          ],
-        },
-        {
-          label: '코인전송관리',
-          children: [
-            { href: '/page/point/pointRewardInfo', label: '• 개별전송' },
-            { href: '/page/point/pointHistoryInfo', label: '• 노드전송' },
-            { href: '/page/point/pointSwapInfo', label: '• 대량전송' },
-            { href: '/page/point/pointSwapInfo', label: '• 전송내역 관리' },
-          ],
-        },
-        {
-          label: '운영관리',
-          children: [
-            { href: '/page/manage/noticeInfo', label: '• 공지 관리' },
-            { href: '/page/manage/mailInfo', label: '• 메일 인증내역' },
-            { href: '/page/manage/mailInfo', label: '• 메일 발송관리' },
-            { href: '/page/manage/smsInfo', label: '• SMS 인증내역' },
-            { href: '/page/manage/lockInfo', label: '• Lock 설정' },
-            { href: '/page/user/blackList', label: '• 블랙리스트 관리' },
-            { href: '/page/manage/appInfo', label: '• 앱 관리' },
-          ],
-        },
-        {
-          label: '키오스크관리',
-          children: [
-            { href: '/page/kiosk/ownerInfo', label: '• 소유자 관리' },
-            { href: '/page/kiosk/petDepositInfo', label: '• 플라스틱 수거현황' },
-          ],
-        },
-        {
-          label: '설정',
-          children: [
-            { href: '/page/setup/manageList', label: '• 사용자 관리' },
-            { href: '/page/setup/menuAuth', label: '• 메뉴권한 관리' },
-          ],
-        },
-      
-      ]);
-
-
-    }
-    
-  },[menu_auth]);
-  */
-
-  useEffect(()=>{
-
-  },[sidebarData]);
 
   useEffect(()=>{
     console.log('isLoggedIn effect sidebar : ' + isLoggedIn);
@@ -200,44 +44,28 @@ export default function Sidebar() {
   },[isLoggedIn]);
 
   const getLoginStatus = async () => {
-
     try{
-
-
       const response = await fetch('/api/session', {
-
         method: 'POST',
         headers: {
-        
           'Content-Type': 'application/json',
-        
         },
-        
         body: JSON.stringify({ user_id: '' }),
-      
       });
 
       const data = await response.json();
 
       if (response.ok) {
-
         console.log(data.menu_auth);
         login(data);
-
         setSidebarData(data.menu_auth);
-
       } else {
-
         console.log(data.message);
         logout();
       }
-
     }catch(error){  
-
       console.log(error);
-
     }
-
   };
 
   const toggleMenu = (index) => {
@@ -265,90 +93,141 @@ export default function Sidebar() {
     }
   };
 
-  return (
-    
-    <aside className={styles.sidebar} style={{display:isShow ? 'block' : 'none'}}>
+  const UserInfo = () => {
+    if (!user) return null;
 
-      <div style={{width:'100%', height:'1px', backgroundColor:'gray', marginTop:'0px'}}/>
-
-        <div style={{display:'flex', flexDirection:'row', width:'100%', marginLeft:'25px',}}>
-
-          <a style={{fontSize:14, fontWeight:'bold', color:'white', marginTop:'25px',}}></a>
-
+    return (
+      <div style={{
+        padding: '20px',
+        margin: '15px',
+        borderRadius: '8px',
+        backgroundColor: 'rgba(255, 255, 255, 0.05)',
+        border: '1px solid rgba(255, 255, 255, 0.1)',
+      }}>
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          marginBottom: '12px',
+        }}>
+          <AccountCircleIcon 
+            style={{
+              color: '#fff',
+              fontSize: '32px',
+              marginRight: '10px'
+            }}
+          />
+          <Chip
+            label={user.user_type == 'A' ? '총괄관리자' : user.user_type == 'M' ? '어드민' : '일반사용자'}
+            size="small"
+            style={{
+              backgroundColor: 'rgba(255, 255, 255, 0.1)',
+              color: '#fff',
+              fontSize: '14px',
+              height: '25px'
+            }}
+          />
         </div>
+        
+        <div style={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '4px'
+        }}>
+          <div style={{
+            color: '#fff',
+            fontSize: '13px',
+            opacity: 0.7
+          }}>
+            ID: {user.user_id}
+          </div>
+          <div style={{
+            color: '#fff',
+            fontSize: '14px',
+            fontWeight: 'bold'
+          }}>
+            {user.user_name}
+          </div>
+        </div>
+      </div>
+    );
+  };
 
-        <ul style={{marginTop:'30px'}}>
-          {sidebarData.map((item, index) => (
-            <li key={index} style={{width:'100%'}}>
-              {item.href ? (
-                <div style={{width:'100%', padding:'20px', paddingTop:'7px', paddingBottom:'7px', alignContent:'center', alignItems:'center', justifyContent:'center'}}>
-                <HomeIcon color="white" style={{marginRight:'15px', marginTop:'-5px'}}/>
-                <Link href={item.href}  style={{fontSize:14, fontWeight:'bold', width:'100%',}} legacyBehavior>
-                  <a tabIndex="0" style={{fontSize:14, fontWeight:'bold', width:'100%', color:'white'}}>{item.label}</a>
-                </Link>
+  return (
+    <aside className={styles.sidebar} style={{display:isShow ? 'block' : 'none'}}>
+      <div style={{width:'100%', height:'1px', backgroundColor:'gray', marginTop:'0px'}}/>
+      
+      <UserInfo />
+
+      <ul style={{marginTop:'10px'}}>
+        {sidebarData.map((item, index) => (
+          <li key={index} style={{width:'100%'}}>
+            {item.href ? (
+              <div style={{width:'100%', padding:'20px', paddingTop:'7px', paddingBottom:'7px', alignContent:'center', alignItems:'center', justifyContent:'center'}}>
+              <HomeIcon color="white" style={{marginRight:'15px', marginTop:'-5px'}}/>
+              <Link href={item.href}  style={{fontSize:14, fontWeight:'bold', width:'100%',}} legacyBehavior>
+                <a tabIndex="0" style={{fontSize:14, fontWeight:'bold', width:'100%', color:'white'}}>{item.label}</a>
+              </Link>
+              </div>
+            ) : (
+              <>
+                <div 
+                  className={styles.menuRow}
+                  style={{
+                    display:item.show_yn == 'show' ? 'flex' : 'none', 
+                    flexDirection:'row',
+                    paddingTop:'10px', 
+                    paddingBottom:'10px',
+                    paddingLeft:'20px', 
+                    paddingRight:'10px', 
+                    marginRight:'10px', 
+                  }}>
+                  {getIcon(item.label)}
+                  <button tabIndex="0" className={styles.menuButton} style={{fontSize:14, fontWeight:'bold'}} onClick={() => toggleMenu(index)}>
+                    {item.label}
+                  </button>
+                  <button style={{
+                    marginLeft: 'auto', 
+                    marginTop: '-5px',
+                    fontSize: '10px',  // 화살표 크기를 10px로 조정
+                    color: 'white'
+                  }}>
+                    {openMenu === index ? '▲' : '▼'}
+                  </button>
                 </div>
-              ) : (
-                <>
-                  <div 
-                    className={styles.menuRow}
-                    style={{
-                      display:item.show_yn == 'show' ? 'flex' : 'none', 
-                      flexDirection:'row',
-                      paddingTop:'10px', 
-                      paddingBottom:'10px',
-                      paddingLeft:'20px', 
-                      paddingRight:'10px', 
-                      marginRight:'10px', 
-
-                    }}>
-                    {getIcon(item.label)}
-                    <button tabIndex="0" className={styles.menuButton} style={{fontSize:14, fontWeight:'bold'}} onClick={() => toggleMenu(index)}>
-                      {item.label}
-                    </button>
-                    <button style={{marginLeft:'auto', marginTop:'-5px',}}>
-                      {openMenu === index ? '▲' : '▼'}
-                    </button>
-                  </div>
-                  <ul className={`${styles.subMenu} ${openMenu === index ? styles.open : ''}`} style={{marginTop:'5px', marginLeft:'30px'}}> 
-                    {item.children &&
-                      item.children.map((child, childIndex) => (
-                        <li key={childIndex} style={{display:child.checked ? 'block' : 'none'}}>
-                          <Link href={child.href} legacyBehavior>
-                            <a className={styles.submenuLink} style={{fontSize:13, marginLeft:'25px', color: 'white'}}>{child.label}</a>
-                          </Link>
-                        </li>
-                      ))}
-                  </ul>
-                </>
-              )}
-            </li>
-          ))}
-        </ul>
-        <style jsx>{`
-          
-          a:focus {
-            color: #4CAF50 !important; /* 초록색으로 변경 */
-            outline: none;
-          },
-          a:not(:focus) {
-            color: white !important;
-            outline: none;
-          },
-          div:focus {
-
-            outline: none; /* 기본 포커스 스타일 제거 (선택 사항) */
-            background-color: white; /* 포커스 또는 호버 시 배경 색상 변경 */
-          
-            },
-          div:hover {
-          
-            outline: none; /* 기본 포커스 스타일 제거 (선택 사항) */
-            background-color: white; /* 포커스 또는 호버 시 배경 색상 변경 */
-            color: white; /* 포커스 또는 호버 시 텍스트 색상 변경 */
-          
-            }`}
-        </style>
-
+                <ul className={`${styles.subMenu} ${openMenu === index ? styles.open : ''}`} style={{marginTop:'5px', marginLeft:'30px'}}> 
+                  {item.children &&
+                    item.children.map((child, childIndex) => (
+                      <li key={childIndex} style={{display:child.checked ? 'block' : 'none'}}>
+                        <Link href={child.href} legacyBehavior>
+                          <a className={styles.submenuLink} style={{fontSize:13, marginLeft:'25px', color: 'white'}}>{child.label}</a>
+                        </Link>
+                      </li>
+                    ))}
+                </ul>
+              </>
+            )}
+          </li>
+        ))}
+      </ul>
+      <style jsx>{`
+        a:focus {
+          color: #4CAF50 !important; /* 초록색으로 변경 */
+          outline: none;
+        },
+        a:not(:focus) {
+          color: white !important;
+          outline: none;
+        },
+        div:focus {
+          outline: none; /* 기본 포커스 스타일 제거 (선택 사항) */
+          background-color: white; /* 포커스 또는 호버 시 배경 색상 변경 */
+        },
+        div:hover {
+          outline: none; /* 기본 포커스 스타일 제거 (선택 사항) */
+          background-color: white; /* 포커스 또는 호버 시 배경 색상 변경 */
+          color: white; /* 포커스 또는 호버 시 텍스트 색상 변경 */
+        }`}
+      </style>
     </aside>
   );
 }
