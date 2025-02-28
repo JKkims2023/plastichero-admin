@@ -65,7 +65,6 @@ export async function POST(request) {
 
     }else if(manage_type == 'update'){
 
-  
       const selectedMenuAuth = JSON.stringify(menu_auth);
 
       const sql = `
@@ -98,6 +97,33 @@ export async function POST(request) {
         return response;
 
     }else if(manage_type == 'delete'){
+
+      const sql = `
+ 
+      UPDATE tbl_system_user_main
+      
+      SET
+
+        delete_flag = 'Y'
+
+      WHERE user_key = '${user_key}';
+  
+
+    `;
+
+    const [rows, fields] = await connection.execute(sql);
+
+    const response = NextResponse.json({ 
+        
+        result: 'success',
+        result_data : rows,
+
+      
+      });
+
+      connection.release(); // 연결 반환
+    
+      return response;
 
     }else if(manage_type == 'password'){
 

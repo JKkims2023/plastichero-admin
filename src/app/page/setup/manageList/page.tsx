@@ -46,6 +46,7 @@ import SaveIcon from '@mui/icons-material/Save';
 import CancelIcon from '@mui/icons-material/Cancel';
 import Chip from '@mui/material/Chip';
 import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/Delete';
 
 type Anchor = 'bottom';
 
@@ -145,7 +146,7 @@ const menuList = [
     label: '설정',
     children: [
       { href: '/page/setup/manageList', label: '• 시스템 사용자 관리' },
-      { href: '/page/setup/menuAuth', label: '• 메뉴권한 관리' },
+
     ],
   },
   
@@ -1065,6 +1066,37 @@ export default function Home() {
     
     };
 
+    // 삭제 처리 함수 추가
+    const handleDelete = async () => {
+      // 삭제 확인 다이얼로그
+      if (window.confirm('정말 사용자 정보를 삭제 하시겠습니까?')) {
+        try {
+          const response = await fetch('/api/setup/manageUser', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              user_id: editUserId,
+              user_key: selectedContent.user_key,
+              manage_type: 'delete'
+            })
+          });
+
+          const data = await response.json();
+
+          if (response.ok && data.result === 'success') {
+            alert('삭제가 완료되었습니다.');
+            handleCloseEditDialog();
+            get_UserInfo(); // 목록 새로고침
+          } else {
+            alert(data.message || '삭제 중 오류가 발생했습니다.');
+          }
+        } catch (error) {
+          console.error('Error:', error);
+          alert('삭제 중 오류가 발생했습니다.');
+        }
+      }
+    };
+
     return (
 
       <div style={{display:'flex', flexDirection:'column',  width:'100%', height:'100vh',  paddingLeft:'20px', paddingRight:'20px',}}>
@@ -1140,12 +1172,12 @@ export default function Home() {
                 </div>
             </div>
 
-            <div style={{display:"flex", float:"left", marginLeft:"20px", alignContent:'center', alignItems:'center', justifyContent:'center'}}>
+            <div style={{display:"flex", float:"left", marginLeft:"0px", alignContent:'center', alignItems:'center', justifyContent:'center'}}>
                   
                 <div style={{display:"flex", float:"left"}}>
 
                     <FormControl fullWidth style={{ 
-                        width:"110px", 
+                        width:"150px", 
                         marginTop:"0px", 
                         marginLeft:"5px", 
                         backgroundColor:'white', 
@@ -1163,7 +1195,7 @@ export default function Home() {
                             size="small"
                             onChange={handleChangeFilterUserType}
                         >
-                            <MenuItem style={{fontSize: '14px'}} value={10}>사용자아이디</MenuItem>
+                            <MenuItem style={{fontSize: '14px'}} value={10}>사용자 아이디</MenuItem>
                             <MenuItem style={{fontSize: '14px'}} value={20}>사용자명</MenuItem>
                         </Select>
                     </FormControl>
@@ -1721,22 +1753,36 @@ export default function Home() {
               position: 'sticky',
               bottom: 0,
               zIndex: 2,
+              display: 'flex',
+              justifyContent: 'space-between'
             }}
           >
             <Button 
-              onClick={handleCloseEditDialog}
-              variant="outlined"
-              startIcon={<CancelIcon />}
-            >
-              취소
-            </Button>
-            <Button 
-              onClick={handleEdit}
+              onClick={handleDelete}
               variant="contained"
-              startIcon={<SaveIcon />}
+              color="error"
+              startIcon={<DeleteIcon />}
+              sx={{ mr: 'auto' }}
             >
-              수정
+              삭제
             </Button>
+            <Box>
+              <Button 
+                onClick={handleCloseEditDialog}
+                variant="outlined"
+                startIcon={<CancelIcon />}
+                sx={{ mr: 1 }}
+              >
+                취소
+              </Button>
+              <Button 
+                onClick={handleEdit}
+                variant="contained"
+                startIcon={<SaveIcon />}
+              >
+                수정
+              </Button>
+            </Box>
           </DialogActions>
         </Dialog>
 

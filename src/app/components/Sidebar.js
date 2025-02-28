@@ -56,16 +56,22 @@ export default function Sidebar() {
       const data = await response.json();
 
       if (response.ok) {
-        console.log(data.menu_auth);
+
         login(data);
         setSidebarData(data.menu_auth);
+
       } else {
-        console.log(data.message);
+
         logout();
+
       }
+
     }catch(error){  
+
       console.log(error);
+
     }
+
   };
 
   const toggleMenu = (index) => {
@@ -196,13 +202,41 @@ export default function Sidebar() {
                 </div>
                 <ul className={`${styles.subMenu} ${openMenu === index ? styles.open : ''}`} style={{marginTop:'5px', marginLeft:'30px'}}> 
                   {item.children &&
-                    item.children.map((child, childIndex) => (
-                      <li key={childIndex} style={{display:child.checked ? 'block' : 'none'}}>
-                        <Link href={child.href} legacyBehavior>
-                          <a className={styles.submenuLink} style={{fontSize:13, marginLeft:'25px', color: 'white'}}>{child.label}</a>
-                        </Link>
-                      </li>
-                    ))}
+                    item.children.map((child, childIndex) => {
+                      // 시스템 사용자 관리 메뉴에 대한 접근 권한 체크
+                      const isSystemUserManageMenu = child.label === '• 시스템 사용자 관리';
+                      const hasAccess = !isSystemUserManageMenu || 
+                        (isSystemUserManageMenu && (user?.user_type === 'A' || user?.user_type === 'M'));
+
+                      return (
+                        <li key={childIndex} style={{display:child.checked ? 'block' : 'none'}}>
+                          {hasAccess ? (
+                            <Link href={child.href} legacyBehavior>
+                              <a className={styles.submenuLink} 
+                                style={{fontSize:13, marginLeft:'25px', color: 'white'}}>
+                                {child.label}
+                              </a>
+                            </Link>
+                          ) : (
+                            <span 
+                              className={styles.submenuLink} 
+                              style={{
+                                fontSize:13, 
+                                marginLeft:'25px', 
+                                color: 'rgba(255,255,255,0.5)', 
+                                cursor: 'not-allowed'
+                              }}
+                              onClick={(e) => {
+                                e.preventDefault();
+                                alert('접근 권한이 없습니다.');
+                              }}
+                            >
+                              {child.label}
+                            </span>
+                          )}
+                        </li>
+                      );
+                    })}
                 </ul>
               </>
             )}
