@@ -100,12 +100,17 @@ export default function Home() {
     
     });
 
+    const [filterUserTypeMethod, setFilterUserTypeMethod] = React.useState(10);
     const [filterContentTypeMethod, setFilterContentTypeMethod] = React.useState(10);
     const [filterContentTypeValueMethod, setFilterContentTypeValueMethod] = React.useState('all');
     const [stateBottom, setStateBottom] = React.useState(false);
     const [isLoading, setIsLoading] = React.useState(false);
+    const [totalUserCount, setTotalUserCount] = React.useState(0);
+    const [leaveUserCount, setLeaveUserCount] = React.useState(0);
+    const [blackUserCount, setBlackUserCount] = React.useState(0);
+    const [lockUserCount, setLockUserCount] = React.useState(0);
 
-    const page_info = 'Home > 회원관리 > 일반 사용자 관리';
+    const page_info = 'Home > 회원관리 > 일반 회원리스트';
 
     // @ts-ignore
     const columns: GridColDef<(typeof rows)[number]>[] = [
@@ -118,7 +123,7 @@ export default function Home() {
       },
       {
           field: 'mb_id',
-          headerName: '유저 아이디',
+          headerName: '사용자ID',
           type: 'string',
           flex: 1,
           disableColumnMenu: true,
@@ -126,7 +131,7 @@ export default function Home() {
       },
       {
           field: 'mb_name',
-          headerName: '유저명',
+          headerName: '사용자명',
           type: 'string',
           flex: 0.6,
           disableColumnMenu: true,
@@ -186,8 +191,28 @@ export default function Home() {
                     size="small"
                     sx={{ fontSize: '12px' }}
                     onClick={(event) => {
+
                         event.stopPropagation();
-                        setSelectedContent(filterUserList[params.row.id - 1]);
+
+                        console.log('JK');
+                        console.log(filterUserList[params.row.id - 1].mb_images);
+
+                        if(filterUserList[params.row.id - 1].mb_images == ''){
+
+                          const userInfo = {...filterUserList[params.row.id - 1], mb_images: []};
+                          setSelectedContent(userInfo);
+                          
+                        }else{
+
+                          
+                          const userInfo = {
+                              ...filterUserList[params.row.id - 1], 
+                              mb_images: filterUserList[params.row.id - 1].mb_images.split('|').filter(image => image !== '') // 빈 문자열 제거
+                          };
+                          setSelectedContent(userInfo);
+                        
+                        }
+                        
                         setStateBottom(true);
                     }}
                 >
@@ -254,6 +279,13 @@ export default function Home() {
   
         if (response.ok) {
 
+          console.log(data.result_data);
+
+          setTotalUserCount(data.total_count);
+          setLeaveUserCount(data.leave_count);
+          setBlackUserCount(data.black_count);
+          setLockUserCount(data.result_data.filter((data) => data.lock_yn === 'Y').length);
+
           setUserList(data.result_data.map((data, idx) => ({ id: idx + 1, ...data })));
 
           setFilterUserList(data.result_data.map((data, idx) => ({ id: idx + 1, ...data })));
@@ -286,6 +318,20 @@ export default function Home() {
    
     };
     
+    const handleChangeFilterUserType = (event: SelectChangeEvent<number>) => {
+
+      try{
+
+        setFilterUserTypeMethod(Number(event.target.value));
+ 
+      }catch(error){
+        
+        console.log(error);
+
+      }
+    
+    }
+
     const handleChangeFilterContentType = (event: SelectChangeEvent<number>) => {
 
         try{
@@ -345,33 +391,80 @@ export default function Home() {
     const handleClickSearch = () => {
 
       try {
+
+        let filteredUserList = [];
       
         if(filterInfo.length > 0){
       
           switch(filterContentTypeValueMethod){
             case 'id':{
-              setFilterUserList(userList.filter((user) => user.mb_id.includes(filterInfo))
-                .map((user, idx) => ({ ...user, id: idx + 1 })));
+              filteredUserList = userList.filter((user) => user.mb_id.includes(filterInfo))
+                .map((user, idx) => ({ ...user, id: idx + 1 }));
             }break;
             case 'name':{
-              setFilterUserList(userList.filter((user) => user.mb_name.includes(filterInfo))
-                .map((user, idx) => ({ ...user, id: idx + 1 })));
+              filteredUserList = userList.filter((user) => user.mb_name.includes(filterInfo))
+                .map((user, idx) => ({ ...user, id: idx + 1 }));
             }break;
             case 'email':{
-              setFilterUserList(userList.filter((user) => user.mb_email.includes(filterInfo))
-                .map((user, idx) => ({ ...user, id: idx + 1 })));
+              filteredUserList = userList.filter((user) => user.mb_email.includes(filterInfo))
+                .map((user, idx) => ({ ...user, id: idx + 1 }));
             }break;
             case 'wallet':{
-              setFilterUserList(userList.filter((user) => user.mb_wallet.includes(filterInfo))
-                .map((user, idx) => ({ ...user, id: idx + 1 })));
+              filteredUserList = userList.filter((user) => user.mb_wallet.includes(filterInfo))
+                .map((user, idx) => ({ ...user, id: idx + 1 }));
             }break;
             default:{
-              setFilterUserList(userList.map((user, idx) => ({ ...user, id: idx + 1 })));
+              filteredUserList = userList.map((user, idx) => ({ ...user, id: idx + 1 }));
+            }break;
+          
+          }
+
+          switch(filterUserTypeMethod){
+            case 10:{
+
+            }break;
+            case 20:{
+              filteredUserList = filteredUserList.filter((user) => user.block_yn === 'N' && user.lock_yn === 'N').map((data, idx) => ({ ...data, id: idx + 1 }));;
+            }break;
+            case 30:{
+              filteredUserList = filteredUserList.filter((user) => user.block_yn === 'Y').map((data, idx) => ({ ...data, id: idx + 1 }));
+            }break;
+            case 40:{
+              filteredUserList = filteredUserList.filter((user) => user.lock_yn === 'Y').map((data, idx) => ({ ...data, id: idx + 1 }));
+            }break;
+            default:{
+
             }break;
           }
+
+          setFilterUserList(filteredUserList);
+
+
         }else{
-          setFilterUserList(userList);
+          
+
+          switch(filterUserTypeMethod){
+            case 10:{
+              filteredUserList = userList.map((user, idx) => ({ ...user, id: idx + 1 }));
+            }break;
+            case 20:{
+              filteredUserList = userList.filter((user) => user.block_yn === 'N' && user.lock_yn === 'N').map((data, idx) => ({ ...data, id: idx + 1 }));;
+            }break;
+            case 30:{
+              filteredUserList = userList.filter((user) => user.block_yn === 'Y').map((data, idx) => ({ ...data, id: idx + 1 }));
+            }break;
+            case 40:{
+              filteredUserList = userList.filter((user) => user.lock_yn === 'Y').map((data, idx) => ({ ...data, id: idx + 1 }));
+            }break;
+            default:{
+              filteredUserList = userList.map((user, idx) => ({ ...user, id: idx + 1 }));
+            }break;
+          }
+
+          setFilterUserList(filteredUserList);  
+
         } 
+
       }catch(error){
         console.log(error);
       }
@@ -430,8 +523,37 @@ export default function Home() {
 
       <div style={{}}>
           <Typography sx={{fontSize:"20px",  color: '#1f1f26', marginLeft:"0px", marginTop:"10px", fontWeight:'bold' }}>
-              일반 사용자 관리
+              일반 회원리스트
           </Typography>
+      </div>
+
+      <div style={{marginTop:'-10px'}}>
+        {/* Summary 정보 영역 추가 */}
+        <Grid container spacing={2} style={{ marginTop: '0px' }}>
+          {['누적 가입자', '정상 이용자', '블랙 이용자', 'Lock 적용 이용자', '탈퇴한 이용자'].map((title, index) => (
+            <Grid item xs={2.4} key={index}> {/* xs={2.4}로 조정하여 한 줄에 5개 항목 배치 */}
+              <div style={{
+                padding: '16px',
+                backgroundColor: '#f8f9fa',
+                borderRadius: 2, 
+                boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+                textAlign: 'left',
+              }}>
+                <Typography variant="h6" style={{ color: '#1f1f26', marginBottom: '4px' }}>{title}</Typography>
+                <Typography variant="body1" style={{ color: 'black', fontSize: '24px', fontWeight: 'bold' }}>
+                  {index === 0 ? totalUserCount.toLocaleString() : 
+                    index === 1 ? userList.length.toLocaleString() :
+                    index === 2 ? blackUserCount.toLocaleString() : 
+                    index === 3 ? lockUserCount.toLocaleString() : 
+                    index === 4 ? leaveUserCount.toLocaleString() :
+                    0
+                    } 
+                </Typography>
+              </div>
+            </Grid>
+          ))}
+        </Grid>
+        {/* Summary 정보 영역 추가 끝 */}
       </div>
 
       <div style={{
@@ -451,10 +573,28 @@ export default function Home() {
         alignItems:'center',
         
         }}>
-          
-          <a style={{fontSize:14, marginRight:"10px", color:'black', marginLeft:'10px', fontWeight:900}}>
-            총 가입자 : {userList.length}
-          </a>
+
+        <div style={{display:"flex", float:"left"}}>
+
+          <FormControl fullWidth  style={{ width:"110px",marginTop:"0px", marginLeft:"8px", backgroundColor:'white', color:'black'}}>
+              <Select
+              labelId="demo-simple-select-label"
+              id="demo-simple-select"
+              style={{color:'black'}}
+              value={filterUserTypeMethod}
+              size="small"
+              onChange={handleChangeFilterUserType}
+              >
+              <MenuItem style={{fontSize:13}} value={10}>전체</MenuItem>
+              <MenuItem style={{fontSize:13}} value={20}>정상 이용자</MenuItem>
+              <MenuItem style={{fontSize:13}} value={30}>블랙 이용자</MenuItem>
+              <MenuItem style={{fontSize:13}} value={40}>Lock적용 이용자</MenuItem>
+
+              </Select>
+          </FormControl>
+
+        </div>
+
 
           <div style={{display:"flex", float:"left", marginLeft:"auto", alignContent:'center', alignItems:'center', justifyContent:'center'}}>
                 
@@ -470,8 +610,8 @@ export default function Home() {
                       onChange={handleChangeFilterContentType}
                       >
                       <MenuItem style={{fontSize:13}} value={10}>전체</MenuItem>
-                      <MenuItem style={{fontSize:13}} value={20}>유저 아이디</MenuItem>
-                      <MenuItem style={{fontSize:13}} value={30}>유저명</MenuItem>
+                      <MenuItem style={{fontSize:13}} value={20}>사용자ID</MenuItem>
+                      <MenuItem style={{fontSize:13}} value={30}>사용자명</MenuItem>
                       <MenuItem style={{fontSize:13}} value={40}>이메일</MenuItem>
                       <MenuItem style={{fontSize:13}} value={50}>지갑주소</MenuItem>
 

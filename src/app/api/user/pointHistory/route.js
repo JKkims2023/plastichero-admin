@@ -12,6 +12,8 @@ export async function POST(request) {
 
     const connection = await getConnection();
 
+    let date_filter = 'PARTITION(p20250216,p20250217)';
+
     let sql_filter = '';
 
     if(filterInfo == '0'){
@@ -61,7 +63,7 @@ export async function POST(request) {
         if(po_reward_type = '0', 'Point', 'PTH') as po_reward_type,
         if(po_reward_type = '0', po_point, po_pth) as point_amount
         
-      from tbl_point where mb_id = '${mb_id}' ${sql_filter} order by po_datetime desc;
+      from g5_point_backup_20250220 ${date_filter} where mb_id = '${mb_id}' ${sql_filter} order by po_datetime desc;
 
     `;
 

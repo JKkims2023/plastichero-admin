@@ -459,10 +459,6 @@ export default function Home() {
           
           }}>
             
-            <a style={{fontSize:14, marginRight:"10px", color:'black', marginLeft:'10px', fontWeight:900}}>
-              총 가입자 : {userList.length}
-            </a>
-
             <div style={{display:"flex", float:"left", marginLeft:"auto", alignContent:'center', alignItems:'center', justifyContent:'center'}}>
                   
                 <div style={{display:"flex", float:"left"}}>

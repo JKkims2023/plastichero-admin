@@ -16,9 +16,19 @@ export async function POST(request) {
 
       const sql = `
     
-        SELECT idx, user_idx, name, email, address, reg_date, is_main, active
+        SELECT 
+        
+          W.idx, 
+          W.user_idx, 
+          W.name, 
+          W.email, 
+          W.address, 
+          W.reg_date, 
+          W.is_main, 
+          W.active,
+          if((select address from tbl_pth_lock where address = W.address ) is null, 'N', 'Y') as lock_yn
 
-          from tbl_pth_wallet_info
+          from tbl_pth_wallet_info as W
 
         where user_idx = '${md_idx}' and active = 'O' order by is_main asc;
 
@@ -57,9 +67,19 @@ export async function POST(request) {
 
       const sql = `
     
-        SELECT idx, user_idx, name, email, address, reg_date, is_main, active
+        SELECT 
+        
+          W.idx, 
+          W.user_idx, 
+          W.name, 
+          W.email, 
+          W.address, 
+          W.reg_date, 
+          W.is_main, 
+          W.active,
+          if((select address from tbl_pth_lock where address = W.address ) is null, 'N', 'Y') as lock_yn
 
-          from tbl_pth_wallet_info
+          from tbl_pth_wallet_info as W
 
         where user_idx = '${md_idx}' and active = 'O' order by is_main asc;
 

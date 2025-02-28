@@ -153,7 +153,15 @@ export default function Home() {
           field: 'address',
           headerName: '지갑주소',
           type: 'string',
-          flex: 3,              // 비율 조정
+          flex: 3.5,              // 비율 조정
+          disableColumnMenu: true,
+          editable: false,
+      },
+      {
+          field: 'lock_type_text',
+          headerName: 'Lock 타입',
+          type: 'string',
+          flex: 1,              // 비율 조정
           disableColumnMenu: true,
           editable: false,
       },
@@ -185,7 +193,7 @@ export default function Home() {
           field: 'unlock_date',
           headerName: '해지 예정일',
           type: 'string',
-          flex: 1,             // 비율 조정
+          flex: 1.5,             // 비율 조정
           disableColumnMenu: true,
           editable: false,
       },
@@ -193,9 +201,11 @@ export default function Home() {
           field: 'reg_date',
           headerName: '등록일시',
           type: 'string',
-          flex: 1.5,           // 비율 조정
+          flex: 1,           // 비율 조정
           disableColumnMenu: true,
-          editable: false,
+          renderCell: (params) => (
+              <span>{params.value?.substring(0, 10)}</span>
+          ),
       },
       {
         field: 'detail',
@@ -320,23 +330,18 @@ export default function Home() {
           switch(event.target.value){
 
             case 10:{
-
               setFilterContentTypeValueMethod('all');
             }break;
             case 20:{
-
-              setFilterContentTypeValueMethod('id');
+              setFilterContentTypeValueMethod('1');
             }break;
             case 30:{
-
-              setFilterContentTypeValueMethod('location');
+              setFilterContentTypeValueMethod('0');
             }break;
             case 40:{
-
-              setFilterContentTypeValueMethod('owner');
+              setFilterContentTypeValueMethod('2');
             }break;
             default:{ 
-
               setFilterContentTypeValueMethod('all');
             }break;  
 
@@ -405,31 +410,69 @@ export default function Home() {
 
       try{
 
-
         let filteredList = [...kioskList];
 
-        console.log(filterSellStatusValueMethod);
+        if(filterContentTypeValueMethod != 'all') {
 
-        if(filterSellStatusValueMethod != 'all') {
-
-          console.log('pick inside');
           if(filterInfo.length > 0) {
-            
-            console.log(filterInfo);
+
             switch(filterSellStatusValueMethod) {
               case 'address': {
                 filteredList = filteredList.filter((user) => 
-                  user.address?.includes(filterInfo))
+                  user.address?.includes(filterInfo) && user.lock_type == filterContentTypeValueMethod)
                   .map((user, idx) => ({ ...user, id: idx + 1 }));
               } break;
               case 'name': {
                 filteredList = filteredList.filter((user) => 
-                  user.mb_name?.includes(filterInfo))
+                  user.mb_name?.includes(filterInfo) && user.lock_type == filterContentTypeValueMethod)
                   .map((user, idx) => ({ ...user, id: idx + 1 }));
               } break;
               case 'id': {
                 filteredList = filteredList.filter((user) => 
-                  user.mb_id?.includes(filterInfo))
+                  user.mb_id?.includes(filterInfo) && user.lock_type == filterContentTypeValueMethod)
+                  .map((user, idx) => ({ ...user, id: idx + 1 }));
+              } break;
+              case 'mail': {
+                filteredList = filteredList.filter((user) => 
+                  user.email?.includes(filterInfo) && user.lock_type == filterContentTypeValueMethod)
+                  .map((user, idx) => ({ ...user, id: idx + 1 }));
+              } break;
+              default: {
+                filteredList = filteredList.filter((user) => 
+                  user.lock_type == filterContentTypeValueMethod)
+                  .map((user, idx) => ({ ...user, id: idx + 1 }));
+              } break;
+            
+            }
+          
+          }else{
+
+            filteredList = filteredList.filter((user) => 
+              user.lock_type == filterContentTypeValueMethod)
+              .map((user, idx) => ({ ...user, id: idx + 1 }));
+          
+            }
+
+        } else {
+
+          console.log('here2');
+
+          if(filterInfo.length > 0) {
+
+            switch(filterSellStatusValueMethod) {
+              case 'address': {
+                filteredList = filteredList.filter((user) => 
+                  user.address?.includes(filterInfo) )
+                  .map((user, idx) => ({ ...user, id: idx + 1 }));
+              } break;
+              case 'name': {
+                filteredList = filteredList.filter((user) => 
+                  user.mb_name?.includes(filterInfo) )
+                  .map((user, idx) => ({ ...user, id: idx + 1 }));
+              } break;
+              case 'id': {
+                filteredList = filteredList.filter((user) => 
+                  user.mb_id?.includes(filterInfo) )
                   .map((user, idx) => ({ ...user, id: idx + 1 }));
               } break;
               case 'mail': {
@@ -447,11 +490,7 @@ export default function Home() {
 
             filteredList = filteredList.map((user, idx) => ({ ...user, id: idx + 1 }));
           
-          }
-
-        } else {
-
-          filteredList = filteredList.map((user, idx) => ({ ...user, id: idx + 1 }));
+            }
           
         }
 
@@ -696,7 +735,9 @@ export default function Home() {
                                 fullWidth
                                 label="지갑주소"
                                 value={newLockInfo.address}
-                                onChange={(e) => setNewLockInfo({...newLockInfo, address: e.target.value})}
+                                onChange={(e) => {
+                                    setNewLockInfo({...newLockInfo, address: e.target.value});
+                                }}
                                 margin="normal"
                                 size="small"
                                 disabled={!isManualInput}
@@ -719,6 +760,76 @@ export default function Home() {
                                     )
                                 }}
                             />
+                            {newLockInfo.address && ( // 지갑주소가 입력된 경우에만 나머지 항목 보이기
+                                <>
+                                    <TextField
+                                        fullWidth
+                                        label="이용자명명"
+                                        value={newLockInfo.mb_name}
+                                        margin="normal"
+                                        size="small"
+                                        disabled
+                                        sx={{ 
+                                            backgroundColor: '#f5f5f5',
+                                            '& .MuiInputBase-input.Mui-disabled': {
+                                                WebkitTextFillColor: '#666666',
+                                            }
+                                        }}
+                                    />
+                                    <TextField
+                                        fullWidth
+                                        label="이용자 ID"
+                                        value={newLockInfo.mb_id}
+                                        margin="normal"
+                                        size="small"
+                                        disabled
+                                        sx={{ 
+                                            backgroundColor: '#f5f5f5',
+                                            '& .MuiInputBase-input.Mui-disabled': {
+                                                WebkitTextFillColor: '#666666',
+                                            }
+                                        }}
+                                    />
+                                    <TextField
+                                        fullWidth
+                                        label="연결된 이메일"
+                                        value={newLockInfo.email}
+                                        margin="normal"
+                                        size="small"
+                                        disabled
+                                        sx={{ 
+                                            backgroundColor: '#f5f5f5',
+                                            '& .MuiInputBase-input.Mui-disabled': {
+                                                WebkitTextFillColor: '#666666',
+                                            }
+                                        }}
+                                    />
+                                    <TextField
+                                        fullWidth
+                                        label="Lock 사유"
+                                        value={newLockInfo.lock_reason}
+                                        onChange={(e) => setNewLockInfo({...newLockInfo, lock_reason: e.target.value})}
+                                        margin="normal"
+                                        size="small"
+                                        multiline
+                                        rows={3}
+                                        required
+                                    />
+                                    <TextField
+                                        fullWidth
+                                        label="해지 예정일"
+                                        type="date"
+                                        value={newLockInfo.unlock_date}
+                                        onChange={(e) => setNewLockInfo({...newLockInfo, unlock_date: e.target.value})}
+                                        margin="normal"
+                                        size="small"
+                                        required
+                                        InputLabelProps={{
+                                            shrink: true,
+                                        }}
+                                    />
+                                </>
+                            )}
                         </Box>
                         <Box sx={{ mt: '16px' }}>
                             <Button 
@@ -751,72 +862,7 @@ export default function Home() {
                             </Button>
                         </Box>
                     </Box>
-                    <TextField
-                        fullWidth
-                        label="이용자명명"
-                        value={newLockInfo.mb_name}
-                        margin="normal"
-                        size="small"
-                        disabled
-                        sx={{ 
-                            backgroundColor: '#f5f5f5',
-                            '& .MuiInputBase-input.Mui-disabled': {
-                                WebkitTextFillColor: '#666666',
-                            }
-                        }}
-                    />
-                    <TextField
-                        fullWidth
-                        label="이용자 ID"
-                        value={newLockInfo.mb_id}
-                        margin="normal"
-                        size="small"
-                        disabled
-                        sx={{ 
-                            backgroundColor: '#f5f5f5',
-                            '& .MuiInputBase-input.Mui-disabled': {
-                                WebkitTextFillColor: '#666666',
-                            }
-                        }}
-                    />
-                    <TextField
-                        fullWidth
-                        label="연결된 이메일"
-                        value={newLockInfo.email}
-                        margin="normal"
-                        size="small"
-                        disabled
-                        sx={{ 
-                            backgroundColor: '#f5f5f5',
-                            '& .MuiInputBase-input.Mui-disabled': {
-                                WebkitTextFillColor: '#666666',
-                            }
-                        }}
-                    />
-                    <TextField
-                        fullWidth
-                        label="Lock 사유"
-                        value={newLockInfo.lock_reason}
-                        onChange={(e) => setNewLockInfo({...newLockInfo, lock_reason: e.target.value})}
-                        margin="normal"
-                        size="small"
-                        multiline
-                        rows={3}
-                        required
-                    />
-                    <TextField
-                        fullWidth
-                        label="해지 예정일"
-                        type="date"
-                        value={newLockInfo.unlock_date}
-                        onChange={(e) => setNewLockInfo({...newLockInfo, unlock_date: e.target.value})}
-                        margin="normal"
-                        size="small"
-                        required
-                        InputLabelProps={{
-                            shrink: true,
-                        }}
-                    />
+                    
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={handleCloseDialog} color="primary">
@@ -985,6 +1031,59 @@ export default function Home() {
             </Typography>
         </div>
 
+        <div style={{ marginTop: '5px' }}>
+
+            <Grid container spacing={2}>
+                <Grid item xs={2.4}>
+                    <Box sx={{ padding: '16px', backgroundColor: '#f5f5f5', borderRadius: '8px', width: '100%' }}>
+
+                        <Typography variant="h6" sx={{ color: '#1f1f26', fontSize: '14px', mb: 1 }}>
+                          총 대상 수
+                        </Typography>
+                        <Typography sx={{fontSize: "24px", fontWeight: "bold", color: "#1f1f26"}}>
+                          {filterKioskList.length.toLocaleString()}
+                        </Typography>
+                        
+                    </Box>
+                </Grid>
+                <Grid item xs={2.4}>
+                    <Box sx={{ padding: '16px', backgroundColor: '#f5f5f5', borderRadius: '8px', width: '100%' }}>
+
+                        <Typography variant="h6" sx={{ color: '#1f1f26', fontSize: '14px', mb: 1 }}>
+                          회사정책
+                        </Typography>
+                        <Typography sx={{fontSize: "24px", fontWeight: "bold", color: "#1f1f26"}}>
+                          {filterKioskList.filter(user => user.lock_type === '1').length.toLocaleString()}
+                        </Typography>
+
+                    </Box>
+                </Grid>
+                <Grid item xs={2.4}>
+                    <Box sx={{ padding: '16px', backgroundColor: '#f5f5f5', borderRadius: '8px', width: '100%' }}>
+                        
+                        <Typography variant="h6" sx={{ color: '#1f1f26', fontSize: '14px', mb: 1 }}>
+                          기타
+                        </Typography>
+                        <Typography sx={{fontSize: "24px", fontWeight: "bold", color: "#1f1f26"}}>
+                            {filterKioskList.filter(user => user.lock_type === '0').length.toLocaleString()}
+                        </Typography>
+                    </Box>
+                </Grid>
+                <Grid item xs={2.4}>
+                    <Box sx={{ padding: '16px', backgroundColor: '#f5f5f5', borderRadius: '8px', width: '100%' }}>
+                        
+                        <Typography variant="h6" sx={{ color: '#1f1f26', fontSize: '14px', mb: 1 }}>
+                            해킹
+                        </Typography>
+                        <Typography sx={{fontSize: "24px", fontWeight: "bold", color: "#1f1f26"}}>
+                            {filterKioskList.filter(user => user.lock_type === '2').length.toLocaleString()}
+                        </Typography>
+                        
+                    </Box>
+                </Grid>
+            </Grid>
+        </div>
+
         <div style={{
           
           display:"flex", 
@@ -1015,8 +1114,9 @@ export default function Home() {
                   onChange={handleChangeFilterContentType}
                   >
                   <MenuItem style={{fontSize:13}} value={10}>전체</MenuItem>
-                  <MenuItem style={{fontSize:13}} value={20}>Locked</MenuItem>
-                  <MenuItem style={{fontSize:13}} value={30}>Unlocked</MenuItem>
+                  <MenuItem style={{fontSize:13}} value={20}>회사정책</MenuItem>
+                  <MenuItem style={{fontSize:13}} value={30}>기타</MenuItem>
+                  <MenuItem style={{fontSize:13}} value={40}>해킹</MenuItem>
                   </Select>
               </FormControl>
 
@@ -1270,7 +1370,7 @@ export default function Home() {
         {manageDialog}
 
         <Backdrop
-            sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }}
+            sx={{ color: '#fff',  display: 'flex', flexDirection: 'column', zIndex: (theme) => theme.zIndex.drawer + 1 }}
             open={loading}
         >
             <CircularProgress color="inherit" />

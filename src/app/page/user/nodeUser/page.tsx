@@ -92,13 +92,15 @@ export default function Home() {
 
     const [filterContentTypeMethod, setFilterContentTypeMethod] = React.useState(10);
     const [filterContentTypeValueMethod, setFilterContentTypeValueMethod] = React.useState('all');
+    const [filterTypeMethod, setFilterTypeMethod] = React.useState(10);
+    const [filterTypeValueMethod, setFilterTypeValueMethod] = React.useState('');
     const [stateBottom, setStateBottom] = React.useState(false);
 
     const [file, setFile] = React.useState(null);
     const [message, setMessage] = React.useState('');
     const [isLoading, setIsLoading] = React.useState(false);
 
-    const page_info = 'Home > 회원관리 > 노드 사용자 관리';
+    const page_info = 'Home > 회원관리 > 노드 회원리스트트';
 
     // @ts-ignore
     const columns: GridColDef<(typeof rows)[number]>[] = [
@@ -110,10 +112,23 @@ export default function Home() {
           disableColumnMenu: true, 
       },
       {
-          field: 'mb_email',
-          headerName: '이메일',
+          field: 'not_match_user_text',
+          headerName: '매칭 여부',
           type: 'string',
-          flex: 1.2,
+          flex: 0.5,
+          disableColumnMenu: true,
+          editable: false,
+          renderCell: (params) => (
+              <span style={{ color: params.value === '미 매칭 사용자' ? 'red' : 'blue' }}>
+                  {params.value}
+              </span>
+          ),
+      },
+      {
+          field: 'mb_email',
+          headerName: '이메일(신청)',
+          type: 'string',
+          flex: 0.8,
           disableColumnMenu: true,
           editable: false,
       },
@@ -121,7 +136,31 @@ export default function Home() {
           field: 'wallet_address',
           headerName: '지갑주소(노드)',
           type: 'string',
-          flex: 2,
+          flex: 2.1,
+          disableColumnMenu: true,
+          editable: false,
+      },
+      {
+          field: 'mb_id',
+          headerName: '사용자ID',
+          type: 'string',
+          flex: 0.4,
+          disableColumnMenu: true,
+          editable: false,
+      },
+      {
+          field: 'mb_name',
+          headerName: '사용자명',
+          type: 'string',
+          flex: 0.4,
+          disableColumnMenu: true,
+          editable: false,
+      },
+      {
+          field: 'real_email',
+          headerName: '실제 이메일',
+          type: 'string',
+          flex: 0.8,
           disableColumnMenu: true,
           editable: false,
       },
@@ -129,7 +168,7 @@ export default function Home() {
           field: 'invite_code',
           headerName: '추천코드',
           type: 'string',
-          flex: 1,
+          flex: 0.4,
           disableColumnMenu: true,
           editable: false,
       },
@@ -137,7 +176,7 @@ export default function Home() {
           field: 'mb_datetime',
           headerName: '가입일',
           type: 'string',
-          flex: 1,
+          flex: 0.7,
           disableColumnMenu: true,
           editable: false,
       },
@@ -157,9 +196,10 @@ export default function Home() {
                     margin: '0 auto'  // 버튼 자체를 중앙 정렬
                 }}
                 onClick={(event) => {
+
                     event.stopPropagation();
                     setSelectedContent(filterUserList[params.row.id - 1]);
-                    setStateBottom(true);
+
                 }}
             >
                 보기
@@ -221,7 +261,21 @@ export default function Home() {
         });
   
         const data = await response.json(); 
-  
+
+        // 중복 이메일 체크 로직 추가
+        const emailSet = new Set();
+        const duplicateEmails = new Set();
+        data.result_data.forEach(user => {
+          if (emailSet.has(user.mb_email)) {
+            duplicateEmails.add(user.mb_email);
+          } else {
+            emailSet.add(user.mb_email);
+          }
+        });
+        if (duplicateEmails.size > 0) {
+          console.log('중복된 이메일:', Array.from(duplicateEmails));
+        }
+
         if (response.ok) {
 
           setUserList(data.result_data.map((data, idx) => ({ id: idx + 1, ...data })));
@@ -256,6 +310,37 @@ export default function Home() {
    
     };
     
+    const handleChangeFilterType = (event: SelectChangeEvent<number>) => {
+
+      try{
+
+        setFilterTypeMethod(Number(event.target.value));
+
+        switch(event.target.value){
+
+        case 10:{
+          setFilterTypeValueMethod('all');
+        }break;
+        case 20:{
+          setFilterTypeValueMethod('matching');
+        }break;
+        case 30:{
+          setFilterTypeValueMethod('non-matching');
+        }break; 
+        default:{
+          setFilterTypeValueMethod('all');
+        }break;
+
+        }
+
+      }catch(error){
+
+        console.log(error);
+
+      }
+
+    };  
+
     const handleChangeFilterContentType = (event: SelectChangeEvent<number>) => {
 
         try{
@@ -265,27 +350,21 @@ export default function Home() {
           switch(event.target.value){
 
             case 10:{
-              console.log('all');
               setFilterContentTypeValueMethod('all');
             }break;
             case 20:{
-              console.log('id');
               setFilterContentTypeValueMethod('id');
             }break;
             case 30:{
-              console.log('name');
               setFilterContentTypeValueMethod('name');
             }break;
             case 40:{
-              console.log('email');
               setFilterContentTypeValueMethod('email');
             }break;
             case 50:{
-              console.log('wallet');
               setFilterContentTypeValueMethod('wallet');
             }break;
             default:{ 
-              console.log('default');
               setFilterContentTypeValueMethod('all');
             }break;  
 
@@ -297,6 +376,7 @@ export default function Home() {
 
         }
     };
+
 
     const handleClickDeleteKeyword = () => {
 
@@ -316,39 +396,218 @@ export default function Home() {
       
       try{
 
+        let filteredList = []
 
-        if(filterInfo.length > 0){
+        
+        if(filterTypeValueMethod == 'all'){
 
-          switch(filterContentTypeValueMethod){
+          if(filterInfo.length > 0){
 
-            case 'id':{
-              setFilterUserList(userList.filter((user) => user.mb_id.includes(filterInfo))
-                .map((user, idx) => ({ ...user, id: idx + 1 })));
-            }break;
-            case 'name':{
-              setFilterUserList(userList.filter((user) => user.mb_name.includes(filterInfo))
-                .map((user, idx) => ({ ...user, id: idx + 1 })));
-            }break;
-            case 'email':{
-              setFilterUserList(userList.filter((user) => user.mb_email.includes(filterInfo))
-                .map((user, idx) => ({ ...user, id: idx + 1 })));
-            }break;
-            case 'wallet':{
-              setFilterUserList(userList.filter((user) => user.mb_wallet.includes(filterInfo))
-                .map((user, idx) => ({ ...user, id: idx + 1 })));
-            }break;
-            default:{
-              setFilterUserList(userList.map((user, idx) => ({ ...user, id: idx + 1 })));
-            }break;
+            switch(filterContentTypeValueMethod){
+
+              case 'id':{
+                filteredList = userList.filter((user) => {
+                  
+                  if(user.mb_id == null || user.mb_id == 'undefined' || user.mb_id == '')
+                    return false;
+
+                  if(user.mb_id.includes(filterInfo || '')){
+                    return true;
+                  }else{
+                    return false;
+                  }
+
+                })
+                  .map((user, idx) => ({ ...user, id: idx + 1 }));
+              }break;
+              case 'name':{ 
+                filteredList = userList.filter((user) => {
+
+                  if(user.mb_name == null || user.mb_name == 'undefined' || user.mb_name == '')
+                    return false;
+
+                  if(user.mb_name.includes(filterInfo || ''))
+                    return true;
+                })
+              }break;
+              case 'email':{
+                filteredList = userList.filter((user) => {
+
+                  if(user.mb_email == null || user.mb_email == 'undefined' || user.mb_email == '')
+                    return false;
+
+                  if(user.mb_email.includes(filterInfo || ''))
+                    return true;
+                })
+              }break;
+              case 'wallet':{
+                filteredList = userList.filter((user) => {
+
+                  if(user.mb_wallet == null || user.mb_wallet == 'undefined' || user.mb_wallet == '')
+                    return false;
+
+                  if(user.mb_wallet.includes(filterInfo || ''))
+                    return true;
+                })
+              }break;
+              default:{
+                filteredList = userList.map((user, idx) => ({ ...user, id: idx + 1 }));
+              }break;
+            
+            }
+
+            switch(filterTypeValueMethod){
+
+              case 'all':{
+                filteredList = filteredList;
+              }break;
+              // @ts-ignore
+              case 'matching':{
+                filteredList = filteredList.filter(user => user.not_match_user === 'N');
+              }break;
+              // @ts-ignore
+              case 'non-matching':{
+                filteredList = filteredList.filter(user => user.not_match_user === 'Y');
+              }break;
+              default:{
+                filteredList = filteredList;
+              }break;
+
+            }
+
+            setFilterUserList(filteredList);
+
+          }else{
+
+            switch(filterTypeValueMethod){
+
+              case 'all':{
+                filteredList = userList;
+              }break;
+              // @ts-ignore
+              case 'matching':{
+                filteredList = userList.filter(user => user.not_match_user === 'N');
+              }break;
+              // @ts-ignore
+              case 'non-matching':{
+                filteredList = userList.filter(user => user.not_match_user === 'Y');
+              }break;
+              default:{
+                filteredList = userList;
+              }break;
+
+            }
+
+            setFilterUserList(userList);
+
+          } 
           
-          }
-
         }else{
 
-          setFilterUserList(userList);
+          
+          if(filterInfo.length > 0){
+            
+            switch(filterContentTypeValueMethod){
 
-        } 
-        
+              case 'id':{
+                filteredList = userList.filter((user) => {
+                  
+                  if(user.mb_id == null || user.mb_id == 'undefined' || user.mb_id == '')
+                    return false;
+
+                  if(user.mb_id.includes(filterInfo || '')){
+                    return true;
+                  }else{
+                    return false;
+                  }
+
+                })
+                  .map((user, idx) => ({ ...user, id: idx + 1 }));
+              }break;
+              case 'name':{ 
+                filteredList = userList.filter((user) => {
+
+                  if(user.mb_name == null || user.mb_name == 'undefined' || user.mb_name == '')
+                    return false;
+
+                  if(user.mb_name.includes(filterInfo || ''))
+                    return true;
+                })
+              }break;
+              case 'email':{
+                filteredList = userList.filter((user) => {
+
+                  if(user.mb_email == null || user.mb_email == 'undefined' || user.mb_email == '')
+                    return false;
+
+                  if(user.mb_email.includes(filterInfo || ''))
+                    return true;
+                })
+              }break;
+              case 'wallet':{
+                filteredList = userList.filter((user) => {
+
+                  if(user.mb_wallet == null || user.mb_wallet == 'undefined' || user.mb_wallet == '')
+                    return false;
+
+                  if(user.mb_wallet.includes(filterInfo || ''))
+                    return true;
+                })
+              }break;
+              default:{
+                filteredList = userList.map((user, idx) => ({ ...user, id: idx + 1 }));
+              }break;
+            
+            }
+
+            switch(filterTypeValueMethod){
+
+              case 'all':{
+                filteredList = filteredList;
+              }break;
+              // @ts-ignore
+              case 'matching':{
+                filteredList = filteredList.filter(user => user.not_match_user === 'N');
+              }break;
+              // @ts-ignore
+              case 'non-matching':{
+                filteredList = filteredList.filter(user => user.not_match_user === 'Y');
+              }break;
+              default:{
+                filteredList = filteredList;
+              }break;
+
+            }
+
+            setFilterUserList(filteredList);
+
+          }else{
+
+            switch(filterTypeValueMethod){
+
+              case 'all':{
+                filteredList = userList;
+              }break;
+              // @ts-ignore
+              case 'matching':{
+                filteredList = userList.filter(user => user.not_match_user === 'N');
+              }break;
+              // @ts-ignore
+              case 'non-matching':{
+                filteredList = userList.filter(user => user.not_match_user === 'Y');
+              }break;
+              default:{
+                filteredList = userList;
+              }break;
+
+            }
+
+            setFilterUserList(filteredList);
+
+          } 
+          
+        }
+
       }catch(error){
 
         console.log(error);
@@ -438,10 +697,50 @@ export default function Home() {
 
         <div style={{}}>
             <Typography sx={{fontSize:"20px",  color: '#1f1f26', marginLeft:"0px", marginTop:"10px", fontWeight:'bold' }}>
-                노드 사용자 관리
+                노드 회원리스트
             </Typography>
         </div>
 
+        <div style={{ marginTop: '5px' }}>
+
+            <Grid container spacing={2}>
+                <Grid item xs={2.4}>
+                    <Box sx={{ padding: '16px', backgroundColor: '#f5f5f5', borderRadius: '8px', width: '100%' }}>
+
+                        <Typography variant="h6" sx={{ color: '#1f1f26', fontSize: '14px', mb: 1 }}>
+                          총 사용자 수
+                        </Typography>
+                        <Typography sx={{fontSize: "24px", fontWeight: "bold", color: "#1f1f26"}}>
+                          {filterUserList.length.toLocaleString()}
+                        </Typography>
+                        
+                    </Box>
+                </Grid>
+                <Grid item xs={2.4}>
+                    <Box sx={{ padding: '16px', backgroundColor: '#f5f5f5', borderRadius: '8px', width: '100%' }}>
+
+                        <Typography variant="h6" sx={{ color: '#1f1f26', fontSize: '14px', mb: 1 }}>
+                          매칭된 사용자 수
+                        </Typography>
+                        <Typography sx={{fontSize: "24px", fontWeight: "bold", color: "#1f1f26"}}>
+                          {filterUserList.filter(user => user.not_match_user === 'N').length.toLocaleString()}
+                        </Typography>
+
+                    </Box>
+                </Grid>
+                <Grid item xs={2.4}>
+                    <Box sx={{ padding: '16px', backgroundColor: '#f5f5f5', borderRadius: '8px', width: '100%' }}>
+                        
+                        <Typography variant="h6" sx={{ color: '#1f1f26', fontSize: '14px', mb: 1 }}>
+                          미 매칭된 사용자 수
+                        </Typography>
+                        <Typography sx={{fontSize: "24px", fontWeight: "bold", color: "#1f1f26"}}>
+                            {filterUserList.filter(user => user.not_match_user === 'Y').length.toLocaleString()}
+                        </Typography>
+                    </Box>
+                </Grid>
+            </Grid>
+        </div>
 
         <form style={{display:'none'}} onSubmit={handleSubmit}>
           <input type="file" accept=".xlsx, .xls" onChange={handleFileChange} />
@@ -465,12 +764,27 @@ export default function Home() {
           alignItems:'center',
           
           }}>
-                
-            <a style={{fontSize:14, marginRight:"10px", color:'black', marginLeft:'10px', fontWeight:900}}>총 가입자 : {userList.length}</a>
 
-            <div style={{display:"flex", float:"left", marginLeft:"auto", alignContent:'center', alignItems:'center', justifyContent:'center'}}>
+
+                
+            <div style={{display:"flex", float:"left", alignContent:'center', alignItems:'center', width:"100%"}}>
                   
-                <div style={{display:"flex", float:"left"}}>
+                <FormControl fullWidth  style={{ width:"110px",marginTop:"0px", marginLeft:"8px", backgroundColor:'white', color:'black'}}>
+                    <Select
+                    labelId="demo-simple-select-label"
+                    id="demo-simple-select"
+                    style={{color:'black'}}
+                    value={filterTypeMethod}
+                    size="small"
+                    onChange={handleChangeFilterType}
+                    >
+                    <MenuItem style={{fontSize:13}} value={10}>전체</MenuItem>
+                    <MenuItem style={{fontSize:13}} value={20}>매칭 사용자</MenuItem>
+                    <MenuItem style={{fontSize:13}} value={30}>미 매칭 사용자</MenuItem>
+
+                    </Select>
+                </FormControl>
+                <div style={{display:"flex", float:"left", marginLeft:"auto"}}>
 
                     <FormControl fullWidth  style={{ width:"110px",marginTop:"0px", marginLeft:"8px", backgroundColor:'white', color:'black'}}>
                         <Select
@@ -482,8 +796,8 @@ export default function Home() {
                         onChange={handleChangeFilterContentType}
                         >
                         <MenuItem style={{fontSize:13}} value={10}>전체</MenuItem>
-                        <MenuItem style={{fontSize:13}} value={20}>유저 아이디</MenuItem>
-                        <MenuItem style={{fontSize:13}} value={30}>유저명</MenuItem>
+                        <MenuItem style={{fontSize:13}} value={20}>사용자ID</MenuItem>
+                        <MenuItem style={{fontSize:13}} value={30}>사용자명</MenuItem>
                         <MenuItem style={{fontSize:13}} value={40}>이메일</MenuItem>
                         <MenuItem style={{fontSize:13}} value={50}>지갑주소</MenuItem>
 

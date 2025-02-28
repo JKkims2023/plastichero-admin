@@ -8,6 +8,7 @@ import { Buffer } from 'buffer'; // buffer 모듈 import
 import { getConnection } from '../../../lib/db';
 
 
+
 export async function POST(request) {
 
   try{
@@ -17,8 +18,6 @@ export async function POST(request) {
     const connection = await getConnection();
 
     let sql_filter = 'and  point_type in(3,4) ';
-
-    let date_filter = `PARTITION(p${fromDate.substring(0,10).substring(0,10).replaceAll('-','')})`;
 
     const sql_datetime = `and po_datetime > '${fromDate.substring(0,10)}' and po_datetime < '${toDate.substring(0,10)}' `;
 
@@ -52,11 +51,9 @@ export async function POST(request) {
         if(point_type = 3, '기프티콘 구매', '기프티콘 구매취소') as point_type_text,
         swap_pth
 
-        FROM g5_point_backup_20250220
-
-        ${date_filter}
+        FROM g5_point
         
-        where 1=1 ${sql_filter} 
+        where 1=1 ${sql_filter} ${sql_datetime}
 
         order by po_datetime desc
         
@@ -64,8 +61,6 @@ export async function POST(request) {
       ;
 
     `;
-
-    console.log(sql);
 
     const [rows, fields] = await connection.execute(sql);
 

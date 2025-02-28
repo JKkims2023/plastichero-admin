@@ -95,8 +95,8 @@ export default function Home() {
 
     const [pagingIdx, setPaginIdx] = React.useState('0');
     const [filterInfo, setFilterInfo] = React.useState('');
-    const [kioskList, setKioskList] = React.useState([]);
-    const [filterKioskList, setFilterKioskList] = React.useState([]);
+    const [mailList, setMailList] = React.useState([]);
+    const [filterMailList, setFilterMailList] = React.useState([]);
     const [selectedContent, setSelectedContent] = React.useState({
 
         contentID : '',
@@ -112,7 +112,7 @@ export default function Home() {
     const [loading, setLoading] = React.useState(false);
     const [dialogOpen, setDialogOpen] = React.useState(false);
 
-    const page_info = 'Home > 운영관리 > SMS 인증내역';
+    const page_info = 'Home > 운영관리 > 메일 인증내역';
 
     // @ts-ignore
     const columns: GridColDef<(typeof rows)[number]>[] = [
@@ -132,10 +132,10 @@ export default function Home() {
           editable: false,
       },
       {
-          field: 'phone',
-          headerName: '핸드폰 번호',
+          field: 'target',
+          headerName: '이메일주소',
           type: 'string',
-          flex: 1.3,
+          flex: 2,
           disableColumnMenu: true,
           editable: false,
       },
@@ -191,7 +191,7 @@ export default function Home() {
                 sx={{ fontSize: '12px' }}
                 onClick={(event) => {
                     event.stopPropagation();
-                    handleOpenDialog(filterKioskList[params.row.id - 1]);
+                    handleOpenDialog(filterMailList[params.row.id - 1]);
                 }}
             >
                 보기
@@ -227,16 +227,16 @@ export default function Home() {
 
     React.useEffect(()=>{
 
-    },[kioskList]);
+    },[mailList]);
 
     React.useEffect(()=>{
 
-    },[filterKioskList]);
+    },[filterMailList]);
 
     const get_UserInfo = async() => {
         setLoading(true);
         try {
-            const response = await fetch('/api/manage/smsInfo', {
+            const response = await fetch('/api/manage/mailInfo', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -247,8 +247,8 @@ export default function Home() {
             const data = await response.json();
 
             if (response.ok) {
-                setKioskList(data.result_data.map((data, idx) => ({ id: idx + 1, ...data })));
-                setFilterKioskList(data.result_data.map((data, idx) => ({ id: idx + 1, ...data })));
+                setMailList(data.result_data.map((data, idx) => ({ id: idx + 1, ...data })));
+                setFilterMailList(data.result_data.map((data, idx) => ({ id: idx + 1, ...data })));
             } else {
                 alert(data.message);
             }
@@ -364,14 +364,14 @@ export default function Home() {
 
       try{
 
-        let filteredList = [...kioskList];
+        let filteredList = [...mailList];
 
         if(filterStatusValueMethod === 'all') {
 
           if(filterInfo.length > 0) {
             
             switch(filterContentTypeValueMethod) {
-              case 'phone': {
+              case 'target': {
                 filteredList = filteredList.filter((user) => 
                   user.phone?.includes(filterInfo))
                   .map((user, idx) => ({ ...user, id: idx + 1 }));
@@ -400,27 +400,28 @@ export default function Home() {
 
         } else {
           // sell_status 비교 전에 공백 제거
-          const normalizedStatus = filterStatusValueMethod.trim().toString();
+          const normalizedStatus = filterStatusValueMethod.trim();
+
           
           if(filterInfo.length > 0) {
 
             switch(filterContentTypeValueMethod) {
-              case 'phone': {
+              case 'target': {
                 filteredList = filteredList.filter((user) => 
-                  user.phone?.includes(filterInfo) && 
-                  user.auth_type?.toString() == normalizedStatus)
+                  user.target?.includes(filterInfo) && 
+                  user.auth_type?.toString() === normalizedStatus)
                   .map((user, idx) => ({ ...user, id: idx + 1 }));
               } break;
               case 'mb_id': {
                 filteredList = filteredList.filter((user) => 
                   user.mb_id?.includes(filterInfo) && 
-                  user.auth_type?.toString() == normalizedStatus)
+                  user.auth_type?.toString() === normalizedStatus)
                   .map((user, idx) => ({ ...user, id: idx + 1 }));
               } break;
               case 'mb_name': {
                 filteredList = filteredList.filter((user) => 
                   user.mb_name?.includes(filterInfo) && 
-                  user.auth_type?.toString() == normalizedStatus)
+                  user.auth_type?.toString() === normalizedStatus)
                   .map((user, idx) => ({ ...user, id: idx + 1 }));
               } break;
               default: {
@@ -436,7 +437,7 @@ export default function Home() {
           }
         }
 
-        setFilterKioskList(filteredList);
+        setFilterMailList(filteredList);
           
       }catch(error){
 
@@ -506,7 +507,7 @@ export default function Home() {
 
         <div style={{}}>
             <Typography sx={{fontSize:"20px",  color: '#1f1f26', marginLeft:"0px", marginTop:"10px", fontWeight:'bold' }}>
-                SMS 인증내역
+                메일 인증내역
             </Typography>
         </div>
 
@@ -520,7 +521,7 @@ export default function Home() {
                           총 요청수
                         </Typography>
                         <Typography sx={{fontSize: "24px", fontWeight: "bold", color: "#1f1f26"}}>
-                          {kioskList.length.toLocaleString()}
+                          {mailList.length.toLocaleString()}
                         </Typography>
                         
                     </Box>
@@ -529,10 +530,10 @@ export default function Home() {
                     <Box sx={{ padding: '16px', backgroundColor: '#f5f5f5', borderRadius: '8px', width: '100%' }}>
 
                         <Typography variant="h6" sx={{ color: '#1f1f26', fontSize: '14px', mb: 1 }}>
-                          회원가입
+                          지갑생성
                         </Typography>
                         <Typography sx={{fontSize: "24px", fontWeight: "bold", color: "#1f1f26"}}>
-                          {kioskList.filter(user => user.auth_type === '0').length.toLocaleString()}
+                          {mailList.filter(user => user.auth_type === '0').length.toLocaleString()}
                         </Typography>
 
                     </Box>
@@ -541,10 +542,10 @@ export default function Home() {
                     <Box sx={{ padding: '16px', backgroundColor: '#f5f5f5', borderRadius: '8px', width: '100%' }}>
                         
                         <Typography variant="h6" sx={{ color: '#1f1f26', fontSize: '14px', mb: 1 }}>
-                          아이디 찾기
+                          지갑 불러오기
                         </Typography>
                         <Typography sx={{fontSize: "24px", fontWeight: "bold", color: "#1f1f26"}}>
-                            {kioskList.filter(user => user.auth_type === '1').length.toLocaleString()}
+                            {mailList.filter(user => user.auth_type === '1').length.toLocaleString()}
                         </Typography>
                     </Box>
                 </Grid>
@@ -552,22 +553,12 @@ export default function Home() {
                     <Box sx={{ padding: '16px', backgroundColor: '#f5f5f5', borderRadius: '8px', width: '100%' }}>
                         
                         <Typography variant="h6" sx={{ color: '#1f1f26', fontSize: '14px', mb: 1 }}>
-                            비밀번호 변경
+                            기타
                         </Typography>
                         <Typography sx={{fontSize: "24px", fontWeight: "bold", color: "#1f1f26"}}>
-                            {kioskList.filter(user => user.auth_type === '2').length.toLocaleString()}
+                            {mailList.filter(user => user.auth_type === '2').length.toLocaleString()}
                         </Typography>
                         
-                    </Box>
-                </Grid>
-                <Grid item xs={2.4}>
-                    <Box sx={{ padding: '16px', backgroundColor: '#f5f5f5', borderRadius: '8px', width: '100%' }}>
-                        <Typography variant="h6" sx={{ color: '#1f1f26', fontSize: '14px', mb: 1 }}>
-                            출금비밀번호 변경
-                        </Typography>
-                        <Typography sx={{fontSize: "24px", fontWeight: "bold", color: "#1f1f26"}}>
-                            {kioskList.filter(user => user.auth_type === '3').length.toLocaleString()}
-                        </Typography>
                     </Box>
                 </Grid>
             </Grid>
@@ -603,10 +594,9 @@ export default function Home() {
                   onChange={handleChangeFilterType}
                   >
                   <MenuItem style={{fontSize:13}} value={10}>전체</MenuItem>
-                  <MenuItem style={{fontSize:13}} value={20}>회원가입</MenuItem>
-                  <MenuItem style={{fontSize:13}} value={30}>아이디찾기</MenuItem>
-                  <MenuItem style={{fontSize:13}} value={40}>비밀번호 변경</MenuItem>
-                  <MenuItem style={{fontSize:13}} value={50}>출금비밀번호 변경</MenuItem>
+                  <MenuItem style={{fontSize:13}} value={20}>지갑생성</MenuItem>
+                  <MenuItem style={{fontSize:13}} value={30}>지갑 불러오기</MenuItem>
+                  <MenuItem style={{fontSize:13}} value={40}>기타</MenuItem>
                   </Select>
               </FormControl>
 
@@ -625,7 +615,7 @@ export default function Home() {
                   onChange={handleChangeFilterContentType}
                   >
                   <MenuItem style={{fontSize:13}} value={10}>전체</MenuItem>
-                  <MenuItem style={{fontSize:13}} value={20}>핸드폰번호</MenuItem>
+                  <MenuItem style={{fontSize:13}} value={20}>이메일주소</MenuItem>
                   <MenuItem style={{fontSize:13}} value={30}>사용자ID</MenuItem>
                   <MenuItem style={{fontSize:13}} value={40}>사용자명</MenuItem>
                   </Select>
@@ -682,7 +672,7 @@ export default function Home() {
 
           <StripedDataGrid 
 
-          rows={filterKioskList}
+          rows={filterMailList}
           columns={columns}
           autoHeight={true}
 
@@ -811,7 +801,7 @@ export default function Home() {
 
         <Backdrop open={loading} sx={{ color: '#fff', display: 'flex', flexDirection: 'column', zIndex: (theme) => theme.zIndex.drawer + 1 }}>
             <CircularProgress color="inherit" />
-            <Typography variant="h6" color="inherit">SMS인증 정보를 불러오는 중입니다</Typography>
+            <Typography variant="h6" color="inherit">메일 인증 정보를 불러오는 중입니다</Typography>
         </Backdrop>
 
         <Dialog open={dialogOpen} onClose={handleCloseDialog}>

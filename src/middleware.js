@@ -7,43 +7,33 @@ import sessionStore from './app/store/sessionStore';
 const JWT_SECRET = 'plastichero!*1'; // 실제 환경에서는 안전하게 관리해야 합니다.
 
 // 인증이 필요 없는 경로 목록
-const publicPaths = ['/page/login', '/api/login', '/api/logout'];
+const publicPaths = ['/page/login', '/page/point/rewardInfo', '/api/login', '/api/logout'];
 
 export async function middleware(request) {
 
-  console.log('middleware inside');
-  console.log('middleware inside pathname');
-
 
   const token = request.cookies.get('token')?.value;
-  const pathname = request.nextUrl.pathname;
+  const pathname = request.nextUrl;
 
-
+/*
   // 1. publicPaths에 해당하는 경로는 인증 검사 없이 통과
   if (publicPaths.includes(pathname)) {
 
-    console.log('jk free pass');
-
     return NextResponse.next();
+
   }
-
-  console.log('middleware check before2');
-
-  console.log('token', token);
+*/
 
   // 2. 토큰이 없으면 로그인 페이지로 리다이렉트
   if (!token) {
 
-    console.log('jk empty');
+    console.log('middleware token empty');
 
     return NextResponse.redirect(new URL('/page/login', request.url));
   }
 
   // 3. 토큰 검증
   try {
-//    jwt.verify(token, JWT_SECRET);
-
-    console.log('jk verify before');
 
     // 토큰이 'Bearer ' 접두사를 포함하고 있는지 확인하고 제거
     const actualToken = token.startsWith('Bearer ') ? token.split(' ')[1] : token;
@@ -60,20 +50,12 @@ export async function middleware(request) {
     // JWT 검증
     const { payload } = await jwtVerify(actualToken, secret);
 
-    console.log('Decoded payload:', payload);
-
     const sessionResult = await sessionStore(payload.username);
-
-    console.log('sessionResult : ' + sessionResult);
-
-    console.log(sessionResult);
-
 
     if (sessionResult.result == 'success') {
 
-      console.log('jk verifiy after');
-
       return NextResponse.next();
+ //     return NextResponse.redirect(new URL(request.nextUrl, request.url));
       
     } else {
 

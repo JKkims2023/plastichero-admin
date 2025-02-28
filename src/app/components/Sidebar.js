@@ -23,31 +23,26 @@ import logoPath from '../../../public/logo.svg';
 
 export default function Sidebar() {
 
+
   const [menu_auth, setMenu_auth] = useState(useAuthStore((state) => state.user));
   const [sidebarData, setSidebarData] = useState([]);
   const [openMenu, setOpenMenu] = useState(null);
-  const router = useRouter();
+  const isLoggedIn = useAuthStore((state) => state.isLoggedIn);
+  const [isShow, setIsShow] = useState(false);
+
 
   const login = useAuthStore((state) => state.login);
   const logout = useAuthStore((state) => state.logout);
-  const isLoggedIn = useAuthStore((state) => state.isLoggedIn);
 
+  useEffect(()=>{
 
+    getLoginStatus();
 
+  },[]);
 
   useEffect(()=>{
 
     const cookies = parseCookies();
-
-    console.log('cookies', cookies.token);
-
-    console.log('inside menu');
-
-    console.log('isLoggedIn : ' + isLoggedIn)
-
-    console.log('inside menu menu_auth');
-    console.log(menu_auth);
-//    console.log(menu_auth.data.menu_auth);
 
     if(menu_auth != null && menu_auth.menu_auth != 'undefined' && menu_auth.menu_auth.length > 0){
 
@@ -59,18 +54,18 @@ export default function Sidebar() {
         {
           label: '회원관리',
           children: [
-            { href: '/page/user/normalUser', label: '• 일반사용자 관리' },
-            { href: '/page/user/nodeUser', label: '• 노드사용자 관리' },
+            { href: '/page/user/normalUser', label: '• 일반 회원리스트' },
+            { href: '/page/user/nodeUser', label: '• 노드 회원리스트' },
             { href: '/page/user/kycInfo', label: '• KYC 정보관리' },
-            { href: '/page/user/blackList', label: '• 블랙리스트 관리' },
+
           ],
         },
         {
-          label: '채굴관리',
+          label: '채굴(노드)관리',
           children: [
-            { href: '/page/mining/miningList', label: '• 채굴내역' },
-            { href: '/page/mining/miningSetting', label: '• 채굴설정' },
-            { href: '/page/mining/miningMonitoring', label: '• 모니터링 / 재처리' },
+            { href: '/page/mining/setup', label: '• 채굴설정' },
+            { href: '/page/mining/history', label: '• 채굴내역' },
+            { href: '/page/mining/monitoring', label: '• 모니터링 / 재처리' },
           ],
         },
         {
@@ -82,12 +77,23 @@ export default function Sidebar() {
           ],
         },
         {
+          label: '코인전송관리',
+          children: [
+            { href: '/page/point/pointRewardInfo', label: '• 개별전송' },
+            { href: '/page/point/pointHistoryInfo', label: '• 노드전송' },
+            { href: '/page/point/pointSwapInfo', label: '• 대량전송' },
+            { href: '/page/point/pointSwapInfo', label: '• 전송내역 관리' },
+          ],
+        },
+        {
           label: '운영관리',
           children: [
             { href: '/page/manage/noticeInfo', label: '• 공지 관리' },
-            { href: '/page/manage/mailInfo', label: '• 메일 발송' },
-            { href: '/page/manage/smsInfo', label: '• SMS 관리' },
+            { href: '/page/manage/mailInfo', label: '• 메일 인증내역' },
+            { href: '/page/manage/mailInfo', label: '• 메일 발송관리' },
+            { href: '/page/manage/smsInfo', label: '• SMS 인증내역' },
             { href: '/page/manage/lockInfo', label: '• Lock 설정' },
+            { href: '/page/user/blackList', label: '• 블랙리스트 관리' },
             { href: '/page/manage/appInfo', label: '• 앱 관리' },
           ],
         },
@@ -101,7 +107,8 @@ export default function Sidebar() {
         {
           label: '설정',
           children: [
-            { href: '/page/setup', label: '• 사용자 관리' },
+            { href: '/page/setup', label: '• 시스템 사용자 관리' },
+            { href: '/page/setup/menuAuth', label: '• 메뉴권한 관리' },
           ],
         },
       
@@ -117,18 +124,17 @@ export default function Sidebar() {
         {
           label: '회원관리',
           children: [
-            { href: '/page/user/normalUser', label: '• 일반사용자 관리' },
-            { href: '/page/user/nodeUser', label: '• 노드사용자 관리' },
+            { href: '/page/user/normalUser', label: '• 일반 회원리스트' },
+            { href: '/page/user/nodeUser', label: '• 노드 회원리스트' },
             { href: '/page/user/kycInfo', label: '• KYC 정보관리' },
-            { href: '/page/user/blackList', label: '• 블랙리스트 관리' },
           ],
         },
         {
-          label: '채굴관리',
+          label: '채굴(노드)관리',
           children: [
-            { href: '/page/mining/miningList', label: '• 채굴내역' },
-            { href: '/page/mining/miningSetting', label: '• 채굴설정' },
-            { href: '/page/mining/miningMonitoring', label: '• 모니터링 / 재처리' },
+            { href: '/page/mining/setup', label: '• 채굴설정' },
+            { href: '/page/mining/history', label: '• 채굴내역' },
+            { href: '/page/mining/monitoring', label: '• 모니터링 / 재처리' },
           ],
         },
         {
@@ -140,12 +146,23 @@ export default function Sidebar() {
           ],
         },
         {
+          label: '코인전송관리',
+          children: [
+            { href: '/page/point/pointRewardInfo', label: '• 개별전송' },
+            { href: '/page/point/pointHistoryInfo', label: '• 노드전송' },
+            { href: '/page/point/pointSwapInfo', label: '• 대량전송' },
+            { href: '/page/point/pointSwapInfo', label: '• 전송내역 관리' },
+          ],
+        },
+        {
           label: '운영관리',
           children: [
             { href: '/page/manage/noticeInfo', label: '• 공지 관리' },
-            { href: '/page/manage/mailInfo', label: '• 메일 발송' },
-            { href: '/page/manage/smsInfo', label: '• SMS 관리' },
+            { href: '/page/manage/mailInfo', label: '• 메일 인증내역' },
+            { href: '/page/manage/mailInfo', label: '• 메일 발송관리' },
+            { href: '/page/manage/smsInfo', label: '• SMS 인증내역' },
             { href: '/page/manage/lockInfo', label: '• Lock 설정' },
+            { href: '/page/user/blackList', label: '• 블랙리스트 관리' },
             { href: '/page/manage/appInfo', label: '• 앱 관리' },
           ],
         },
@@ -160,6 +177,7 @@ export default function Sidebar() {
           label: '설정',
           children: [
             { href: '/page/setup', label: '• 사용자 관리' },
+            { href: '/page/setup/menuAuth', label: '• 메뉴권한 관리' },
           ],
         },
       
@@ -170,32 +188,54 @@ export default function Sidebar() {
     
   },[menu_auth]);
 
-  /*
-     {
-          label: '노드관리',
-          children: [
-            { href: '/page/blog/category1', label: '• 사전예약관리' },
-            { href: '/page/blog/category2', label: '• 사전예약 삭제리스트' },
-            { href: '/page/blog/category3', label: '• 입금현황' },
-          ],
-        },
-
-  */
 
   useEffect(()=>{
 
   },[sidebarData]);
 
   useEffect(()=>{
-
     console.log('isLoggedIn effect sidebar : ' + isLoggedIn);
+    setIsShow(isLoggedIn);
+  },[isLoggedIn]);
 
-    if(isLoggedIn){
+  const getLoginStatus = async () => {
 
-      router.push('/');
+    try{
+
+
+      const response = await fetch('/api/session', {
+
+        method: 'POST',
+        headers: {
+        
+          'Content-Type': 'application/json',
+        
+        },
+        
+        body: JSON.stringify({ user_id: '' }),
+      
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+
+        console.log(data);
+        login(data);
+
+      } else {
+
+        console.log(data.message);
+        logout();
+      }
+
+    }catch(error){  
+
+      console.log(error);
+
     }
 
-  },[isLoggedIn]);
+  };
 
   const toggleMenu = (index) => {
     setOpenMenu(openMenu === index ? null : index);
@@ -222,10 +262,9 @@ export default function Sidebar() {
     }
   };
 
-
   return (
     
-    <aside className={styles.sidebar}>
+    <aside className={styles.sidebar} style={{display:isShow ? 'block' : 'none'}}>
 
       <div style={{width:'100%', height:'1px', backgroundColor:'gray', marginTop:'0px'}}/>
 
@@ -234,7 +273,6 @@ export default function Sidebar() {
           <a style={{fontSize:14, fontWeight:'bold', color:'white', marginTop:'25px',}}></a>
 
         </div>
-
 
         <ul style={{marginTop:'30px'}}>
           {sidebarData.map((item, index) => (

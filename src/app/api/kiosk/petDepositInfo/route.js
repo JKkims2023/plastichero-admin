@@ -1,10 +1,5 @@
 // src/app/api/login/route.js
 import { NextResponse } from 'next/server';
-import jwt from 'jsonwebtoken';
-import { serialize } from 'cookie';
-import { SignJWT, jwtVerify } from 'jose';
-import { TextEncoder, TextDecoder } from 'util'; // util 모듈에서 가져오기
-import { Buffer } from 'buffer'; // buffer 모듈 import
 import { getConnection } from '../../../lib/db';
 
 
@@ -16,14 +11,14 @@ export async function POST(request) {
 
     const connection = await getConnection();
 
-    const sql_datetime = `and T.reg_date > '${fromDate.substring(0,10)}' and T.reg_date < '${toDate.substring(0,10)}' `;
+    const sql_datetime = `and T.reg_date >= '${fromDate}' and T.reg_date < '${toDate}' `;
 
-
+ 
     const sql = `
     
      SELECT
 
-      T.user_idx,
+      T.user_idx, 
       T.wallet_idx,
       T.from_address,
       T.to_address,
@@ -38,7 +33,7 @@ export async function POST(request) {
       W.user_idx,
       M.mb_id
 
-      from tbl_pth_transfer as T left outer join tbl_pth_wallet_info as W ON T.to_address = W.address 
+      from tbl_pth_transfer as T left outer join tbl_pth_wallet_info as W ON T.to_address = W.address and W.active = 'O'
 
       left outer join g5_member as M ON W.user_idx = M.mb_no
 

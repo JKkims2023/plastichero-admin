@@ -12,7 +12,7 @@ export async function POST(request) {
 
   try{
 
-    const { md_idx } = await request.json();
+    const { md_idx, wallet_address } = await request.json();
 
     const connection = await getConnection();
 
@@ -31,7 +31,10 @@ export async function POST(request) {
         DATE_FORMAT(update_date , '%Y-%m-%d %H:%i:%S') as update_date
 
 
-      from tbl_pth_transfer where wallet_idx = '${md_idx}' order by update_date desc;
+      from tbl_pth_transfer where wallet_idx = '${md_idx}' 
+      or to_address = '${wallet_address}'
+      or from_address = '${wallet_address}'
+      order by update_date desc;
 
     `;
 

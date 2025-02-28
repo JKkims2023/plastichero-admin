@@ -193,6 +193,9 @@ export default function Home() {
 
         setIsLoading(true);
 
+        setPointList([]);
+        setFilterPointList([]);
+
         const filterInfo = filterContentTypeValueMethod;
 
         const response = await fetch('/api/point/pointList', {
@@ -206,8 +209,10 @@ export default function Home() {
           
           body: JSON.stringify({ pagingIdx, filterInfo, 
             
-            fromDate: fromDate.subtract(1,'day'),
-            toDate: fromDate.add(1,'day') }),
+//            fromDate: fromDate.subtract(1,'day'),
+            fromDate: fromDate,
+//            toDate: fromDate.add(1,'day') }),
+            toDate: fromDate }),
         
         });
 

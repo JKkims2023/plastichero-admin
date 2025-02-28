@@ -40,6 +40,18 @@ import UserInfoView from '../../../components/UserInfoView';
 import PointHistoryView from '../../../components/PointHistoryView';
 import WalletInfoView from '../../../components/WalletInfoView';
 import { get } from "http";
+import Backdrop from '@mui/material/Backdrop';
+import CircularProgress from '@mui/material/CircularProgress';
+import * as cheerio from 'cheerio';
+import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
+import DialogActions from '@mui/material/DialogActions';
+import FormLabel from '@mui/material/FormLabel';
+import RadioGroup from '@mui/material/RadioGroup';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import Radio from '@mui/material/Radio';
+import Paper from '@mui/material/Paper';
 
 type Anchor = 'bottom';
 
@@ -90,18 +102,26 @@ export default function Home() {
     const [filterInfo, setFilterInfo] = React.useState('');
     const [kioskList, setKioskList] = React.useState([]);
     const [filterKioskList, setFilterKioskList] = React.useState([]);
-    const [selectedContent, setSelectedContent] = React.useState({
 
-        contentID : '',
-        contentTitle : '',
-    
-    });
 
     const [filterContentTypeMethod, setFilterContentTypeMethod] = React.useState(10);
     const [filterContentTypeValueMethod, setFilterContentTypeValueMethod] = React.useState('all');
     const [filterSellStatusMethod, setFilterSellStatusMethod] = React.useState(10);
     const [filterSellStatusValueMethod, setFilterSellStatusValueMethod] = React.useState('all');
     const [stateBottom, setStateBottom] = React.useState(false);
+    const [loading, setLoading] = React.useState(false);
+    const [editDialogOpen, setEditDialogOpen] = React.useState(false);
+    const [infoManagerID, setInfoManagerID] = React.useState('');
+    const [infoOwnerID, setInfoOwnerID] = React.useState('');
+    const [infoOwnerIdx, setInfoOwnerIdx] = React.useState(-1);
+    const [infoSellStatus, setInfoSellStatus] = React.useState('0');
+    const [finalInfoAddress, setFinalInfoAddress] = React.useState('');
+    const [finalInfoAddressIdx, setFinalInfoAddressIdx] = React.useState(-1);
+    const [targetKioskID, setTargetKioskID] = React.useState(-1);
+    const [infoOwnerList, setInfoOwnerList] = React.useState([]);
+    const [infoMatchAddress, setInfoMatchAddress] = React.useState('');
+    const [filterInfoOwnerList, setFilterInfoOwnerList] = React.useState([]);
+    const [openType, setOpenType] = React.useState('register');
 
     const page_info = 'Home > 키오스크 관리 > 소유자 관리';
 
@@ -134,7 +154,7 @@ export default function Home() {
           field: 'kc_kiosk_id',
           headerName: '키오스크ID',
           type: 'string',
-          flex: 1.5,
+          flex: 1.3,
           disableColumnMenu: true,
           editable: false,
       },
@@ -142,15 +162,15 @@ export default function Home() {
           field: 'kc_addr',
           headerName: '배치장소',
           type: 'string',
-          flex: 5,
+          flex: 3,
           disableColumnMenu: true,
           editable: false,
       },
       {
-          field: 'manager_mail',
-          headerName: '관리자ID',
+          field: 'mb_name',
+          headerName: '소유자명',
           type: 'string',
-          flex: 1,
+          flex: 0.5,
           disableColumnMenu: true,
           editable: false,
       },
@@ -173,24 +193,57 @@ export default function Home() {
       {
         field: 'detail',
         headerName: '상세정보',
-        flex: 0.7,
+        flex: 0.5,
         disableColumnMenu: true,
-        renderCell: (params) => (
-            <Button
-                variant="contained"
-                size="small"
-                sx={{ fontSize: '12px' }}
-                onClick={(event) => {
-                  
-                    event.stopPropagation();
+        renderCell: (params) => {
+          
+            const isSellStatusZero = params.row.sell_status === '0';
+            const handleButtonClick = (event) => {
+                
+                event.stopPropagation();
+                
+                
+                // 다이얼로그 열기
+                if (isSellStatusZero) {
                     
-                    setSelectedContent(filterKioskList[params.row.id - 1]);
-                    setStateBottom(true);
-                }}
-            >
-                관리
-            </Button>
-        ),
+                    // 등록 다이얼로그 열기
+                    setOpenType('register');
+
+                
+                } else {
+
+                    // 수정 다이얼로그 열기
+                    setOpenType('edit');
+
+                }
+
+                console.log(params.row);
+
+                setInfoManagerID(params.row.manager_mail);
+                setInfoOwnerID(params.row.owner_id);
+                setInfoSellStatus(params.row.sell_status);
+                setFinalInfoAddress(params.row.match_address);
+                setFinalInfoAddressIdx(params.row.wallet_idx);
+                setTargetKioskID(params.row.kc_no);                
+
+                setEditDialogOpen(true);
+            };
+
+            return (
+                <Button
+                    variant="contained"
+                    size="small"
+                    sx={{ 
+                        fontSize: '12px', 
+                        backgroundColor: isSellStatusZero ? 'green' : 'gray',
+                        color: 'white'
+                    }}
+                    onClick={handleButtonClick}
+                >
+                    {isSellStatusZero ? '등록' : '수정'}
+                </Button>
+            );
+        },
       },
     ];
 
@@ -227,55 +280,41 @@ export default function Home() {
 
     },[filterKioskList]);
 
+    React.useEffect(()=>{
+
+      console.log('infoSellStatus : ' + infoSellStatus);
+    },[infoSellStatus]);
+
     const get_UserInfo = async() => {
 
-      try{
+        setLoading(true);
 
-        const response = await fetch('/api/kiosk/ownerInfo', {
+        try {
 
-          method: 'POST',
-          headers: {
-          
-            'Content-Type': 'application/json',
-          
-          },
-          
-          body: JSON.stringify({ pagingIdx, filterInfo }),
-        
-        });
-  
-        const data = await response.json(); 
-  
-        if (response.ok) {
+            const response = await fetch('/api/kiosk/ownerInfo', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ pagingIdx, filterInfo }),
+            });
 
-          setKioskList(data.result_data.map((data, idx) => ({ id: idx + 1, ...data })));
+            const data = await response.json();
 
-          setFilterKioskList(data.result_data.map((data, idx) => ({ id: idx + 1, ...data })));
-          
-        } else {
-  
-          alert(data.message);
-        
+            if (response.ok) {
+
+                setKioskList(data.result_data.map((data, idx) => ({ id: idx + 1, ...data })));
+                setFilterKioskList(data.result_data.map((data, idx) => ({ id: idx + 1, ...data })));
+                setInfoOwnerList(data.result_node_member_data.map((data, idx) => ({ id: idx + 1, ...data })));
+
+            } else {
+                alert(data.message);
+            }
+        } catch (error) {
+            console.log(error);
+        } finally {
+            setLoading(false);
         }
-
-      }catch(error){
-
-        console.log(error);
-
-      }
-
-    };
-
-    const toggleDrawer = (anchor: Anchor, open: boolean) => (event: React.KeyboardEvent | React.MouseEvent) => {
-        
-      if (event.type === 'keydown' && ((event as React.KeyboardEvent).key === 'Tab' || (event as React.KeyboardEvent).key === 'Shift')) {
-          
-        return;
-        
-      }
-    
-      setStateBottom(false);
-   
     };
     
     const handleChangeFilterContentType = (event: SelectChangeEvent<number>) => {
@@ -301,6 +340,10 @@ export default function Home() {
             case 40:{
 
               setFilterContentTypeValueMethod('owner');
+            }break;
+            case 50:{
+
+              setFilterContentTypeValueMethod('name');
             }break;
             default:{ 
 
@@ -367,7 +410,7 @@ export default function Home() {
 
     };
 
-    const handleClickSearch = () => {
+    const handleClickSearch = async() => {
 
       try{
 
@@ -391,7 +434,11 @@ export default function Home() {
                   user.owner_id?.includes(filterInfo))
                   .map((user, idx) => ({ ...user, id: idx + 1 }));
               } break;
-
+              case 'name': {
+                filteredList = filteredList.filter((user) => 
+                  user.mb_name?.includes(filterInfo))
+                  .map((user, idx) => ({ ...user, id: idx + 1 }));
+              } break;
               default: {
                 filteredList = filteredList.map((user, idx) => ({ ...user, id: idx + 1 }));
               } break;
@@ -400,25 +447,33 @@ export default function Home() {
         } else {
           // sell_status 비교 전에 공백 제거
           const normalizedStatus = filterSellStatusValueMethod.trim();
+
+          console.log('normalizedStatus : ' + normalizedStatus);
           
           if(filterInfo.length > 0) {
             switch(filterContentTypeValueMethod) {
               case 'id': {
                 filteredList = filteredList.filter((user) => 
                   user.kc_kiosk_id?.includes(filterInfo) && 
-                  user.sell_status?.toString() === normalizedStatus)
+                  user.sell_status?.toString() == normalizedStatus.toString())
                   .map((user, idx) => ({ ...user, id: idx + 1 }));
               } break;
               case 'location': {
                 filteredList = filteredList.filter((user) => 
                   user.kc_addr?.includes(filterInfo) && 
-                  user.sell_status?.toString() === normalizedStatus)
+                  user.sell_status?.toString() == normalizedStatus.toString())
                   .map((user, idx) => ({ ...user, id: idx + 1 }));
               } break;
               case 'owner': {
                 filteredList = filteredList.filter((user) => 
                   user.owner_id?.includes(filterInfo) && 
-                  user.sell_status?.toString() === normalizedStatus)
+                  user.sell_status?.toString() == normalizedStatus.toString())
+                  .map((user, idx) => ({ ...user, id: idx + 1 }));
+              } break;
+              case 'name': {
+                filteredList = filteredList.filter((user) => 
+                  user.mb_name?.includes(filterInfo) && 
+                  user.sell_status?.toString() == normalizedStatus.toString())
                   .map((user, idx) => ({ ...user, id: idx + 1 }));
               } break;
               default: {
@@ -427,7 +482,7 @@ export default function Home() {
             }
           } else {
             filteredList = filteredList.filter((user) => 
-              user.sell_status?.toString() === normalizedStatus)
+              user.sell_status?.toString() == normalizedStatus.toString())
               .map((user, idx) => ({ ...user, id: idx + 1 }));
           }
         }
@@ -481,6 +536,316 @@ export default function Home() {
     
     };
 
+    const handleEditApply = async() => {
+
+      try{
+
+        if(openType == 'register'){
+
+            const infoAddress = finalInfoAddress;
+            const infoAddressIdx = finalInfoAddressIdx;
+            const infoEmail = infoOwnerID.trim();
+            const infoTarget = targetKioskID;
+
+
+            console.log('infoAddress : ' + infoAddress);
+            console.log('infoEmail : ' + infoEmail);
+            console.log('infoTarget : ' + infoTarget);
+            console.log('infoAddressIdx : ' + finalInfoAddressIdx);
+
+            if(infoOwnerID.length == 0){
+
+              alert('소유자ID 정보를 입력해주세요');
+              return;
+
+            }
+
+            const index = infoOwnerList.findIndex(item => item.mb_email.trim() == infoOwnerID.trim());
+
+            if (index == -1) {
+              
+              console.log('index : ' + index);
+
+              alert('소유자ID 정보를 확인할 수 없습니다. 다시 입력바랍니다.');                
+              return;
+            
+            }
+
+            const response = await fetch('/api/kiosk/addOwnerInfo', {
+              
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ infoAddress, infoAddressIdx, infoOwnerIdx, infoEmail, infoTarget }),
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+
+              setEditDialogOpen(false);
+              setInfoOwnerID(''); 
+              setInfoSellStatus('0');
+              setFinalInfoAddress('');
+              setFinalInfoAddressIdx(-1);
+              setTargetKioskID(-1);
+              setFilterInfoOwnerList([]); 
+
+              get_UserInfo();
+
+            } else {
+
+                alert(data.message);
+            
+            }
+
+        }else{
+
+          const infoAddress = finalInfoAddress;
+          const infoAddressIdx = finalInfoAddressIdx;
+          const infoEmail = infoOwnerID.trim();
+          const infoTarget = targetKioskID;
+
+
+          console.log('infoAddress : ' + infoAddress);
+          console.log('infoEmail : ' + infoEmail);
+          console.log('infoTarget : ' + infoTarget);
+          console.log('infoAddressIdx : ' + finalInfoAddressIdx);
+          console.log('infoSellStatus : ' + infoSellStatus);
+
+          if(infoOwnerID.length == 0){
+
+            alert('소유자ID 정보를 입력해주세요');
+            return;
+
+          }
+
+          const index = infoOwnerList.findIndex(item => item.mb_email.trim() == infoOwnerID.trim());
+
+          if (index == -1) {
+            
+            console.log('index : ' + index);
+
+            alert('소유자ID 정보를 확인할 수 없습니다. 다시 입력바랍니다.');                
+            return;
+          
+          }
+
+
+          const response = await fetch('/api/kiosk/changeOwnerInfo', {
+            
+              method: 'POST',
+              headers: {
+                  'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ infoAddress, infoAddressIdx, infoOwnerIdx, infoEmail, infoTarget, infoSellStatus }),
+          });
+
+          const data = await response.json();
+
+          if (response.ok) {
+
+            setEditDialogOpen(false);
+            setInfoOwnerID(''); 
+            setInfoSellStatus('0');
+            setFinalInfoAddress('');
+            setFinalInfoAddressIdx(-1);
+            setTargetKioskID(-1);
+            setFilterInfoOwnerList([]); 
+
+            get_UserInfo();
+
+
+          } else {
+
+              alert(data.message);
+          
+          }
+
+        }
+
+      }catch(error){
+
+        console.log(error);
+
+      }
+    };
+
+    const handleAutoSetOwnerInfo = async() => {
+
+      try{
+
+        console.log('kioskList.length : ' + kioskList.length);
+
+        for(let i = 0; i < kioskList.length; i++){
+
+          console.log(`compare before : ${i}`);
+
+          if(kioskList[i].owner_id == null || kioskList[i].owner_id == ''){
+
+            console.log('kioskList[i].owner_id : ' + kioskList[i].owner_id + ' 제외');
+            console.log(kioskList[i]);
+            continue;
+
+          }
+
+          /*
+          if(kioskList[i].owner_id == 'a01085448384@gmail.com'){ // 소유자 지갑  DB미존재, Explorer 는 존재(PTH5m1hUmGBNKjWoLddy5ie9eEbz27vj9QBai82cgrUubseUFrKAM)
+
+            console.log('kioskList[i].owner_id : ' + kioskList[i].owner_id + ' 제외');
+            continue;
+          }
+
+          if(kioskList[i].owner_id == 'a45842387@gmail.com'){ // 소유자 지갑  DB미존재, Explorer 는 존재(PTH5SJ8YD5XFDnaWTvqBEeSSWc2ruG1VGEFRb9x4NBkNFRctKxvhS)
+
+            console.log('kioskList[i].owner_id : ' + kioskList[i].owner_id + ' 제외');
+            continue;
+          }
+
+          if(kioskList[i].owner_id == 'a01030085007@gmail.com'){ // 소유자 지갑  DB미존재, Explorer 는 존재(PTH7wXrCSMRRRsfqa93if6vusrYMSKJChmKPFrpMyqcNhUH2Ps8jW)
+
+            console.log('kioskList[i].owner_id : ' + kioskList[i].owner_id + ' 제외');
+            continue;
+          }
+
+          if(kioskList[i].owner_id == 'a01026431145@gmail.com'){ // 소유자 지갑  DB미존재, Explorer 는 존재(PTH6GpJRay4omJS1JeMpzDBYjH2hzHgGWSjVyv2CogLSnt46wVKV6)
+
+            console.log('kioskList[i].owner_id : ' + kioskList[i].owner_id + ' 제외');
+            continue;
+          }
+
+          if(kioskList[i].owner_id == 's01065572049@gmail.com'){ // 소유자 지갑  DB미존재, Explorer 는 존재(PTH5hc95npcTccRDXt9CDtZ7UVADjNzW3vqQSk887qYazrKt5kE9o)
+
+            console.log('kioskList[i].owner_id : ' + kioskList[i].owner_id + ' 제외');
+            continue;
+          }
+          */
+
+          console.log(`compare after : ${i}`);
+
+
+          const index = infoOwnerList.findIndex(item => item.mb_email.trim() == kioskList[i].owner_id.trim());
+
+          let infoAddress = '';
+          let infoAddressIdx = -1;  
+          let infoOwnerIdx = -999;
+          let infoEmail = '';
+          let infoTarget = '';
+
+
+          if (index == -1) {
+            
+
+            switch(kioskList[i].owner_id){
+
+              case 'a01085448384@gmail.com':{
+
+                infoAddress = kioskList[i].wallet_address;
+                infoAddressIdx = 8634;  
+                infoOwnerIdx =  -1;
+                infoEmail = kioskList[i].owner_id;
+                infoTarget = kioskList[i].kc_no;
+
+              }break;
+              case 'a45842387@gmail.com':{
+
+                infoAddress = kioskList[i].wallet_address;
+                infoAddressIdx = 8635;  
+                infoOwnerIdx =  -2;
+                infoEmail = kioskList[i].owner_id;
+                infoTarget = kioskList[i].kc_no;
+
+              }break;
+              case 'a01030085007@gmail.com':{
+
+                infoAddress = kioskList[i].wallet_address;
+                infoAddressIdx = 8636;  
+                infoOwnerIdx =  -3;
+                infoEmail = kioskList[i].owner_id;
+                infoTarget = kioskList[i].kc_no;
+
+              }break;
+              case 'a01026431145@gmail.com':{
+
+                infoAddress = kioskList[i].wallet_address;
+                infoAddressIdx = 8637;  
+                infoOwnerIdx =  -4;
+                infoEmail = kioskList[i].owner_id;
+                infoTarget = kioskList[i].kc_no;
+
+              }break;
+              case 's01065572049@gmail.com':{
+
+                infoAddress = kioskList[i].wallet_address;
+                infoAddressIdx = 8638;  
+                infoOwnerIdx =  -5;
+                infoEmail = kioskList[i].owner_id;
+                infoTarget = kioskList[i].kc_no;
+
+              }break;
+              default:{
+
+                console.log('index : ' + index);
+                console.log(kioskList[i]);
+                console.log('소유자ID 정보를 확인할 수 없습니다. 다시 입력바랍니다.');
+
+                
+                alert('소유자ID 정보를 확인할 수 없습니다. 다시 입력바랍니다.');  
+            
+                break;
+
+              }break;
+                
+                
+            }
+
+
+          }else{
+
+            infoAddress = infoOwnerList[index].wallet_address;
+            infoAddressIdx = infoOwnerList[index].wallet_idx;  
+            infoOwnerIdx =  infoOwnerList[index].user_idx;
+            infoEmail = infoOwnerList[index].mb_email;
+            infoTarget = kioskList[i].kc_no;
+  
+          }
+
+
+          const response = await fetch('/api/kiosk/addOwnerInfo', {
+                
+              method: 'POST',
+              headers: {
+                  'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ infoAddress, infoAddressIdx, infoOwnerIdx, infoEmail, infoTarget }),
+
+          });
+
+          const data = await response.json();
+
+          if (response.ok) {
+
+            console.log(`result :  + ${i} +  인덱스 성공` );
+
+          } else {
+
+              alert(data.message);
+              break;
+          
+          }
+
+        }
+
+        console.log('뭐지????');
+
+      }catch(error){
+
+        console.log(error);
+      }
+
+    };
+
     return (
 
       <div style={{display:'flex', flexDirection:'column',  width:'100%', height:'100vh',  paddingLeft:'20px', paddingRight:'20px',}}>
@@ -495,6 +860,29 @@ export default function Home() {
             <Typography sx={{fontSize:"20px",  color: '#1f1f26', marginLeft:"0px", marginTop:"10px", fontWeight:'bold' }}>
                 소유자 관리
             </Typography>
+        </div>
+
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '10px',}}>
+          <Paper style={{ padding: '10px', flex: 1, marginRight: '10px' }}>
+            <Typography variant="h6">총 키오스크 수</Typography>
+            <Typography sx={{fontSize: "24px", fontWeight: "bold", color: "#1f1f26"}}>{kioskList.length}</Typography>
+          </Paper>
+          <Paper style={{ padding: '10px', flex: 1, marginRight: '10px' }}>
+            <Typography variant="h6">판매전</Typography>
+            <Typography sx={{fontSize: "24px", fontWeight: "bold", color: "#1f1f26"}}>{kioskList.filter(kiosk => kiosk.sell_status === '0').length}</Typography>
+          </Paper>
+          <Paper style={{ padding: '10px', flex: 1, marginRight: '10px' }}>
+            <Typography variant="h6">판매중</Typography>
+            <Typography sx={{fontSize: "24px", fontWeight: "bold", color: "#1f1f26"}}>{kioskList.filter(kiosk => kiosk.sell_status === '1').length}</Typography>
+          </Paper>
+          <Paper style={{ padding: '10px', flex: 1, marginRight: '10px' }}>
+            <Typography variant="h6">판매완료(직접채굴)</Typography>
+            <Typography sx={{fontSize: "24px", fontWeight: "bold", color: "#1f1f26"}}>{kioskList.filter(kiosk => kiosk.sell_status === '2').length}</Typography>
+          </Paper>
+          <Paper style={{ padding: '10px', flex: 1 }}>
+            <Typography variant="h6">판매완료(운영지원금)</Typography>
+            <Typography sx={{fontSize: "24px", fontWeight: "bold", color: "#1f1f26"}}>{kioskList.filter(kiosk => kiosk.sell_status === '3').length}</Typography>
+          </Paper>
         </div>
 
         <div style={{
@@ -515,8 +903,6 @@ export default function Home() {
           
           }}>
             
-            <a style={{fontSize:14, marginRight:"10px", color:'black', marginLeft:'10px', fontWeight:900, width:100}}>총 : {kioskList.length}</a>
-      
             <div style={{display:"flex", float:"left"}}>
 
               <FormControl fullWidth  style={{ width:"175px",marginTop:"0px", marginLeft:"8px", backgroundColor:'white', color:'black'}}>
@@ -554,6 +940,7 @@ export default function Home() {
                   <MenuItem style={{fontSize:13}} value={20}>키오스크ID</MenuItem>
                   <MenuItem style={{fontSize:13}} value={30}>배치장소</MenuItem>
                   <MenuItem style={{fontSize:13}} value={40}>소유자ID</MenuItem>
+                  <MenuItem style={{fontSize:13}} value={50}>소유자명</MenuItem>
                   </Select>
               </FormControl>
             </div>
@@ -592,7 +979,7 @@ export default function Home() {
                 />
               </FormControl>
             </Box>
-            <Button id="keyBtns" variant="outlined" style={{color:"white",backgroundColor:"#1f1f26", borderColor:"#CBCBCB" ,height:"33px" , marginRight:"10px"}}  onClick={handleClickSearch}>
+            <Button id="keyBtns" variant="outlined" style={{color:"white",backgroundColor:"#1f1f26", borderColor:"#CBCBCB" ,height:"33px" , marginRight:"10px"}}  onClick={handleAutoSetOwnerInfo}>
               검색
             </Button>
 
@@ -600,17 +987,16 @@ export default function Home() {
 
         <div ref={ref_Div} style={{
           flex: 1, 
-          height: '100%', 
           marginTop: '0px', 
           paddingLeft: "0px",
-          width: '100%'
+          width: '100%',
+          overflow: 'hidden'
         }}>
 
           <StripedDataGrid 
 
           rows={filterKioskList}
           columns={columns}
-          autoHeight={true}
 
           initialState={{
               pagination: {
@@ -620,7 +1006,6 @@ export default function Home() {
               },
           }}
           pageSizeOptions={[10]}
-          rowHeight={42}
           columnHeaderHeight={45}
 
           slots={{
@@ -654,7 +1039,6 @@ export default function Home() {
               }
           }}
           sx={{
-
               '.MuiDataGrid-columnSeparator': {
               display: 'none',
               },
@@ -679,11 +1063,16 @@ export default function Home() {
                   '&.Mui-selected': { backgroundColor: 'black'},
               },
               "& .MuiDataGrid-cell": {
+                  paddingTop: '10px',
+                  paddingBottom: '10px',
                   border: 1,
                   borderColor:"#f4f6f6",
                   borderRight: 0,
                   borderTop: 0,
                   fontSize:13.5,
+                  textAlign: 'left',
+                  display: 'flex',
+                  alignItems: 'center',
               },
               '& .MuiMenuItem-root': {
                       fontSize: 1,
@@ -721,55 +1110,214 @@ export default function Home() {
                   fontSize: '13.5px',
               },
           }}
+          getRowHeight={() => 'auto'}
           getRowClassName={(params) =>
               params.indexRelativeToCurrentPage % 2 === 1 ? 'even' : 'odd'
           }
           style={{
-
             marginTop:'20px',
-
+            height: '80%',
           }}
 
           />
 
         </div>
-    
-        <React.Fragment key='bottom'>
-        
-            <Drawer
-                anchor='bottom'
-                open={stateBottom}
-                onClose={toggleDrawer('bottom', false)}>
 
-                <Box sx={{flexGrow:1, height:750}}>
-                <Grid container spacing={0} sx={{backgroundColor:"#034301", height:"100%"}}>
-                    <Grid item xs={2.4}>
-                        <div style={{height:"100%", paddingLeft:"5px", paddingBottom:"5px", paddingTop:"5px"}}>
+
+        <Backdrop open={loading} sx={{ color: '#fff', display: 'flex', flexDirection: 'column', zIndex: (theme) => theme.zIndex.drawer + 1 }}>
+            <CircularProgress color="inherit" />
+            <Typography variant="h6" color="inherit">키오스크 소유자 정보를 불러오는 중입니다</Typography>
+        </Backdrop>
+
+        <Dialog open={editDialogOpen} onClose={() => {
+            setEditDialogOpen(false);
+            setInfoOwnerID(''); // 값 초기화
+            setFilterInfoOwnerList([]); // 목록 비우기
+        }}>
+            <DialogTitle textAlign="center" sx={{fontSize:"17px",  color: '#1f1f26', marginLeft:"0px", fontWeight:'bold', alignContent:'center', alignItems:'center', justifyContent:'center' }}>{openType == 'edit' ? '수정' : '등록'}</DialogTitle>
+            <DialogContent onClick={(e) => {
+                // 다이얼로그 클릭 시 목록 비우기, 단 OutlinedInput 클릭 시에는 비우지 않음
+                if (!(e.target as HTMLElement).closest('#keywordInfoField')) {
+                    setFilterInfoOwnerList([]); // 다이얼로그 클릭 시 목록 비우기
+                }
+            }}>
+              <div>
+                <div style={{display: openType == 'edit' ? 'flex' : 'none', flexDirection:'column'}}>
+                <div style={{width:'100%', height:'1px', backgroundColor:'#edccd4'}}/>
+                <div style={{display:'flex', flexDirection:'row', width:'100%', }}>
+                  <div style={{flex:1, padding:'10px', backgroundColor:'#f1f1f1', paddingRight:'35px', paddingLeft:'35px', alignItems:'center', alignContent:'center', justifyContent:'center'}}>
+                    <Typography sx={{fontSize:"13px",  color: '#1f1f26', marginLeft:"0px", fontWeight:'bold' }}>
+                        키오스크 상태
+                    </Typography>
+                  </div>
+                  <div style={{display:'flex', flexDirection:'row', padding:'15px', paddingRight:'35px', paddingLeft:'25px', paddingBottom:'10px', backgroundColor:'white'}}>
+                    <FormControl component="fieldset">
+                        <RadioGroup row aria-label="sell-status" name="sell-status" value={infoSellStatus} onChange={(e) => {
+                            const selectedValue = e.target.value;
+
+                            if(selectedValue === '운영지원금'){
+                              setInfoSellStatus('3');
+                            } else {
+                              setInfoSellStatus('2');
+                            }
+                        }}>
+                            <FormControlLabel value="운영지원금" checked={infoSellStatus == '3'} control={<Radio />} label="판매완료(운영지원금)" />
+                            <FormControlLabel value="직접채굴" checked={infoSellStatus == '2'} control={<Radio />} label="판매완료(직접채굴)" />
+                        </RadioGroup>
+                    </FormControl>
+                  </div>
+                </div>
+                </div>
+                <div style={{width:'100%', height:'1px', backgroundColor:'#edccd4'}}/>
+                <div style={{display:'flex', flexDirection:'row', width:'100%', }}>
+                  <div style={{padding:'10px', backgroundColor:'#f1f1f1', alignItems:'center', alignContent:'center', justifyContent:'center'}}>
+                    <Typography sx={{fontSize:"13px",  color: '#1f1f26', padding:'10px', paddingRight:'55px', paddingLeft:'25px', marginLeft:"0px", fontWeight:'bold' }}>
+                        관리자ID
+                    </Typography>
+                  </div>
+                  <div style={{display:'flex', flexDirection:'row', padding:'15px', paddingRight:'35px', paddingLeft:'35px', backgroundColor:'white'}}>
+ 
+                      <div style={{flex:1, width:'100%', marginLeft:'-10px', borderRadius:'5px', borderWidth:'1px', borderColor:'#edccd4', backgroundColor:"#e9ecef", padding:'10px', }}>
+
+                        <Typography sx={{fontSize:"13px", width:'250px',  color: '#1f1f26', marginLeft:"0px", fontWeight:'bold' }}>
+                            {infoManagerID}
+                        </Typography>
                         
-                          <UserInfoView userInfo={selectedContent} />
+                      </div>
 
-                        </div>
-                    </Grid>
-                    <Grid item xs={3.6}>
-                        <div style={{height:"100%", paddingLeft:"5px", paddingBottom:"5px", paddingTop:"5px"}}>
+                  </div>
+                </div>
+                <div style={{width:'100%', height:'1px', backgroundColor:'#edccd4'}}/>
+                <div style={{display:'flex', flexDirection:'row', width:'100%', }}>
+                  <div style={{padding:'10px', backgroundColor:'#f1f1f1', alignItems:'center', alignContent:'center', justifyContent:'center'}}>
+                    <Typography sx={{fontSize:"13px",  color: '#1f1f26', padding:'0px', paddingRight:'55px', paddingLeft:'25px', marginLeft:"0px", fontWeight:'bold' }}>
+                        소유자ID
+                    </Typography>
+                  </div>
+                  <div style={{display:'flex', flexDirection:'row', padding:'15px', paddingRight:'35px', paddingLeft:'25px',  backgroundColor:'white'}}>
+ 
+                      <FormControl sx={{minWidth: '273px' }} variant="outlined">
+                        <OutlinedInput
+                          id="keywordInfoField"
+                          sx={{
+                            height: "33px",
+                            backgroundColor: 'white',
+                            borderColor: '#edccd4'
+                          }}
+                          type='text'
+                          value={infoOwnerID}
+                          onChange={(text) => {
 
-                          <PointHistoryView pointInfo={selectedContent} />
+                            setInfoOwnerID(text.target.value);
 
-                        </div>
-                    </Grid>
-                    <Grid item xs={6}>
-                        
-                        <div style={{height:"100%", paddingLeft:"5px", paddingTop:"5px", paddingRight:"5px", paddingBottom:"5px"}}>
+                            if(text.target.value.length == 0){
+
+                              setFilterInfoOwnerList([]); // 선택 후 목록 비우기
+                              return;
+                              
+                            }
+
+                            setFilterInfoOwnerList(infoOwnerList.filter((item) => item.mb_email.includes(text.target.value)));
+                          
+                          }}
+                          onFocus={() => {
+
+                            console.log('editDialogOpen : ' + editDialogOpen);
+                            if (!editDialogOpen) {
+
+                              setFilterInfoOwnerList([]); // 목록 비우기
                             
-                          <WalletInfoView walletInfo={selectedContent} />
+                            } else {
 
-                        </div>
-                    </Grid>
-                </Grid>
-                </Box>
-            </Drawer>
-        
-        </React.Fragment>
+                              if(infoOwnerID.length == 0){
+
+                                return;
+
+                              }
+
+                              setFilterInfoOwnerList(infoOwnerList.filter((item) => item.mb_email.includes(infoOwnerID)));
+
+                            }
+                          }}
+                          endAdornment={
+                            <InputAdornment position="end">
+                              <ClearIcon
+                                onClick={() => { setInfoOwnerID(''); }}
+                              />
+                            </InputAdornment>
+                          }
+                        />
+                      </FormControl>
+                      {/* 자동완성 목록 */}
+                      {filterInfoOwnerList.length > 0 && (
+                          <Box sx={{ position: 'absolute', zIndex: 1, backgroundColor: 'white', border: '1px solid #edccd4', width: '273px', marginTop: '35px', maxHeight: '150px', overflowY: 'auto' }} onClick={() => {
+                              setFilterInfoOwnerList([]); // 목록 비우기
+                          }}>
+                              {filterInfoOwnerList.map((item) => (
+                                  <MenuItem key={item.id} onClick={() => {
+
+                                      setInfoOwnerID(item.mb_email);
+                                      setFinalInfoAddress(item.wallet_address);
+                                      setFinalInfoAddressIdx(item.wallet_idx);
+                                      setFilterInfoOwnerList([]); // 선택 후 목록 비우기
+                                  }}>
+                                      {item.mb_email}
+                                  </MenuItem>
+                              ))}
+                          </Box>
+                      )}
+                  </div>
+                </div>
+                <div style={{width:'100%', height:'1px', backgroundColor:'#edccd4'}}/>
+                <div style={{display:'flex', flexDirection:'row', width:'100%', }}>
+                  <div style={{padding:'10px', backgroundColor:'#f1f1f1', alignItems:'center', alignContent:'center', justifyContent:'center'}}>
+                    <Typography sx={{fontSize:"13px",  color: '#1f1f26', padding:'10px', paddingRight:'55px', paddingLeft:'25px', marginLeft:"0px", fontWeight:'bold' }}>
+                        매칭주소
+                    </Typography>
+                  </div>
+                  <div style={{display:'flex', flexDirection:'row', padding:'15px', paddingRight:'35px', paddingLeft:'35px', backgroundColor:'white'}}>
+ 
+                      <div style={{flex:1, width:'100%', marginLeft:'-10px', borderRadius:'5px', borderWidth:'1px', borderColor:'#edccd4', backgroundColor:"#e9ecef", padding:'10px', }}>
+
+                        <Typography sx={{fontSize:"13px", width:'250px',  color: '#1f1f26', marginLeft:"0px", fontWeight:'bold', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {finalInfoAddress}
+                        </Typography>
+                        
+                      </div>
+
+                  </div>
+                </div>
+                <div style={{width:'100%', height:'1px', backgroundColor:'#edccd4'}}/>
+
+                <div style={{display:'flex', flexDirection:'column',  width:'100%', backgroundColor:'#f6f6f6', padding:'20px', borderRadius:'10px', marginTop:'20px' }}>
+                  <Typography sx={{fontSize:"13px",  color: '#1f1f26', padding:'0px',  paddingLeft:'0px', fontWeight:'bold' }}>
+                      [유의사항]
+                  </Typography>
+                  <Typography sx={{fontSize:"13px",  color: '#1f1f26', marginTop:'10px' }}>
+                  1. 노드구매사이트에 가입한 회원만 소유자를 등록할 수 있습니다.
+                  </Typography>
+                  <Typography sx={{fontSize:"13px",  color: '#1f1f26', marginTop:'0px' }}>
+                  2. 채굴시간 중에는 소유자 등록이 불가합니다.
+                  </Typography>
+                </div>
+              </div>
+            </DialogContent>
+            <DialogActions>
+                <Button onClick={() => {
+
+                  // 수정 다이얼로그 적용 로직
+                  setEditDialogOpen(false);
+                  setInfoOwnerID(''); // 값 초기화
+                  setInfoOwnerIdx(-1);
+                  setFinalInfoAddress('');
+                  setFinalInfoAddressIdx(-1);
+                  setTargetKioskID(-1);
+                  setFilterInfoOwnerList([]); // 목록 비우기
+                  
+                }} color="primary">닫기</Button>
+                <Button onClick={handleEditApply} color="primary">적용</Button>
+            </DialogActions>
+        </Dialog>
 
       </div>
     );

@@ -9,13 +9,15 @@ import EmailIcon from '@mui/icons-material/Email';
 import PhoneIcon from '@mui/icons-material/Phone';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import VerifiedUserIcon from '@mui/icons-material/VerifiedUser';
+import Dialog from '@mui/material/Dialog';
+import DialogContent from '@mui/material/DialogContent';
+
 
 const UserInfoView = ({userInfo}) => {
 
 
     React.useEffect(()=>{
-
-
 
     },[]);
 
@@ -69,6 +71,31 @@ const UserInfoView = ({userInfo}) => {
         return formatNum;
     }
 
+    const [currentIndex, setCurrentIndex] = useState(0);
+    const [openDialog, setOpenDialog] = useState(false);
+    const [dialogImage, setDialogImage] = useState('');
+
+    const handlePrev = () => {
+        if (userInfo && userInfo.mb_images && Array.isArray(userInfo.mb_images) && userInfo.mb_images.length > 0) {
+            setCurrentIndex((prevIndex) => (prevIndex === 0 ? userInfo.mb_images.length - 1 : prevIndex - 1));
+        }
+    };
+
+    const handleNext = () => {
+        if (userInfo && userInfo.mb_images && Array.isArray(userInfo.mb_images) && userInfo.mb_images.length > 0) {
+            setCurrentIndex((prevIndex) => (prevIndex === userInfo.mb_images.length - 1 ? 0 : prevIndex + 1));
+        }
+    };
+
+    const handleImageClick = (image) => {
+        setDialogImage(image);
+        setOpenDialog(true);
+    };
+
+    const handleCloseDialog = () => {
+        setOpenDialog(false);
+        setDialogImage(null);
+    };
 
     return (
 
@@ -129,7 +156,57 @@ const UserInfoView = ({userInfo}) => {
                         최근 접속일 : {userInfo.mb_today_login} 
                     </Typography>
                 </div>
+
+                <div style={{width:'100%', height:'1px', backgroundColor:'#f0f0f0',}}/>
+
+                <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <VerifiedUserIcon sx={{ color: '#1f1f26' }} />
+                    <Typography fontWeight="medium" sx={{fontSize:14, fontWeight:"normal", color:"#1f1f26", marginLeft:"3px"}} >
+                        KYC 인증정보 
+                    </Typography>
+                </div>
+                
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%', backgroundColor: 'black', padding: '10px', overflow: 'hidden', marginTop:'10px' }}>
+                    {userInfo.mb_images && Array.isArray(userInfo.mb_images) && userInfo.mb_images.length > 0 ? (
+                        <>
+                            <button onClick={handlePrev} disabled={currentIndex === 0} style={{ color: 'white' }}>◀</button>
+                            <img 
+                                src={userInfo.mb_images[currentIndex]} 
+                                alt="User" 
+                                style={{ maxWidth: 'calc(100% - 40px)', height: 'auto', borderRadius: '8px', cursor: 'pointer' }} 
+                                onClick={() => handleImageClick(userInfo.mb_images[currentIndex])} 
+                            />
+                            <button onClick={handleNext} disabled={currentIndex === (userInfo.mb_images.length - 1)} style={{ color: 'white' }}>▶</button>
+                        </>
+                    ) : (
+                        <Typography sx={{ color: 'white' }}>인증되지 않은 사용자입니다.</Typography>
+                    )}
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'center', marginTop: '10px' }}>
+                    {userInfo.mb_images.map((_, index) => (
+                        <span key={index} style={{ 
+                            height: '10px', 
+                            width: '10px', 
+                            borderRadius: '50%', 
+                            backgroundColor: currentIndex === index ? 'black' : 'lightgray', 
+                            margin: '0 5px', 
+                            display: 'inline-block' 
+                        }} />
+                    ))}
+                </div>
+                </div>
             </div>
+            <Dialog 
+                open={openDialog} 
+                onClose={handleCloseDialog} 
+                aria-labelledby="dialog-title" 
+                aria-describedby="dialog-description"
+            >
+                <DialogContent>
+                    <img src={dialogImage} alt="Enlarged User" style={{ width: '100%', height: 'auto' }} />
+                </DialogContent>
+            </Dialog>
         </div>        
     )
 

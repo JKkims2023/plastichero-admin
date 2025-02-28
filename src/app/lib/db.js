@@ -1,4 +1,4 @@
-import mysql from 'mysql2/promise';
+const mysql = require('mysql2/promise');
 
 const pool = mysql.createPool({
   host: process.env.DB_HOST,
@@ -9,7 +9,7 @@ const pool = mysql.createPool({
   connectionLimit: 10, // 연결 풀 크기 설정 (선택 사항)
 });
 
-export async function getConnection() {
+module.exports.getConnection = async function() {
   try {
     const connection = await pool.getConnection();
     return connection;
@@ -19,4 +19,4 @@ export async function getConnection() {
   }
 }
 
-export default pool;
+module.exports.pool = pool;

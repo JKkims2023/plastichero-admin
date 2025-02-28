@@ -10,35 +10,37 @@ import { getConnection } from '../../../lib/db';
 
 export async function POST(request) {
 
+  const connection = await getConnection();
+
   try{
 
-    const { pagingIdx, fromDate, toDate } = await request.json();
+    const { node_no, status } = await request.json();
 
-    const connection = await getConnection();
+    if(status == ''){
+
+      connection.release(); // 연결 반환
+
+      return NextResponse.json({ 
+        
+        result: 'error',
+        result_data : 'status is empty',
+      },{status: 401});
+
+    }
+
 
     const sql = `
     
-      SELECT 
+     UPDATE g5_node_list SET 
+     
+      stop_yn = '${status}'
 
-        L.idx, 
-        L.address, 
-        L.memo,
-        L.lock_type,
-        if(L.lock_type = '0', '기타', if(L.lock_type = '1', '회사정책', '해킹')) as lock_type_text,
-        DATE_FORMAT(L.reg_date , '%Y-%m-%d %H:%i:%S') as reg_date,  
-        DATE_FORMAT(L.unlock_date , '%Y-%m-%d %H:%i:%S') as unlock_date, 
-        W.user_idx,
-        W.email,
-        M.mb_id,
-        M.mb_name,
-        M.mb_email
-
-
-      FROM tbl_pth_lock as L left outer join tbl_pth_wallet_info as W ON L.address = W.address left outer join g5_member as M ON W.user_idx = M.mb_no
-      
-      order by reg_date desc;
+     where node_no = ${node_no} 
+     
 
     `;
+
+    console.log(sql);
 
     const [rows, fields] = await connection.execute(sql);
 
@@ -57,6 +59,14 @@ export async function POST(request) {
   }catch(error){
 
     console.log(error);
+
+    connection.release(); // 연결 반환
+
+    return NextResponse.json({ 
+        
+      result: 'error',
+      result_data : error,
+    },{status: 401});
 
   }
 

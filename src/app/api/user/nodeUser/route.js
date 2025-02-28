@@ -19,28 +19,28 @@ export async function POST(request) {
     const sql = `
     
       SELECT
-
+      
         DATE_FORMAT(N.reg_date , '%Y-%m-%d %H:%i:%S') as mb_datetime,
-          mb_email,
-          mb_invite_code,
-          mb_invite_code as invite_code,
-          wallet_address
+        N.mb_email,
+        N.mb_invite_code,
+        N.mb_invite_code as invite_code,
+        N.wallet_address,
+        M.mb_name, 
+        M.mb_id,
+        W.address as real_address,
+        W.email as real_email,
+        if(W.address is null, 'Y', 'N') as not_match_user,
+        if(W.address is null, '미 매칭 사용자', '매칭 사용자') as not_match_user_text        
 
+      from g5_node_member as N left outer join tbl_pth_wallet_info as W ON BINARY(N.mb_email) = BINARY(W.email) and W.active = 'O' left outer join g5_member as M ON W.user_idx = M.mb_no 
+      
+      
 
-          from g5_node_member as N
-
-        order by N.reg_date desc
-        
-      ;
+      order by N.reg_date desc;
 
     `;
 
-
- //   (select mb_no from g5_member where mb_email = N.mb_email and mb_leave_date <> '' ) as mb_no,
- //   (select mb_id from g5_member where mb_email = N.mb_email and mb_leave_date <> '' ) as mb_id,
- //   (select mb_name from g5_member where mb_email = N.mb_email and mb_leave_date <> '' ) as mb_name,
- //   (select mb_hp from g5_member where mb_email = N.mb_email and mb_leave_date <> '' ) as mb_hp
-
+    // and M.mb_leave_date = ''
     const [rows, fields] = await connection.execute(sql);
 
     const response = NextResponse.json({ 
