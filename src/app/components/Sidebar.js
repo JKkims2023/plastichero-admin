@@ -107,7 +107,7 @@ export default function Sidebar() {
         {
           label: '설정',
           children: [
-            { href: '/page/setup', label: '• 시스템 사용자 관리' },
+            { href: '/page/setup/manageList', label: '• 시스템 사용자 관리' },
             { href: '/page/setup/menuAuth', label: '• 메뉴권한 관리' },
           ],
         },
@@ -176,7 +176,7 @@ export default function Sidebar() {
         {
           label: '설정',
           children: [
-            { href: '/page/setup', label: '• 사용자 관리' },
+            { href: '/page/setup/manageList', label: '• 사용자 관리' },
             { href: '/page/setup/menuAuth', label: '• 메뉴권한 관리' },
           ],
         },

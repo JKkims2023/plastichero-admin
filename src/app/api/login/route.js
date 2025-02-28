@@ -6,6 +6,7 @@ import { SignJWT, jwtVerify } from 'jose';
 import { TextEncoder, TextDecoder } from 'util'; // util 모듈에서 가져오기
 import { Buffer } from 'buffer'; // buffer 모듈 import
 import { getConnection } from '../../lib/db';
+import bcrypt from 'bcryptjs';
 
 
 const JWT_SECRET = 'plastichero!*1'; // 실제 환경에서는 안전하게 관리해야 합니다.
@@ -19,8 +20,6 @@ export async function POST(request) {
 
     global.TextEncoder = TextEncoder;
     global.TextDecoder = TextDecoder;
-  
-    console.log(username, password);
     
     const connection = await getConnection();
 
@@ -31,6 +30,7 @@ export async function POST(request) {
       where user_id = '${username}' 
 
       and delete_flag = 'N';
+      
 
     `;
 
@@ -47,7 +47,9 @@ export async function POST(request) {
 
     if (rows[0].user_id == username) {
 
-        if(password === 'password'){
+        const isValidPassword = await bcrypt.compare(password, rows[0].password);
+        
+        if(isValidPassword){
           
           const sql_menu_auth = `
         
@@ -111,6 +113,7 @@ export async function POST(request) {
   }catch(error){
 
     console.log(error);
+    return NextResponse.json({ message: '로그인 처리 중 오류가 발생했습니다.' }, { status: 500 });
 
   }
 
