@@ -12,7 +12,8 @@ export async function POST(request) {
 
   try{
 
-    const { pagingIdx, fromDate, toDate } = await request.json();
+    const { pagingIdx, fromDate } = await request.json();
+
 
     const connection = await getConnection();
 
@@ -38,10 +39,10 @@ export async function POST(request) {
 
       from g5_mining_history as H inner join g5_node_list as N ON H.node_no = N.node_no and N.delete_flag = 'N'
       inner join tbl_pth_wallet_info as W ON N.wallet_idx = W.idx left outer join g5_kiosk as K ON N.kc_kiosk_id = K.kc_no 
+      where H.round_date = '${fromDate}'
       order by N.kc_kiosk_id, N.node_name
 
     `;
-
 
     const [rows, fields] = await connection.execute(sql);
 

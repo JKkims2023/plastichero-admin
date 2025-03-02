@@ -15,6 +15,7 @@ export default function ClientLayout({ children }) {
   // 초기 마운트 시에만 체크하도록 수정
   useEffect(() => {
 
+    /*
     const cookies = parseCookies();
     const token = cookies.token; // 또는 사용하시는 인증 토큰 이름
     
@@ -23,16 +24,13 @@ export default function ClientLayout({ children }) {
     } else {
       setIsLoggedIn(false);
     }
+    */
   
   }, [setIsLoggedIn]);
 
   // 로그인 상태 변경 시 리디렉션
   useEffect(() => {
-    if (isLoggedIn) {
-//      router.push('/');
-    }
 
-    console.log('isLoggedIn', isLoggedIn);
 
   }, [isLoggedIn, router]);
 

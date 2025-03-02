@@ -29,6 +29,7 @@ export default function LoginPage() {
   }, [isLoggedIn, router]);
 
   const handleSubmit = async (e) => {
+    
     e.preventDefault();
 
     try {
@@ -52,7 +53,7 @@ export default function LoginPage() {
 
         login( data ); // 로그인 성공
         router.push('/'); // 홈페이지로 리디렉션
-        console.log('jk login3');
+
         
       } else {
 
@@ -61,6 +62,7 @@ export default function LoginPage() {
       }
     
     } catch (error) {
+
       console.error('Login failed:', error);
 
       alert('Login failed. Please try again.');

@@ -49,6 +49,11 @@ import DialogActions from '@mui/material/DialogActions';
 import Radio from '@mui/material/Radio';
 import RadioGroup from '@mui/material/RadioGroup';
 import FormControlLabel from '@mui/material/FormControlLabel';
+import SettingsIcon from '@mui/icons-material/Settings';
+import DialogContent from '@mui/material/DialogContent';
+import TextField from '@mui/material/TextField';
+import CancelIcon from '@mui/icons-material/Cancel';
+import SaveIcon from '@mui/icons-material/Save';
 
 type Anchor = 'bottom';
 
@@ -122,8 +127,59 @@ export default function Home() {
           disableColumnMenu: true, 
       },
       {
+          field: 'kc_kiosk_id_text',
+          headerName: '키오스크ID',
+          type: 'string',
+          flex: 0.6,
+          disableColumnMenu: true,
+          editable: false,
+          align: 'center',
+          headerAlign: 'center',
+          renderCell: (params) => {
+              const allRows = params.api.getRowModels();
+              const currentId = params.row.id;
+              
+              const prevRow = allRows.get(currentId - 1);
+              const nextRow = allRows.get(currentId + 1);
+
+              const isPrevSame = prevRow && prevRow.kc_kiosk_id_text === params.value;
+              const isNextSame = nextRow && nextRow.kc_kiosk_id_text === params.value;
+
+              const cellStyle: React.CSSProperties = {
+                  width: '100%',
+                  height: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderTop: 'none',
+                  borderBottom: 'none',
+                  borderRight: 'none',
+                  borderLeft: '0.1px solid #f4f6f6',
+              };
+
+              // 값이 이전 행과 같으면 표시하지 않음
+              if (isPrevSame) {
+                  return <div style={cellStyle}></div>;
+              }
+
+              return (
+                  <div style={cellStyle}>
+                      {params.value}
+                  </div>
+              );
+          }
+      },
+      {
           field: 'node_type_text',
           headerName: '타입',
+          type: 'string',
+          flex: 0.3,
+          disableColumnMenu: true,
+          editable: false,
+      },
+      {
+          field: 'node_name',
+          headerName: '노드명',
           type: 'string',
           flex: 0.6,
           disableColumnMenu: true,
@@ -138,18 +194,11 @@ export default function Home() {
           editable: false,
       },
       {
-          field: 'node_name',
-          headerName: '노드명',
-          type: 'string',
-          flex: 0.6,
-          disableColumnMenu: true,
-          editable: false,
-      },
-      {
           field: 'mining_amount',
           headerName: '설정수량',
           type: 'string',
           flex: 0.3,
+          align: 'center',
           disableColumnMenu: true,
           editable: false,
       },
@@ -298,15 +347,29 @@ export default function Home() {
                 }}
                 sx={{
                     '.MuiDataGrid-columnSeparator': {
-                    display: 'none',
+                        display: 'none',
                     },
                     "& .MuiDataGrid-columnHeader": {
-                        borderTopColor:"green",
-                        borderBlockColor:"green",
+                        borderTopColor: "green",
+                        borderBlockColor: "green",
                         color: "#000000",
-                        fontSize:13.5,
+                        fontSize: 13.5,
                         fontWeight: 900,
                         WebkitFontSmoothing: 'antialiased',
+                    },
+                    "& .MuiDataGrid-cell": {
+                        border: 1,
+                        borderColor: "#f4f6f6",
+                        borderRight: 0,
+                        borderTop: 0,
+                        fontSize: 13.5,
+                    },
+                    '& .MuiDataGrid-cell[data-field="kc_kiosk_id_text"]': {
+                        borderTop: 'none !important',
+                        borderBottom: 'none !important',
+                        borderRight: 'none !important',
+                        borderLeft: '1px solid #f4f6f6 !important',
+                        padding: 0,
                     },
                     '& .super-app-theme--Open': {
                         '&.Mui-selected': { backgroundColor: 'black'},
@@ -319,13 +382,6 @@ export default function Home() {
                     },
                     '& .super-app-theme--Rejected': {
                         '&.Mui-selected': { backgroundColor: 'black'},
-                    },
-                    "& .MuiDataGrid-cell": {
-                        border: 1,
-                        borderColor:"#f4f6f6",
-                        borderRight: 0,
-                        borderTop: 0,
-                        fontSize:13.5,
                     },
                     '& .MuiMenuItem-root': {
                             fontSize: 1,
@@ -362,6 +418,14 @@ export default function Home() {
                     '& .MuiTablePagination-select': {
                         fontSize: '13.5px',
                     },
+                    '& .MuiDataGrid-row': {
+                        '&:hover': {
+                            backgroundColor: 'inherit',
+                        },
+                    },
+                    '& .even': {
+                        backgroundColor: theme => theme.palette.grey[50],
+                    },
                 }}
                 getRowClassName={(params) =>
                     params.indexRelativeToCurrentPage % 2 === 1 ? 'even' : 'odd'
@@ -369,6 +433,7 @@ export default function Home() {
                 style={{
                     marginTop:'20px',
                 }}
+                getRowHeight={() => 42}
             />
         );
     };
@@ -391,20 +456,12 @@ export default function Home() {
             }break;
             case 30:{
 
-              setFilterContentTypeValueMethod('location');
+              setFilterContentTypeValueMethod('email');
             }break;
             case 40:{
 
-              setFilterContentTypeValueMethod('owner');
+              setFilterContentTypeValueMethod('address');
             }break;
-            case 50:{
-
-              setFilterContentTypeValueMethod('name');
-            }break;
-            default:{ 
-
-              setFilterContentTypeValueMethod('all');
-            }break;  
 
           }
 
@@ -427,19 +484,10 @@ export default function Home() {
             setFilterSellStatusValueMethod('all');
           }break;
           case 20:{
-            setFilterSellStatusValueMethod('0 ');
+            setFilterSellStatusValueMethod('N');
           }break;
           case 30:{
-            setFilterSellStatusValueMethod('1');
-          }break;
-          case 40:{
-            setFilterSellStatusValueMethod('2');
-          }break;
-          case 50:{
-            setFilterSellStatusValueMethod('3');
-          }break;
-          default:{
-            setFilterSellStatusValueMethod('all');
+            setFilterSellStatusValueMethod('Y');
           }break;
 
         }
@@ -473,71 +521,92 @@ export default function Home() {
         let filteredList = [...nodeList];
 
         if(filterSellStatusValueMethod === 'all') {
+          
           if(filterInfo.length > 0) {
+
             switch(filterContentTypeValueMethod) {
+
               case 'id': {
                 filteredList = filteredList.filter((user) => 
-                  user.kc_kiosk_id?.includes(filterInfo))
+                  user.kc_kiosk_id_text?.includes(filterInfo))
                   .map((user, idx) => ({ ...user, id: idx + 1 }));
               } break;
-              case 'location': {
+              case 'email': {
                 filteredList = filteredList.filter((user) => 
-                  user.kc_addr?.includes(filterInfo))
+                  user.mb_email?.includes(filterInfo))
                   .map((user, idx) => ({ ...user, id: idx + 1 }));
               } break;
-              case 'owner': {
+              case 'address': {
                 filteredList = filteredList.filter((user) => 
-                  user.owner_id?.includes(filterInfo))
+                  user.node_address?.includes(filterInfo))
                   .map((user, idx) => ({ ...user, id: idx + 1 }));
               } break;
-              case 'name': {
-                filteredList = filteredList.filter((user) => 
-                  user.mb_name?.includes(filterInfo))
-                  .map((user, idx) => ({ ...user, id: idx + 1 }));
-              } break;
-              default: {
-                filteredList = filteredList.map((user, idx) => ({ ...user, id: idx + 1 }));
-              } break;
+
             }
+
+          }else{
+
+            filteredList = filteredList.map((user, idx) => ({ ...user, id: idx + 1 }));
+          
           }
+
         } else {
           // sell_status 비교 전에 공백 제거
           const normalizedStatus = filterSellStatusValueMethod.trim();
           
           if(filterInfo.length > 0) {
+
             switch(filterContentTypeValueMethod) {
+
               case 'id': {
                 filteredList = filteredList.filter((user) => 
-                  user.kc_kiosk_id?.includes(filterInfo) && 
-                  user.sell_status?.toString() === normalizedStatus)
+                  user.kc_kiosk_id_text?.includes(filterInfo))
                   .map((user, idx) => ({ ...user, id: idx + 1 }));
               } break;
-              case 'location': {
+              case 'email': {
                 filteredList = filteredList.filter((user) => 
-                  user.kc_addr?.includes(filterInfo) && 
-                  user.sell_status?.toString() === normalizedStatus)
+                  user.mb_email?.includes(filterInfo))
                   .map((user, idx) => ({ ...user, id: idx + 1 }));
               } break;
-              case 'owner': {
+              case 'address': {
                 filteredList = filteredList.filter((user) => 
-                  user.owner_id?.includes(filterInfo) && 
-                  user.sell_status?.toString() === normalizedStatus)
+                  user.node_address?.includes(filterInfo))
                   .map((user, idx) => ({ ...user, id: idx + 1 }));
               } break;
-              case 'name': {
-                filteredList = filteredList.filter((user) => 
-                  user.mb_name?.includes(filterInfo) && 
-                  user.sell_status?.toString() === normalizedStatus)
-                  .map((user, idx) => ({ ...user, id: idx + 1 }));
-              } break;
-              default: {
-                filteredList = filteredList.map((user, idx) => ({ ...user, id: idx + 1 }));
-              } break;
+
             }
+
+            switch(filterSellStatusValueMethod) {
+
+              case 'Y': {
+                filteredList = filteredList.filter((user) => 
+                  user.stop_yn?.toString() == 'Y')
+                  .map((user, idx) => ({ ...user, id: idx + 1 }));
+              } break;
+              case 'N': {
+                filteredList = filteredList.filter((user) => 
+                  user.stop_yn?.toString() == 'N')
+                  .map((user, idx) => ({ ...user, id: idx + 1 }));
+              } break;
+
+            }
+
           } else {
-            filteredList = filteredList.filter((user) => 
-              user.sell_status?.toString() === normalizedStatus)
-              .map((user, idx) => ({ ...user, id: idx + 1 }));
+
+             switch(filterSellStatusValueMethod) {
+
+              case 'Y': {
+                filteredList = filteredList.filter((user) => 
+                  user.stop_yn?.toString() == 'Y')
+                  .map((user, idx) => ({ ...user, id: idx + 1 }));
+              } break;
+              case 'N': {
+                filteredList = filteredList.filter((user) => 
+                  user.stop_yn?.toString() == 'N')
+                  .map((user, idx) => ({ ...user, id: idx + 1 }));
+              } break;
+
+            }
           }
         }
 
@@ -673,7 +742,6 @@ export default function Home() {
         </div>
 
         <div style={{
-          
           display:"flex", 
           float:"left",  
           marginTop:'10px', 
@@ -687,89 +755,87 @@ export default function Home() {
           backgroundColor:'#efefef',
           alignContent:'center',
           alignItems:'center',
-          
-          }}>
-            
+        }}>
             <div style={{display:"flex", float:"left"}}>
+                <FormControl fullWidth style={{ width:"175px", marginTop:"0px", marginLeft:"8px", backgroundColor:'white', color:'black'}}>
+                    <Select
+                        labelId="demo-simple-select-label"
+                        id="demo-simple-select"
+                        style={{color:'black', height: '33px', fontSize: '13px'}}
+                        value={filterSellStatusMethod}
+                        size="small"
+                        onChange={handleChangeFilterSellStatus}
+                    >
+                        <MenuItem style={{fontSize:13}} value={10}>전체</MenuItem>
+                        <MenuItem style={{fontSize:13}} value={20}>채굴중</MenuItem>
+                        <MenuItem style={{fontSize:13}} value={30}>정지</MenuItem>
 
-              <FormControl fullWidth  style={{ width:"175px",marginTop:"0px", marginLeft:"8px", backgroundColor:'white', color:'black'}}>
-                  <Select
-                  labelId="demo-simple-select-label"
-                  id="demo-simple-select"
-                  style={{color:'black'}}
-                  value={filterSellStatusMethod}
-                  size="small"
-                  onChange={handleChangeFilterSellStatus}
-                  >
-                  <MenuItem style={{fontSize:13}} value={10}>전체</MenuItem>
-                  <MenuItem style={{fontSize:13}} value={20}>판매전</MenuItem>
-                  <MenuItem style={{fontSize:13}} value={30}>판매중</MenuItem>
-                  <MenuItem style={{fontSize:13}} value={40}>판매완료(직접채굴)</MenuItem>
-                  <MenuItem style={{fontSize:13}} value={50}>판매완료(운영지원금)</MenuItem>
-                  </Select>
-              </FormControl>
-
+                    </Select>
+                </FormControl>
             </div>
 
-
             <div style={{display:"flex", float:"left", marginLeft:"auto", width:"100%"}}>
-
-              <FormControl fullWidth  style={{ width:"110px",marginTop:"0px", marginLeft:"auto", backgroundColor:'white', color:'black'}}>
-                  <Select
-                  labelId="demo-simple-select-label"
-                  id="demo-simple-select"
-                  style={{color:'black'}}
-                  value={filterContentTypeMethod}
-                  size="small"
-                  onChange={handleChangeFilterContentType}
-                  >
-                  <MenuItem style={{fontSize:13}} value={10}>전체</MenuItem>
-                  <MenuItem style={{fontSize:13}} value={20}>키오스크ID</MenuItem>
-                  <MenuItem style={{fontSize:13}} value={30}>배치장소</MenuItem>
-                  <MenuItem style={{fontSize:13}} value={40}>소유자ID</MenuItem>
-                  <MenuItem style={{fontSize:13}} value={50}>소유자명</MenuItem>
-                  </Select>
-              </FormControl>
+                <FormControl fullWidth style={{ width:"110px", marginTop:"0px", marginLeft:"auto", backgroundColor:'white', color:'black'}}>
+                    <Select
+                        labelId="demo-simple-select-label"
+                        id="demo-simple-select"
+                        style={{color:'black', height: '33px', fontSize: '13px'}}
+                        value={filterContentTypeMethod}
+                        size="small"
+                        onChange={handleChangeFilterContentType}
+                    >
+                        <MenuItem style={{fontSize:13}} value={10}>전체</MenuItem>
+                        <MenuItem style={{fontSize:13}} value={20}>키오스크ID</MenuItem>
+                        <MenuItem style={{fontSize:13}} value={30}>유저이메일</MenuItem>
+                        <MenuItem style={{fontSize:13}} value={40}>유저지갑</MenuItem>
+                    </Select>
+                </FormControl>
             </div>
 
             <Box
-              component="form"
-              marginLeft="10px"
-              marginRight="5px"
-              noValidate
-              style={{marginLeft:'5px'}}
-              autoComplete="off">
+                component="form"
+                marginLeft="10px"
+                marginRight="5px"
+                noValidate
+                style={{marginLeft:'5px'}}
+                autoComplete="off">
 
-
-              <FormControl sx={{minWidth: '300px' }} variant="outlined">
-                <InputLabel id='keywordLabel' size="small" sx={{height:"40px",}}>키워드를 입력하세요</InputLabel>
-                <OutlinedInput
-                  sx={{height:"33px", backgroundColor:'white'}}
-                  id="keywordInfoField"
-                  type='text'
-                  value={filterInfo}
-                  onChange={(text)=>{
-
-                    setFilterInfo(text.target.value);
-
-                  }}
-                  endAdornment={
-                    <InputAdornment position="end">
-                      <ClearIcon
-
-                        onClick={handleClickDeleteKeyword}
-                      />
-                  
-                    </InputAdornment>
-                  }
-                  label="Password"
-                />
-              </FormControl>
+                <FormControl sx={{minWidth: '300px' }} variant="outlined">
+                    <InputLabel id='keywordLabel' size="small" sx={{height:"33px", fontSize: '13px'}}>키워드를 입력하세요</InputLabel>
+                    <OutlinedInput
+                        sx={{height:"33px", backgroundColor:'white', fontSize: '13px'}}
+                        id="keywordInfoField"
+                        type='text'
+                        value={filterInfo}
+                        onChange={(text)=>{
+                            setFilterInfo(text.target.value);
+                        }}
+                        endAdornment={
+                            <InputAdornment position="end">
+                                <ClearIcon
+                                    onClick={handleClickDeleteKeyword}
+                                />
+                            </InputAdornment>
+                        }
+                        label="Password"
+                    />
+                </FormControl>
             </Box>
-            <Button id="keyBtns" variant="outlined" style={{color:"white",backgroundColor:"#1f1f26", borderColor:"#CBCBCB" ,height:"33px" , marginRight:"10px"}}  onClick={handleClickSearch}>
-              검색
+            <Button 
+                id="keyBtns" 
+                variant="outlined" 
+                style={{
+                    color:"white",
+                    backgroundColor:"#1f1f26", 
+                    borderColor:"#CBCBCB",
+                    height:"33px",
+                    marginRight:"10px",
+                    fontSize: '13px'
+                }} 
+                onClick={handleClickSearch}
+            >
+                검색
             </Button>
-
         </div>
 
         <div ref={ref_Div} style={{
@@ -793,52 +859,190 @@ export default function Home() {
         <Dialog 
             open={dialogOpen} 
             onClose={handleCloseDialog} 
+            maxWidth="sm" 
+            fullWidth
             PaperProps={{
-                style: {
-                    width: '500px', // 다이얼로그 너비 조정
-                    padding: '20px', // 좌우 패딩 적용
-                },
+                sx: {
+                    maxHeight: '90vh',
+                    display: 'flex',
+                    flexDirection: 'column'
+                }
             }}
         >
-            <DialogTitle style={{fontWeight:'bold', marginLeft:'0px', paddingLeft:'0px' }}>노드 설정</DialogTitle>
-            <div>
-                <div style={{ backgroundColor: '#f0f0f0', padding: '10px', margin: '5px 0', borderRadius: '5px', border: '1px solid #ccc' }}>
-                    {/* @ts-ignore */}
-                    <p>노드명 : {selectedContent.node_name || '정보 없음'}</p>
-                </div>
-                <div style={{ backgroundColor: '#f0f0f0', padding: '10px', margin: '5px 0', borderRadius: '5px', border: '1px solid #ccc' }}>
-                    {/* @ts-ignore */}
-                    <p>유저이메일 : {selectedContent.mb_email || '정보 없음'}</p>
-                </div>
-                <div style={{ backgroundColor: '#f0f0f0', padding: '10px', margin: '5px 0', borderRadius: '5px', border: '1px solid #ccc' }}>
-                    {/* @ts-ignore */}
-                    <p>유저지갑 : {selectedContent.node_address || '정보 없음'}</p>
-                </div>
-            </div>
-            <RadioGroup
-                value={selectedStatus}
-                onChange={(e) => {
-                  
-
-                  setSelectedStatus(e.target.value);
-
+            <DialogTitle 
+                sx={{ 
+                    backgroundColor: '#1976d2',
+                    color: 'white',
+                    p: 2,
+                    flex: '0 0 auto'
                 }}
             >
-                <FormControlLabel value="stop" control={<Radio />} label="정지" />
-                <FormControlLabel value="mining" control={<Radio />} label="채굴" />
-            </RadioGroup>
-            <DialogActions>
+                <Box sx={{ 
+                    display: 'flex', 
+                    alignItems: 'center',
+                    gap: 1 
+                }}>
+                    <SettingsIcon />
+                    <Typography 
+                        component="span"
+                        sx={{ 
+                            fontSize: '1.25rem',
+                            fontWeight: 'bold'
+                        }}
+                    >
+                        노드 설정
+                    </Typography>
+                </Box>
+            </DialogTitle>
+            
+            <DialogContent 
+                sx={{ 
+                    p: 3,
+                    flex: '1 1 auto',
+                    overflow: 'hidden',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 2,
+                }}
+            >
+                <Box sx={{ 
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 2,
+                    marginTop:'20px'
+                }}>
+                    <TextField
+                        label="노드명"
+                        // @ts-ignore
+                        value={selectedContent.node_name || ''}
+                        fullWidth
+                        size="small"
+                        InputProps={{
+                            readOnly: true,
+                        }}
+                        sx={{
+                          '& .MuiInputLabel-root': { fontSize: '13px' },
+                          '& .MuiInputBase-input': { fontSize: '13px' }
+                        }}
+                    />
+                    <TextField
+                        label="유저이메일"
+                        // @ts-ignore
+                        value={selectedContent.mb_email || ''}
+                        fullWidth
+                        size="small"
+                        InputProps={{
+                            readOnly: true,
+                        }}
+                        sx={{
+                          '& .MuiInputLabel-root': { fontSize: '13px' },
+                          '& .MuiInputBase-input': { fontSize: '13px' }
+                        }}
+                    />
+                    <TextField
+                        label="유저지갑"
+                        // @ts-ignore
+                        value={selectedContent.node_address || ''}
+                        fullWidth
+                        size="small"
+                        InputProps={{
+                            readOnly: true,
+                        }}
+                        sx={{
+                          '& .MuiInputLabel-root': { fontSize: '13px' },
+                          '& .MuiInputBase-input': { fontSize: '13px' }
+                        }}
+                    />
+                </Box>
+
+                <Box sx={{
+                    mt: 2,
+                    p: 2,
+                    marginTop:'0px',
+                    border: '1px solid #e0e0e0',
+                    borderRadius: '8px',
+                    backgroundColor: '#fafafa',
+                }}>
+                    <Typography
+                        sx={{
+                            fontSize: '14px',
+                            fontWeight: 'bold',
+                            color: '#1976d2',
+                            mb: 2,
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 1
+                        }}
+                    >
+                        <SettingsIcon sx={{ fontSize: 20 }} />
+                        노드 상태 설정
+                    </Typography>
+                    
+                    <RadioGroup
+                        value={selectedStatus}
+                        onChange={(e) => setSelectedStatus(e.target.value)}
+                        sx={{
+                            '& .MuiFormControlLabel-root': {
+                                marginY: 0
+                            },
+                            '& .MuiFormControlLabel-label': {
+                                fontSize: '13px'
+                            }
+                        }}
+                    >
+                        <FormControlLabel 
+                            value="stop" 
+                            control={
+                                <Radio 
+                                    sx={{
+                                        color: '#1976d2',
+                                        '&.Mui-checked': {
+                                            color: '#1976d2',
+                                        }
+                                    }}
+                                />
+                            } 
+                            label="정지" 
+                        />
+                        <FormControlLabel 
+                            value="mining" 
+                            control={
+                                <Radio 
+                                    sx={{
+                                        color: '#1976d2',
+                                        '&.Mui-checked': {
+                                            color: '#1976d2',
+                                        }
+                                    }}
+                                />
+                            } 
+                            label="채굴" 
+                        />
+                    </RadioGroup>
+                </Box>
+            </DialogContent>
+
+            <DialogActions 
+                sx={{ 
+                    p: 2,
+                    backgroundColor: '#f5f5f5',
+                    borderTop: '1px solid #ddd',
+                    flex: '0 0 auto'
+                }}
+            >
                 <Button 
                     onClick={handleCloseDialog} 
                     variant="outlined" 
-                    style={{ color: '#1f1f26', borderColor: '#CBCBCB', marginRight: '10px' }}
+                    startIcon={<CancelIcon />}
+                    sx={{ fontSize: '13px' }}
                 >
-                    닫기
+                    취소
                 </Button>
                 <Button 
                     onClick={handleApplyStatus} 
                     variant="contained" 
-                    style={{ backgroundColor: '#1f1f26', color: 'white' }}
+                    startIcon={<SaveIcon />}
+                    sx={{ fontSize: '13px' }}
                 >
                     적용
                 </Button>

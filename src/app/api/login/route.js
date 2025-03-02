@@ -23,6 +23,8 @@ export async function POST(request) {
     
     const connection = await getConnection();
 
+    console.log(username, password);
+
     const sql = `
     
       SELECT * FROM tbl_system_user_main 
@@ -47,61 +49,67 @@ export async function POST(request) {
 
     if (rows[0].user_id == username) {
 
-        const isValidPassword = await bcrypt.compare(password, rows[0].password);
+        console.log(rows);
+
+        if (!rows[0].user_pw) {
+
+            connection.release();
+            return NextResponse.json({ message: '비밀번호가 설정되지 않은 계정입니다.' }, { status: 401 });
         
-        if(isValidPassword){
-          
-          const sql_menu_auth = `
-        
-            SELECT * FROM tbl_system_menu_auth 
-            
-            where user_key = '${rows[0].user_key}' 
-      
-            and delete_flag = 'N';
-      
-          `;
-    
-          const [rows_menu, fields_menu] = await connection.execute(sql_menu_auth);
-
-          
-          const token = await new SignJWT({ username })
-              .setProtectedHeader({ alg: 'HS256' })
-              .setIssuedAt()
-              .setExpirationTime('12h')
-              .sign(Buffer.from(JWT_SECRET));
-
-          
-          const serializedCookie = serialize('token', token, {
-              httpOnly: true,
-              secure: process.env.NODE_ENV === 'production',
-              sameSite: 'strict',
-              path: '/',
-              maxAge:12 * 60 * 60,});
-
-          const response = NextResponse.json({ 
-              
-              message: 'Login successful',
-              user_id : username,
-              user_name :  rows[0].user_name,
-              user_type : rows[0].user_type,
-              menu_auth : rows_menu,
-
-            });
-
-            // Set-Cookie 헤더 설정
-            response.headers.set('Set-Cookie', serializedCookie);
-
-            connection.release(); // 연결 반환
-          
-            return response;
-          
-          
-          }else{
-
-            connection.release(); // 연결 반환
-            return NextResponse.json({ message: '비밀번호가 일치하지 않습니다.' }, { status: 401 });
-     
           }
+
+        try {
+
+            const isValidPassword = await bcrypt.compare(password, rows[0].user_pw);
+            
+            console.log(isValidPassword);
+
+            if(isValidPassword){  
+              
+                const token = await new SignJWT({ username })
+                    .setProtectedHeader({ alg: 'HS256' })
+                    .setIssuedAt()
+                    .setExpirationTime('12h')
+                    .sign(Buffer.from(JWT_SECRET));
+
+                
+                const serializedCookie = serialize('token', token, {
+                    httpOnly: true,
+                    secure: process.env.NODE_ENV === 'production',
+                    sameSite: 'strict',
+                    path: '/',
+                    maxAge:12 * 60 * 60,});
+
+                const response = NextResponse.json({ 
+                    
+                    message: 'Login successful',
+                    user_id : username,
+                    user_name :  rows[0].user_name,
+                    user_type : rows[0].user_type,
+                    menu_auth : rows[0].menu_auth,
+
+                  });
+
+                // Set-Cookie 헤더 설정
+                response.headers.set('Set-Cookie', serializedCookie);
+
+                connection.release(); // 연결 반환
+              
+                return response;
+              
+              
+              }else{
+
+                connection.release(); // 연결 반환
+                return NextResponse.json({ message: '비밀번호가 일치하지 않습니다.' }, { status: 401 });
+         
+              }
+
+        } catch (error) {
+            console.error('Password comparison error:', error);
+            connection.release();
+            return NextResponse.json({ message: '비밀번호 검증 중 오류가 발생했습니다.' }, { status: 500 });
+        }
 
     } else {
       

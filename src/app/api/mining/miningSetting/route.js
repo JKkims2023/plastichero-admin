@@ -22,7 +22,6 @@ export async function POST(request) {
      
       N.node_no, 
       N.mb_no, 
-
       N.kc_kiosk_id, 
       N.node_name, 
       N.mining_amount, 
@@ -38,13 +37,14 @@ export async function POST(request) {
       M.mb_name,
       M.mb_id,
       M.mb_email,
-      W.address as node_address
+      W.address as node_address,
+      (select kc_kiosk_id from g5_kiosk where kc_no = N.kc_kiosk_id) as kc_kiosk_id_text
 
       FROM g5_node_list as N left outer join tbl_pth_wallet_info as W on W.idx = N.wallet_idx left outer join g5_member as M on M.mb_no = N.mb_no
 
     where 1=1 and N.delete_flag = 'N'
 
-    order by reg_date desc;
+    order by N.kc_kiosk_id, N.reg_date desc;
 
     `;
 
