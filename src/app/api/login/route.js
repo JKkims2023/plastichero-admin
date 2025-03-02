@@ -50,30 +50,31 @@ export async function POST(request) {
 
     if (rows[0].user_id == username) {
 
-        const isValidPassword = await bcrypt.compare(password, rows[0].password);
+        const isValidPassword = await bcrypt.compare(password, rows[0].user_pw);
         
-        if(isValidPassword){
-          
-          const sql_menu_auth = `
-        
-            SELECT * FROM tbl_system_menu_auth 
+        try{
+              if(isValidPassword){
+                
+                const sql_menu_auth = `
+              
+                  SELECT * FROM tbl_system_menu_auth 
+                  
+                  where user_key = '${rows[0].user_key}' 
             
-            where user_key = '${rows[0].user_key}' 
-      
-            and delete_flag = 'N';
-      
-          `;
-    
-          const [rows_menu, fields_menu] = await connection.execute(sql_menu_auth);
-
+                  and delete_flag = 'N';
+            
+                `;
           
-          const token = await new SignJWT({ username })
-              .setProtectedHeader({ alg: 'HS256' })
-              .setIssuedAt()
-              .setExpirationTime('12h')
-              .sign(Buffer.from(JWT_SECRET));
+                const [rows_menu, fields_menu] = await connection.execute(sql_menu_auth);
 
                 
+                const token = await new SignJWT({ username })
+                    .setProtectedHeader({ alg: 'HS256' })
+                    .setIssuedAt()
+                    .setExpirationTime('12h')
+                    .sign(Buffer.from(JWT_SECRET));
+
+                      
                 const serializedCookie = serialize('token', token, {
                     httpOnly: true,
                     secure: process.env.NODE_ENV === 'production',

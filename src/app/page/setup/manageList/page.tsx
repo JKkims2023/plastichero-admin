@@ -88,68 +88,69 @@ const StripedDataGrid = styled(DataGrid)(({ theme }) => ({
 
 
 const menuList = [
-
-  {
-    label: '회원관리',
-    children: [
-      { href: '/page/user/normalUser', label: '• 일반 회원리스트' },
-      { href: '/page/user/nodeUser', label: '• 노드 회원리스트' },
-      { href: '/page/user/kycInfo', label: '• KYC 정보관리' },
-
-    ],
-  },
-  {
-    label: '채굴(노드)관리',
-    children: [
-      { href: '/page/mining/setup', label: '• 채굴설정' },
-      { href: '/page/mining/history', label: '• 채굴내역' },
-      { href: '/page/mining/monitoring', label: '• 모니터링 / 재처리' },
-    ],
-  },
-  {
-    label: '포인트관리',
-    children: [
-      { href: '/page/point/pointRewardInfo', label: '• 포인트 제공내역' },
-      { href: '/page/point/pointHistoryInfo', label: '• 포인트 사용내역' },
-      { href: '/page/point/pointSwapInfo', label: '• 포인트 전환내역' },
-    ],
-  },
-  {
-    label: '코인전송관리',
-    children: [
-      { href: '/page/point/pointRewardInfo', label: '• 개별전송' },
-      { href: '/page/point/pointHistoryInfo', label: '• 노드전송' },
-      { href: '/page/point/pointSwapInfo', label: '• 대량전송' },
-      { href: '/page/point/pointSwapInfo', label: '• 전송내역 관리' },
-    ],
-  },
-  {
-    label: '운영관리',
-    children: [
-      { href: '/page/manage/noticeInfo', label: '• 공지 관리' },
-      { href: '/page/manage/mailInfo', label: '• 메일 인증내역' },
-      { href: '/page/manage/mailInfo', label: '• 메일 발송관리' },
-      { href: '/page/manage/smsInfo', label: '• SMS 인증내역' },
-      { href: '/page/manage/lockInfo', label: '• Lock 설정' },
-      { href: '/page/user/blackList', label: '• 블랙리스트 관리' },
-      { href: '/page/manage/appInfo', label: '• 앱 관리' },
-    ],
-  },
-  {
-    label: '키오스크관리',
-    children: [
-      { href: '/page/kiosk/ownerInfo', label: '• 소유자 관리' },
-      { href: '/page/kiosk/petDepositInfo', label: '• 플라스틱 수거현황' },
-    ],
-  },
-  {
-    label: '설정',
-    children: [
-      { href: '/page/setup/manageList', label: '• 시스템 사용자 관리' },
-
-    ],
-  },
-  
+    {
+        label: 'Overview',
+        href: '/',
+        children: []
+    },
+    {
+        label: '회원관리',
+        children: [
+            { href: '/page/user/normalUser', label: '• 일반 회원리스트' },
+            { href: '/page/user/nodeUser', label: '• 노드 회원리스트' },
+            { href: '/page/user/kycInfo', label: '• KYC 정보관리' },
+        ],
+    },
+    {
+        label: '채굴(노드)관리',
+        children: [
+            { href: '/page/mining/setup', label: '• 채굴설정' },
+            { href: '/page/mining/history', label: '• 채굴내역' },
+            { href: '/page/mining/monitoring', label: '• 모니터링 / 재처리' },
+        ],
+    },
+    {
+        label: '포인트관리',
+        children: [
+            { href: '/page/point/pointRewardInfo', label: '• 포인트 제공내역' },
+            { href: '/page/point/pointHistoryInfo', label: '• 포인트 사용내역' },
+            { href: '/page/point/pointSwapInfo', label: '• 포인트 전환내역' },
+        ],
+    },
+    {
+        label: '코인전송관리',
+        children: [
+            { href: '/page/point/pointRewardInfo', label: '• 개별전송' },
+            { href: '/page/point/pointHistoryInfo', label: '• 노드전송' },
+            { href: '/page/point/pointSwapInfo', label: '• 대량전송' },
+            { href: '/page/point/pointSwapInfo', label: '• 전송내역 관리' },
+        ],
+    },
+    {
+        label: '운영관리',
+        children: [
+            { href: '/page/manage/noticeInfo', label: '• 공지 관리' },
+            { href: '/page/manage/mailInfo', label: '• 메일 인증내역' },
+            { href: '/page/manage/mailInfo', label: '• 메일 발송관리' },
+            { href: '/page/manage/smsInfo', label: '• SMS 인증내역' },
+            { href: '/page/manage/lockInfo', label: '• Lock 설정' },
+            { href: '/page/user/blackList', label: '• 블랙리스트 관리' },
+            { href: '/page/manage/appInfo', label: '• 앱 관리' },
+        ],
+    },
+    {
+        label: '키오스크관리',
+        children: [
+            { href: '/page/kiosk/ownerInfo', label: '• 소유자 관리' },
+            { href: '/page/kiosk/petDepositInfo', label: '• 플라스틱 수거현황' },
+        ],
+    },
+    {
+        label: '설정',
+        children: [
+            { href: '/page/setup/manageList', label: '• 시스템 사용자 관리' },
+        ],
+    },
 ];
 
 
@@ -396,8 +397,8 @@ const MenuAuthSection: React.FC<MenuAuthSectionProps> = ({ menuItems, onMenuChan
 const createInitialMenuAuth = (menuListData: any[]) => {
   return menuListData.map(menu => ({
         label: menu.label,
-        checked: false,
-        show_yn: 'hide',
+        checked: menu.label === 'Overview', // Overview는 기본적으로 체크
+        show_yn: menu.label === 'Overview' ? 'show' : 'hide',
         children: menu.children?.map(child => ({
           href: child.href,
           label: child.label,
@@ -405,6 +406,7 @@ const createInitialMenuAuth = (menuListData: any[]) => {
         })) || []
   }));
 };
+
 
 export default function Home() {
 
@@ -845,17 +847,34 @@ export default function Home() {
       setEditUserType(content.user_type);
       
       // 기존 메뉴 권한 정보를 가져와서 설정
-      const userMenuAuth = content.menu_auth 
-        ? content.menu_auth.map((menu: any) => ({
-            ...menu,
-            checked: menu.checked || false,
-            show_yn: menu.show_yn || 'hide',
-            children: menu.children?.map((child: any) => ({
-              ...child,
-              checked: child.checked || false
-            })) || []
-          }))
-        : createInitialMenuAuth(menuList);
+      let userMenuAuth;
+      if (content.menu_auth) {
+          // Overview가 없는 경우 추가
+          const hasOverview = content.menu_auth.some(menu => menu.label === 'Overview');
+          if (!hasOverview) {
+              userMenuAuth = [
+                  {
+                      label: 'Overview',
+                      checked: true,
+                      show_yn: 'show',
+                      children: []
+                  },
+                  ...content.menu_auth
+              ];
+          } else {
+              userMenuAuth = content.menu_auth.map(menu => ({
+                  ...menu,
+                  checked: menu.checked || menu.label === 'Overview',
+                  show_yn: menu.label === 'Overview' ? 'show' : menu.show_yn,
+                  children: menu.children?.map(child => ({
+                      ...child,
+                      checked: child.checked
+                  })) || []
+              }));
+          }
+      } else {
+          userMenuAuth = createInitialMenuAuth(menuList);
+      }
 
       setEditMenuAuth(userMenuAuth);
       setOpenEditDialog(true);
@@ -942,42 +961,42 @@ export default function Home() {
         return;
       }
 
-      // 선택된 메뉴 권한 정보 수집
-      const selectedMenuAuth = menuAuth.map(menu => {
-        const hasCheckedChild = menu.children?.some(child => child.checked) ?? false;
-        return {
-          label: menu.label,
-          checked: menu.checked,
-          show_yn: hasCheckedChild ? 'show' : 'hide',
-          children: menu.children?.map(child => ({
-            href: child.href,
-            label: child.label,
-            checked: child.checked
-          }))
-        };
-      });
-
-      let userTypeValue = userType;
-
-      switch(userType){
-
-        case '총괄관리자':{
-          userTypeValue = 'A';
-        }break;
-        case '어드민':{
-          userTypeValue = 'M';
-        }break;
-        case '일반사용자':{
-          userTypeValue = 'N';
-        }break;
-        default:{
-          userTypeValue = 'N';
-        }break;
-      }
-
-      console.log(selectedMenuAuth);
-      
       try {
+        // 선택된 메뉴 권한 정보 수집
+        const selectedMenuAuth = menuAuth.map(menu => {
+          const hasCheckedChild = menu.children?.some(child => child.checked) ?? false;
+          return {
+            label: menu.label,
+            checked: menu.checked || menu.label === 'Overview', // Overview는 항상 체크
+            show_yn: hasCheckedChild || menu.label === 'Overview' ? 'show' : 'hide',
+            children: menu.children?.map(child => ({
+              href: child.href,
+              label: child.label,
+              checked: child.checked
+            }))
+          };
+        });
+
+        let userTypeValue = userType;
+
+        switch(userType){
+
+          case '총괄관리자':{
+            userTypeValue = 'A';
+          }break;
+          case '어드민':{
+            userTypeValue = 'M';
+          }break;
+          case '일반사용자':{
+            userTypeValue = 'N';
+          }break;
+          default:{
+            userTypeValue = 'N';
+          }break;
+        }
+
+        console.log(selectedMenuAuth);
+        
         const response = await fetch('/api/setup/manageUser', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -1016,13 +1035,12 @@ export default function Home() {
     // 수정 처리
     const handleEdit = async () => {
       try {
-        // 수정된 메뉴 권한 정보 수집
         const updatedMenuAuth = editMenuAuth.map(menu => {
           const hasCheckedChild = menu.children?.some(child => child.checked) ?? false;
           return {
             label: menu.label,
-            checked: menu.checked,
-            show_yn: hasCheckedChild ? 'show' : 'hide',
+            checked: menu.checked || menu.label === 'Overview', // Overview는 항상 체크
+            show_yn: hasCheckedChild || menu.label === 'Overview' ? 'show' : 'hide',
             children: menu.children?.map(child => ({
               href: child.href,
               label: child.label,
@@ -1031,6 +1049,7 @@ export default function Home() {
           };
         });
 
+        console.log(updatedMenuAuth);
 
         const response = await fetch('/api/setup/manageUser', {
           method: 'POST',

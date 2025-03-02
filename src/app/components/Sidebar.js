@@ -167,10 +167,10 @@ export default function Sidebar() {
       <ul style={{marginTop:'10px'}}>
         {sidebarData.map((item, index) => (
           <li key={index} style={{width:'100%'}}>
-            {item.href ? (
+            {item.href || item.label == 'Overview' ? (
               <div style={{width:'100%', padding:'20px', paddingTop:'7px', paddingBottom:'7px', alignContent:'center', alignItems:'center', justifyContent:'center'}}>
               <HomeIcon color="white" style={{marginRight:'15px', marginTop:'-5px'}}/>
-              <Link href={item.href}  style={{fontSize:14, fontWeight:'bold', width:'100%',}} legacyBehavior>
+              <Link href={'/'}  style={{fontSize:14, fontWeight:'bold', width:'100%',}} legacyBehavior>
                 <a tabIndex="0" style={{fontSize:14, fontWeight:'bold', width:'100%', color:'white'}}>{item.label}</a>
               </Link>
               </div>

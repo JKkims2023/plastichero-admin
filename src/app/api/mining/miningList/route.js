@@ -28,13 +28,15 @@ export async function POST(request) {
         H.result_key,
         H.tx_hash,
         H.round_date,
+        H.mainnet_request_status,
+        H.result_msg,
         DATE_FORMAT(H.req_date, '%Y-%m-%d %H:%i:%S') as req_date, 
         H.update_date,
         H.done_yn,
-        if(H.done_yn = 'S','채굴완료',if(H.done_yn = 'F','채굴실패','채굴중')) as done_status,
-        N.node_name,
+        if(H.mainnet_request_status = 'S','채굴완료',if(H.mainnet_request_status = 'F','채굴실패','채굴중')) as done_status,
         K.kc_kiosk_id,
-        W.address
+        W.address,
+        N.node_name
 
 
       from g5_mining_history as H inner join g5_node_list as N ON H.node_no = N.node_no and N.delete_flag = 'N'
@@ -44,6 +46,7 @@ export async function POST(request) {
 
     `;
 
+    console.log(sql);
     const [rows, fields] = await connection.execute(sql);
 
     const response = NextResponse.json({ 
@@ -62,7 +65,7 @@ export async function POST(request) {
 
     console.log(error);
 
-    return NextResponse.json({ message: error }, { status: 401 });
+    return NextResponse.json({ message: error.message }, { status: 401 });
   
   }
 

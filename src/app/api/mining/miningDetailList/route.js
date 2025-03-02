@@ -16,24 +16,28 @@ export async function POST(request) {
     
       SELECT 
       
-        idx, 
-        user_idx, 
-        wallet_idx, 
-        from_address, 
-        to_address, 
-        amount, 
-        memo, 
-        tx_id, 
-        reg_date, 
-        update_date
+        T.idx, 
+        T.user_idx, 
+        T.wallet_idx, 
+        T.from_address, 
+        T.to_address, 
+        T.amount, 
+        T.memo, 
+        T.tx_id, 
+        T.reg_date, 
+        T.update_date,
+        N.node_name,
+        N.node_company_no
         
-      FROM tbl_pth_transfer_dummy
+      FROM tbl_pth_transfer_dummy as T left outer join g5_node_company_list as N on T.wallet_idx = N.wallet_idx and N.delete_flag = 'N'
 
-      where tx_id = '${target_id}';
+
+      where memo = '${target_id}';
 
     `;
 
     const [rows, fields] = await connection.execute(sql);
+
 
     const response = NextResponse.json({ 
         

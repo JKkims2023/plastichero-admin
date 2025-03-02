@@ -113,12 +113,12 @@ export default function Home() {
       <div style={{ borderBottom: '1px solid #888' }} />
       <LocalizationProvider dateAdapter={AdapterDayjs}>
         <div style={{ display: 'flex', padding: '10px', backgroundColor: '#1f1f26',  color: 'white' }}>
-          <div style={{ display: 'flex', flexDirection: 'column', marginRight: '20px', alignItems:'center' }}>
+          <div style={{ display: 'none', flexDirection: 'column', marginRight: '20px', alignItems:'center' }}>
             <div style={{ color: 'green', fontSize: '35px',  }}>
               OVERVIEW : {selectedDate.format("YYYY/MM/DD")}
             </div>
           </div>
-          <div style={{ marginLeft: 'auto',  }}>
+          <div style={{ marginLeft: '-10px',  }}>
             <DatePicker 
               value={selectedDate} 
               onChange={(newValue) => setSelectedDate(newValue)} 
@@ -126,7 +126,8 @@ export default function Home() {
               maxDate={dayjs().subtract(1, 'day')}
               sx={{ 
  
-                input: { color: 'white', fontSize: '1.3em' },
+                marginTop: '5px',
+                input: { color: 'white', fontSize: '1.1em' },
                 '.MuiInputBase-root': { backgroundColor: '#2a2a30' },
                 '.MuiSvgIcon-root': { color: 'white' }
               }}

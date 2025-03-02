@@ -54,6 +54,13 @@ import DialogContent from '@mui/material/DialogContent';
 import TextField from '@mui/material/TextField';
 import CancelIcon from '@mui/icons-material/Cancel';
 import SaveIcon from '@mui/icons-material/Save';
+import AccountTreeIcon from '@mui/icons-material/AccountTree';
+import EmailIcon from '@mui/icons-material/Email';
+import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
+import StopCircleIcon from '@mui/icons-material/StopCircle';
+import PlayCircleIcon from '@mui/icons-material/PlayCircle';
+import Divider from '@mui/material/Divider';
+import ComputerIcon from '@mui/icons-material/Computer';
 
 type Anchor = 'bottom';
 
@@ -741,6 +748,34 @@ export default function Home() {
             </Typography>
         </div>
 
+        {/* Summary 영역 추가 */}
+        <div style={{ marginTop: '-10px' }}>
+            <Grid container spacing={2} style={{ marginTop: '0px' }}>
+                {[
+                    { title: '총 노드수', value: nodeList.length },
+                    { title: '채굴 설정 노드', value: nodeList.filter(node => node.stop_yn === 'N').length },
+                    { title: '채굴 중지 노드', value: nodeList.filter(node => node.stop_yn === 'Y').length }
+                ].map((item, index) => (
+                    <Grid item xs={4} key={index}>
+                        <div style={{
+                            padding: '16px',
+                            backgroundColor: '#f8f9fa',
+                            borderRadius: 2,
+                            boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+                            textAlign: 'left',
+                        }}>
+                            <Typography variant="h6" style={{ color: '#1f1f26', marginBottom: '4px' }}>
+                                {item.title}
+                            </Typography>
+                            <Typography variant="body1" style={{ color: 'black', fontSize: '24px', fontWeight: 'bold' }}>
+                                {item.value.toLocaleString()}
+                            </Typography>
+                        </div>
+                    </Grid>
+                ))}
+            </Grid>
+        </div>
+
         <div style={{
           display:"flex", 
           float:"left",  
@@ -841,7 +876,7 @@ export default function Home() {
         <div ref={ref_Div} style={{
           flex: 1, 
           height: '100%', 
-          marginTop: '0px', 
+          marginTop: '-10px', 
           paddingLeft: "0px",
           width: '100%'
         }}>
@@ -897,7 +932,7 @@ export default function Home() {
             
             <DialogContent 
                 sx={{ 
-                    p: 3,
+                    p: 2.5,
                     flex: '1 1 auto',
                     overflow: 'hidden',
                     display: 'flex',
@@ -906,72 +941,126 @@ export default function Home() {
                 }}
             >
                 <Box sx={{ 
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: 2,
-                    marginTop:'20px'
+                    backgroundColor: '#ffffff',
+                    borderRadius: '10px',
+                    marginTop:'15px',
+                    p: 2.5,
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.06)',
+                    border: '1px solid #eaeaea',
                 }}>
-                    <TextField
-                        label="노드명"
-                        // @ts-ignore
-                        value={selectedContent.node_name || ''}
-                        fullWidth
-                        size="small"
-                        InputProps={{
-                            readOnly: true,
-                        }}
-                        sx={{
-                          '& .MuiInputLabel-root': { fontSize: '13px' },
-                          '& .MuiInputBase-input': { fontSize: '13px' }
-                        }}
-                    />
-                    <TextField
-                        label="유저이메일"
-                        // @ts-ignore
-                        value={selectedContent.mb_email || ''}
-                        fullWidth
-                        size="small"
-                        InputProps={{
-                            readOnly: true,
-                        }}
-                        sx={{
-                          '& .MuiInputLabel-root': { fontSize: '13px' },
-                          '& .MuiInputBase-input': { fontSize: '13px' }
-                        }}
-                    />
-                    <TextField
-                        label="유저지갑"
-                        // @ts-ignore
-                        value={selectedContent.node_address || ''}
-                        fullWidth
-                        size="small"
-                        InputProps={{
-                            readOnly: true,
-                        }}
-                        sx={{
-                          '& .MuiInputLabel-root': { fontSize: '13px' },
-                          '& .MuiInputBase-input': { fontSize: '13px' }
-                        }}
-                    />
+                    <Grid container spacing={2}>
+                        <Grid item xs={12}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.2, mb: 0.8 }}>
+                                <ComputerIcon sx={{ color: '#1976d2', fontSize: 18 }} />
+                                <Typography variant="subtitle2" sx={{ 
+                                    color: '#444',
+                                    fontSize: '12px',
+                                    fontWeight: 600,
+                                }}>
+                                    키오스크 ID
+                                </Typography>
+                            </Box>
+                            <Typography sx={{ 
+                                fontSize: '14px',
+                                fontWeight: '500',
+                                color: '#1f1f26',
+                                pl: 3
+                            }}>
+                                {/* @ts-ignore */}
+                                {selectedContent.kc_kiosk_id_text || '-'}
+                            </Typography>
+                            <Divider sx={{ mt: 1.5, mb: 1 }} />
+                        </Grid>
+                        
+                        <Grid item xs={12}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.2, mb: 0.8 }}>
+                                <AccountTreeIcon sx={{ color: '#1976d2', fontSize: 18 }} />
+                                <Typography variant="subtitle2" sx={{ 
+                                    color: '#444',
+                                    fontSize: '12px',
+                                    fontWeight: 600,
+                                }}>
+                                    노드명
+                                </Typography>
+                            </Box>
+                            <Typography sx={{ 
+                                fontSize: '14px',
+                                fontWeight: '500',
+                                color: '#1f1f26',
+                                pl: 3
+                            }}>
+                                {/* @ts-ignore */}
+                                {selectedContent.node_name || '-'}
+                            </Typography>
+                            <Divider sx={{ mt: 1.5, mb: 1 }} />
+                        </Grid>
+                        
+                        <Grid item xs={12}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.2, mb: 0.8 }}>
+                                <EmailIcon sx={{ color: '#1976d2', fontSize: 18 }} />
+                                <Typography variant="subtitle2" sx={{ 
+                                    color: '#444',
+                                    fontSize: '12px',
+                                    fontWeight: 600,
+                                }}>
+                                    유저이메일
+                                </Typography>
+                            </Box>
+                            <Typography sx={{ 
+                                fontSize: '14px',
+                                fontWeight: '500',
+                                color: '#1f1f26',
+                                pl: 3
+                            }}>
+                                {/* @ts-ignore */}
+                                {selectedContent.mb_email || '-'}
+                            </Typography>
+                            <Divider sx={{ mt: 1.5, mb: 1 }} />
+                        </Grid>
+                        
+                        <Grid item xs={12}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.2, mb: 0.8 }}>
+                                <AccountBalanceWalletIcon sx={{ color: '#1976d2', fontSize: 18 }} />
+                                <Typography variant="subtitle2" sx={{ 
+                                    color: '#444',
+                                    fontSize: '12px',
+                                    fontWeight: 600,
+                                }}>
+                                    유저지갑
+                                </Typography>
+                            </Box>
+                            <Typography sx={{ 
+                                fontSize: '14px',
+                                fontWeight: '500',
+                                color: '#1f1f26',
+                                pl: 3,
+                                wordBreak: 'break-all',
+                                lineHeight: 1.4
+                            }}>
+                                {/* @ts-ignore */}
+                                {selectedContent.node_address || '-'}
+                            </Typography>
+                        </Grid>
+                    </Grid>
                 </Box>
 
                 <Box sx={{
-                    mt: 2,
-                    p: 2,
-                    marginTop:'0px',
+                    p: 2.5,
                     border: '1px solid #e0e0e0',
-                    borderRadius: '8px',
-                    backgroundColor: '#fafafa',
+                    borderRadius: '10px',
+                    backgroundColor: '#f8f9fa',
                 }}>
                     <Typography
                         sx={{
                             fontSize: '14px',
-                            fontWeight: 'bold',
+                            fontWeight: 600,
                             color: '#1976d2',
                             mb: 2,
                             display: 'flex',
                             alignItems: 'center',
-                            gap: 1
+                            gap: 1.2,
+                            pb: 1.5,
+                            borderBottom: '1px solid #e0e0e0'
                         }}
                     >
                         <SettingsIcon sx={{ fontSize: 20 }} />
@@ -982,41 +1071,31 @@ export default function Home() {
                         value={selectedStatus}
                         onChange={(e) => setSelectedStatus(e.target.value)}
                         sx={{
+                            pl: 1.5,
                             '& .MuiFormControlLabel-root': {
-                                marginY: 0
+                                mb: 0.8
                             },
                             '& .MuiFormControlLabel-label': {
-                                fontSize: '13px'
+                                fontSize: '13px',
+                                color: '#333'
+                            },
+                            '& .MuiRadio-root': {
+                                color: '#1976d2',
+                                '&.Mui-checked': {
+                                    color: '#1976d2',
+                                }
                             }
                         }}
                     >
                         <FormControlLabel 
                             value="stop" 
-                            control={
-                                <Radio 
-                                    sx={{
-                                        color: '#1976d2',
-                                        '&.Mui-checked': {
-                                            color: '#1976d2',
-                                        }
-                                    }}
-                                />
-                            } 
-                            label="정지" 
+                            control={<Radio />} 
+                            label="정지"
                         />
                         <FormControlLabel 
                             value="mining" 
-                            control={
-                                <Radio 
-                                    sx={{
-                                        color: '#1976d2',
-                                        '&.Mui-checked': {
-                                            color: '#1976d2',
-                                        }
-                                    }}
-                                />
-                            } 
-                            label="채굴" 
+                            control={<Radio />} 
+                            label="채굴"
                         />
                     </RadioGroup>
                 </Box>
@@ -1024,17 +1103,27 @@ export default function Home() {
 
             <DialogActions 
                 sx={{ 
-                    p: 2,
-                    backgroundColor: '#f5f5f5',
-                    borderTop: '1px solid #ddd',
-                    flex: '0 0 auto'
+                    p: 2.5,
+                    backgroundColor: '#f8f9fa',
+                    borderTop: '1px solid #eaeaea',
+                    gap: 1.5
                 }}
             >
                 <Button 
                     onClick={handleCloseDialog} 
                     variant="outlined" 
                     startIcon={<CancelIcon />}
-                    sx={{ fontSize: '13px' }}
+                    sx={{ 
+                        fontSize: '13px',
+                        px: 2.5,
+                        py: 1,
+                        color: '#666',
+                        borderColor: '#ccc',
+                        '&:hover': {
+                            borderColor: '#999',
+                            backgroundColor: '#f5f5f5'
+                        }
+                    }}
                 >
                     취소
                 </Button>
@@ -1042,7 +1131,15 @@ export default function Home() {
                     onClick={handleApplyStatus} 
                     variant="contained" 
                     startIcon={<SaveIcon />}
-                    sx={{ fontSize: '13px' }}
+                    sx={{ 
+                        fontSize: '13px',
+                        px: 2.5,
+                        py: 1,
+                        backgroundColor: '#1976d2',
+                        '&:hover': {
+                            backgroundColor: '#1565c0'
+                        }
+                    }}
                 >
                     적용
                 </Button>

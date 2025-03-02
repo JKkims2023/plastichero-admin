@@ -58,6 +58,13 @@ import dayjs from 'dayjs';
 import 'dayjs/locale/ko';
 import CloseIcon from '@mui/icons-material/Close';
 import axios from 'axios';
+import PaidIcon from '@mui/icons-material/Paid';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import ReceiptLongIcon from '@mui/icons-material/ReceiptLong';
+import AccountTreeIcon from '@mui/icons-material/AccountTree';
+import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
+import Divider from '@mui/material/Divider';
+import DialogContent from '@mui/material/DialogContent';
 
 type Anchor = 'bottom';
 
@@ -121,6 +128,10 @@ export default function Home() {
     const [startDate, setStartDate] = React.useState(dayjs());
     const [endDate, setEndDate] = React.useState(dayjs());
     const [detailSendList, setDetailSendList] = React.useState([]);
+    const [isDetailShow, setIsDetailShow] = React.useState(false);
+    const [detailMessage, setDetailMessage] = React.useState('');
+    const [detailBugTrackKey, setDetailBugTrackKey] = React.useState('');
+    const [detailBugTrackMessage, setDetailBugTrackMessage] = React.useState('');
 
     const page_info = 'Home > 채굴(노드)관리 > 채굴내역';
 
@@ -145,7 +156,7 @@ export default function Home() {
           field: 'node_name',
           headerName: '노드명',
           type: 'string',
-          flex: 0.15,
+          flex: 0.1,
           disableColumnMenu: true,
           editable: false,
       },
@@ -174,6 +185,14 @@ export default function Home() {
           editable: false,
       },
       {
+        field: 'send_status',
+        headerName: '전송상태',
+        type: 'string',
+        flex: 0.07,
+        disableColumnMenu: true,
+        editable: false,
+    },
+      {
           field: 'tx_id',
           headerName: 'TXID',
           type: 'string',
@@ -183,9 +202,9 @@ export default function Home() {
       },
       {
           field: 'req_date',
-          headerName: '채굴일시',
+          headerName: '처리일시',
           type: 'string',
-          flex: 0.17,
+          flex: 0.13,
           disableColumnMenu: true,
           editable: false,
       },
@@ -195,15 +214,60 @@ export default function Home() {
         flex: 0.08,
         disableColumnMenu: true,
         renderCell: (params) => {
-            const isStopped = params.row.stop_yn === 'Y';
+            const getButtonColor = () => {
+                switch(params.row.mainnet_request_status) {
+                    case 'S': return '#1976d2';  // Blue
+                    case 'N': return '#2e7d32';  // Green
+                    case 'F': return '#d32f2f';  // Red
+                    default: return '#1976d2';   // 기본값 Blue
+                }
+            };
+
             return (
                 <Button
                     variant="contained"
                     size="small"
-                    sx={{ fontSize: '12px', backgroundColor: isStopped ? 'red' : 'green' }}
+                    sx={{ 
+                        fontSize: '12px', 
+                        backgroundColor: getButtonColor(),
+                        '&:hover': {
+                            backgroundColor: getButtonColor(),
+                            opacity: 0.9
+                        }
+                    }}
                     onClick={() => {
+
                         setSelectedContent(params.row);
-                        setDialogOpen(true);
+
+                        switch(params.row.mainnet_request_status){
+                            
+                            case 'N':{
+                                
+                                setIsDetailShow(false);
+                               
+                            } break;
+                            case 'S':{
+                                
+                                setIsDetailShow(true);
+
+                            } break;
+                            case 'F':{
+                                
+                                console.log(params.row.mainnet_request_status);
+                                setIsDetailShow(false);
+                                setDetailMessage('블록체인 서버로 채굴 요청이 실패하였습니다.\채굴 요청 자체 실패로 인하여 관련 지갑들로의 코인전송 또한 수행되지 않았습니다.');
+                                setDetailBugTrackKey('장애 추적키 : ' + params.row.result_key);
+                                setDetailBugTrackMessage('장애 메세지 : ' + params.row.result_msg);
+
+                            } break;
+                            default:{
+                                setIsDetailShow(true);
+                                break;
+                            }
+                        }
+                        
+                        get_Detail_NodeList(params.row.result_key);
+
                     }}
                 >
                     보기
@@ -221,10 +285,19 @@ export default function Home() {
             disableColumnMenu: true,
         },
         {
-            field: 'target_name',
+            field: 'node_name',
             headerName: '분배 대상',
             flex: 0.4,
             disableColumnMenu: true,
+            renderCell: (params) => (
+                <Typography sx={{ 
+                    fontSize: '13px',
+                    width: '100%',
+                    textAlign: 'left'
+                }}>
+                    {params.value || '노드소유주'}
+                </Typography>
+            ),
         },
         {
             field: 'amount',
@@ -274,9 +347,13 @@ export default function Home() {
     },[filterNodeList]);
 
     React.useEffect(() => {
+
         if (startDate) {
+
             get_NodeList();
+        
         }
+
     }, [startDate]);
 
     const get_NodeList = async() => {
@@ -287,6 +364,7 @@ export default function Home() {
         
           const fromDate = startDate.format('YYYY-MM-DD').replace(/-/g, '');
 
+          setNodeList([]);
 
           const response = await fetch('/api/mining/miningList', {
                 method: 'POST',
@@ -318,7 +396,7 @@ export default function Home() {
         }
     };
 
-    const get_Detail_NodeList = async() => {
+    const get_Detail_NodeList = async(result_key) => {
         
         setLoading(true);
 
@@ -330,7 +408,7 @@ export default function Home() {
                     'Content-Type': 'application/json',
                 },
                 // @ts-ignore
-                body: JSON.stringify({ target_id: selectedContent.result_key }),
+                body: JSON.stringify({ target_id: result_key }),
             });
 
             const data = await response.json();
@@ -339,11 +417,14 @@ export default function Home() {
 
             if (response.ok) {
               
-                setNodeList(data.result_data.map((data, idx) => ({ id: idx + 1, ...data })));
-                setFilterNodeList(data.result_data.map((data, idx) => ({ id: idx + 1, ...data })));
+                setDetailSendList(data.result_data.map((data, idx) => ({ id: idx + 1, ...data })));
             
+                setDialogOpen(true);
+
             } else {
             
+                setDetailSendList([]);
+
                 alert(data.message);
             
             }
@@ -732,25 +813,34 @@ export default function Home() {
             <Paper style={{ padding: '10px', flex: 1, marginRight: '10px', display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
                 <Typography style={{ fontSize: '14x', color: "#1f1f26"  }}>총 채굴횟수</Typography>
                 <Typography style={{ fontSize: "24px", fontWeight: "bold", color: "#1f1f26" }}>
-                    {filterNodeList.length}
+                    {filterNodeList.length.toLocaleString('ko-KR')}
+                </Typography>
+            </Paper>
+            <Paper style={{ padding: '10px', flex: 1, marginRight: '10px', display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+                <Typography style={{ fontSize: '14px', color: "#1f1f26"  }}>채굴수량</Typography>
+                <Typography style={{ fontSize: "24px", fontWeight: "bold", color: "#1f1f26" }}>
+                    {filterNodeList
+                        .filter(node => node.mainnet_request_status === 'S')
+                        .reduce((sum, node) => sum + Number(node.mining_amount || 0), 0)
+                        .toLocaleString('ko-KR')} PTH
                 </Typography>
             </Paper>
             <Paper style={{ padding: '10px', flex: 1, marginRight: '10px', display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
                 <Typography style={{ fontSize: '14px', color: "#1f1f26"  }}>채굴완료</Typography>
                 <Typography style={{ fontSize: "24px", fontWeight: "bold", color: "#1f1f26" }}>
-                    {filterNodeList.filter(node => node.done_yn === 'Y').length}
+                    {filterNodeList.filter(node => node.mainnet_request_status === 'S').length.toLocaleString('ko-KR')}
                 </Typography>
             </Paper>
             <Paper style={{ padding: '10px', flex: 1, marginRight: '10px', display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
                 <Typography style={{ fontSize: '14px', color: "#1f1f26"  }}>채굴중</Typography>
                 <Typography style={{ fontSize: "24px", fontWeight: "bold", color: "#1f1f26"}}>
-                    {filterNodeList.filter(node => node.done_yn === 'N').length}
+                    {filterNodeList.filter(node => node.mainnet_request_status === 'N').length.toLocaleString('ko-KR')}
                 </Typography>
             </Paper>
             <Paper style={{ padding: '10px', flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
                 <Typography style={{ fontSize: '14px', color: "#1f1f26"  }}>채굴실패</Typography>
                 <Typography style={{ fontSize: "24px", fontWeight: "bold", color: "#1f1f26"}}>
-                    {filterNodeList.filter(node => node.done_yn === 'F').length}
+                    {filterNodeList.filter(node => node.mainnet_request_status === 'F').length.toLocaleString('ko-KR')}
                 </Typography>
             </Paper>
         </div>
@@ -760,7 +850,7 @@ export default function Home() {
           display:"flex", 
           float:"left",  
           marginTop:'10px', 
-          paddingTop:"15px", 
+          paddingTop:"10px", 
           paddingBottom:"10px", 
           paddingLeft:"10px",
           width:"100%", 
@@ -773,9 +863,19 @@ export default function Home() {
           
           }}>
             
-            <div style={{ display: "flex", alignItems: "center", marginRight: "5px", marginTop:"0px" }}>
+            <div style={{ display: "flex", alignItems: "center", marginRight: "5px",}}>
                 <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="ko">
-                    <DemoContainer components={['DatePicker']}>
+                    <DemoContainer 
+                        components={['DatePicker']} 
+                        sx={{ 
+                            paddingTop:"-5px",
+                            alignSelf:'center',
+                            alignItems:'center',
+                            justifyContent:'center',
+                            overflow: 'hidden',  // 스크롤만 제거
+
+                        }}
+                    >
                         <DatePicker
                             value={startDate}
                             onChange={(newValue) => {
@@ -793,6 +893,8 @@ export default function Home() {
                             sx={{
                                 backgroundColor: 'white',
                                 width: '150px',
+                                alignSelf:'center',
+                                alignItems:'center',
                                 '& .MuiInputBase-root': {
                                     height: '33px',
                                     fontSize: '13px',
@@ -867,7 +969,7 @@ export default function Home() {
                                 />
                             </InputAdornment>
                         }
-                        label="Password"
+
                     />
                 </FormControl>
             </Box>
@@ -882,7 +984,7 @@ export default function Home() {
                     marginRight:"10px",
                     fontSize: '13px'
                 }} 
-                onClick={handleTestFunc}
+                onClick={handleClickSearch}
             >
                 검색
             </Button>
@@ -951,121 +1053,204 @@ export default function Home() {
                 </IconButton>
             </div>
 
-            <div style={{ padding: '20px' }}>
-                
-                <div style={{ 
-                    backgroundColor: '#f0f0f0', 
-                    padding: '10px', 
-                    margin: '5px 0', 
-                    borderRadius: '5px', 
-                    border: '1px solid #ccc'
+            <DialogContent>
+                <Box sx={{ 
+                    backgroundColor: '#ffffff',
+                    borderRadius: '10px',
+                    p: 2.5,
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.06)',
+                    border: '1px solid #eaeaea',
+                    mb: 2
                 }}>
-                    <p style={{ margin: 0, fontSize: '13px', color: '#1f1f26' }}>
-                        {/* @ts-ignore */}
-                        노드명 : {selectedContent.node_name || '정보 없음'}
-                    </p>
-                </div>
-                <div style={{ 
-                    backgroundColor: '#f0f0f0', 
-                    padding: '10px', 
-                    margin: '5px 0', 
-                    borderRadius: '5px', 
-                    border: '1px solid #ccc'
-                }}>
-                    <p style={{ margin: 0, fontSize: '13px', color: '#1f1f26' }}>
-                        {/* @ts-ignore */}
-                        지갑주소 : {selectedContent.address || '정보 없음'}
-                    </p>
-                </div>
-                <div style={{ 
-                    backgroundColor: '#f0f0f0', 
-                    padding: '10px', 
-                    margin: '5px 0', 
-                    borderRadius: '5px', 
-                    border: '1px solid #ccc'
-                }}>
-                    <p style={{ margin: 0, fontSize: '13px', color: '#1f1f26' }}>
-                         {/* @ts-ignore */}                                     
-                        채굴수량 : {selectedContent.mining_amount || '정보 없음'}
-                    </p>
-                </div>
-                <div style={{ 
-                    backgroundColor: '#f0f0f0', 
-                    padding: '10px', 
-                    margin: '5px 0', 
-                    borderRadius: '5px', 
-                    border: '1px solid #ccc'
-                }}>
-                    <p style={{ margin: 0, fontSize: '13px', color: '#1f1f26' }}>
-                        {/* @ts-ignore */}
-                        처리상태 : {selectedContent.done_status || '정보 없음'}
-                    </p>
-                </div>
-                <div style={{ 
-                    backgroundColor: '#f0f0f0', 
-                    padding: '10px', 
-                    margin: '5px 0', 
-                    borderRadius: '5px', 
-                    border: '1px solid #ccc'
-                }}>
-                    <p style={{ margin: 0, fontSize: '13px', color: '#1f1f26' }}>
-                        {/* @ts-ignore */}
-                        TXID : {selectedContent.tx_id || '정보 없음'}
-                    </p>
-                </div>
-            </div>
-            
-            <div style={{ padding: '0 20px' }}>
-                <DataGrid
-                    rows={detailSendList}
-                    columns={detailColumns}
-                    autoHeight={true}
-                    initialState={{
-                        pagination: {
-                            paginationModel: {
-                                pageSize: 5,
-                            },
-                        },
-                    }}
-                    pageSizeOptions={[5]}
-                    rowHeight={42}
-                    columnHeaderHeight={45}
-                    sx={{
-                        width: '100%',
-                        '.MuiDataGrid-columnSeparator': {
-                            display: 'none',
-                        },
-                        "& .MuiDataGrid-columnHeader": {
-                            backgroundColor: '#f0f0f0',
-                            color: "#1f1f26",
+                    <Grid container spacing={2}>
+                        <Grid item xs={6}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.2, mb: 0.8 }}>
+                                <AccountTreeIcon sx={{ color: '#1976d2', fontSize: 18 }} />
+                                <Typography variant="subtitle2" sx={{ 
+                                    color: '#444',
+                                    fontSize: '12px',
+                                    fontWeight: 600,
+                                }}>
+                                    노드명
+                                </Typography>
+                            </Box>
+                            <Typography sx={{ 
+                                fontSize: '14px',
+                                fontWeight: '500',
+                                color: '#1f1f26',
+                                pl: 3
+                            }}>
+                                {/* @ts-ignore */}
+                                {selectedContent.node_name || '-'}
+                            </Typography>
+                        </Grid>
+
+                        <Grid item xs={6}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.2, mb: 0.8 }}>
+                                <CheckCircleIcon sx={{ color: '#1976d2', fontSize: 18 }} />
+                                <Typography variant="subtitle2" sx={{ 
+                                    color: '#444',
+                                    fontSize: '12px',
+                                    fontWeight: 600,
+                                }}>
+                                    처리상태
+                                </Typography>
+                            </Box>
+                            <Typography sx={{ 
+                                fontSize: '14px',
+                                fontWeight: '500',
+                                color: (() => {
+                                    // @ts-ignore
+                                    switch(selectedContent.done_yn) {
+                                        case 'S': return '#1976d2';
+                                        case 'N': return '#2e7d32';
+                                        case 'F': return '#d32f2f';
+                                        default: return '#1f1f26';
+                                    }
+                                })(),
+                                pl: 3
+                            }}>
+                                {/* @ts-ignore */}
+                                {selectedContent.done_status || '-'}
+                            </Typography>
+                        </Grid>
+                    </Grid>
+                </Box>
+
+                {isDetailShow ? 
+                    <>                 
+                        {/* Summary 영역 */}
+                        <Box sx={{ mb: 2 }}>
+                            <Grid container spacing={2}>
+                                <Grid item xs={6}>
+                                    <Box sx={{ 
+                                        p: 2,
+                                        backgroundColor: '#f8f9fa',
+                                        borderRadius: '8px',
+                                        height: '100%'
+                                    }}>
+                                        <Typography sx={{ 
+                                            color: '#333',
+                                            fontSize: '13px',
+                                            mb: 1,
+                                            fontWeight: 500
+                                        }}>
+                                            전송수량
+                                        </Typography>
+                                        <Typography sx={{ 
+                                            fontSize: '16px',
+                                            fontWeight: 600,
+                                            color: '#1976d2'
+                                        }}>
+                                            {/* @ts-ignore */}
+                                            {(detailSendList?.length > 0 
+                                                ? detailSendList.reduce((sum, row) => 
+                                                    sum + (Number(row.amount) || 0), 0)
+                                                : 0)
+                                            } PTH
+                                        </Typography>
+                                    </Box>
+                                </Grid>
+                                <Grid item xs={6}>
+                                    <Box sx={{ 
+                                        p: 2,
+                                        backgroundColor: '#f8f9fa',
+                                        borderRadius: '8px',
+                                        height: '100%'
+                                    }}>
+                                        <Typography sx={{ 
+                                            color: '#333',
+                                            fontSize: '13px',
+                                            mb: 1,
+                                            fontWeight: 500
+                                        }}>
+                                            분배수
+                                        </Typography>
+                                        <Typography sx={{ 
+                                            fontSize: '16px',
+                                            fontWeight: 600,
+                                            color: '#1976d2'
+                                        }}>
+                                            {detailSendList?.length || '0'}건
+                                        </Typography>
+                                    </Box>
+                                </Grid>
+                            </Grid>
+                        </Box>
+
+                        {/* DataGrid */}
+                        <DataGrid
+                            rows={detailSendList || []}
+                            columns={detailColumns}
+                            disableRowSelectionOnClick={true}
+                            hideFooter={true}
+                            autoHeight={false}
+                            sx={{
+                                height: '400px',
+                                border: 'none',
+                                '& .MuiDataGrid-cell': {
+                                    borderBottom: '1px solid #f0f0f0',
+                                    fontSize: '13px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    padding: '0 16px',
+                                },
+                                '& .MuiDataGrid-columnHeaders': {
+                                    backgroundColor: '#f5f5f5',
+                                    borderBottom: 'none',
+                                    '& .MuiDataGrid-columnHeaderTitle': {
+                                        fontSize: '13px',
+                                        fontWeight: 600,
+                                    },
+                                },
+                                '& .MuiDataGrid-row': {
+                                    '&:hover': {
+                                        backgroundColor: '#f5f5f5',
+                                    },
+                                },
+
+                            }}
+                        />
+                 </>
+                    :
+                    <div>
+                        <Typography sx={{   
                             fontSize: '13px',
-                            fontWeight: 900,
-                        },
-                        "& .MuiDataGrid-cell": {
-                            border: 1,
-                            borderColor: "#f4f6f6",
+                            fontWeight: '500',
+                            color: '#d32f2f',
+                            pl: 1,
+                            mt: 1,
+                            marginTop:'10px'
+
+                        }}>
+                            {detailMessage}
+                        </Typography>
+                        <Typography sx={{   
                             fontSize: '13px',
+                            fontWeight: '500',
                             color: '#1f1f26',
-                        },
-                        '& .MuiTablePagination-root': {
+                            pl: 1,
+                            mt: 1,
+                            marginTop:'10px'
+
+                        }}>
+                            {detailBugTrackMessage}
+                        </Typography>
+                        <Typography sx={{   
                             fontSize: '13px',
+                            fontWeight: '500',
                             color: '#1f1f26',
-                        },
-                        '& .MuiTablePagination-selectLabel': {
-                            fontSize: '13px',
-                            color: '#1f1f26',
-                        },
-                        '& .MuiTablePagination-displayedRows': {
-                            fontSize: '13px',
-                            color: '#1f1f26',
-                        },
-                        '& .MuiSelect-select': {
-                            fontSize: '13px',
-                            color: '#1f1f26',
-                        }
-                    }}
-                />
-            </div>
+                            pl: 1,
+                            mt: 1,
+                            marginTop:'5px'
+
+                        }}>
+                            {detailBugTrackKey}
+                        </Typography>
+                    </div>
+                }
+
+            </DialogContent>
 
             <DialogActions style={{ 
                 padding: '15px 20px',
