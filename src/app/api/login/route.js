@@ -21,6 +21,7 @@ export async function POST(request) {
     global.TextEncoder = TextEncoder;
     global.TextDecoder = TextDecoder;
     
+    console.log(username, password);
     const connection = await getConnection();
 
     const sql = `
@@ -47,7 +48,12 @@ export async function POST(request) {
 
     if (rows[0].user_id == username) {
 
-        const isValidPassword = await bcrypt.compare(password, rows[0].password);
+//        const crypto_pw = await bcrypt.hash(password, 10);
+
+//        console.log(crypto_pw);
+//        console.log(rows[0].user_pw);
+      
+        const isValidPassword = await bcrypt.compare(password, rows[0].user_pw);
         
         if(isValidPassword){
           

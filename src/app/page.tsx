@@ -1,13 +1,7 @@
 'use client'
 
 import React, { useEffect, useState } from "react";
-import Image from "next/image";
-import PeopleAltIcon from '@mui/icons-material/PeopleAlt';
-import MiningIcon from '@mui/icons-material/Hardware';
-import PointIcon from '@mui/icons-material/Stars';
-import KioskIcon from '@mui/icons-material/TouchApp';
-import GiftIcon from '@mui/icons-material/CardGiftcard';
-import MonetizationOnIcon from '@mui/icons-material/MonetizationOn';
+
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
