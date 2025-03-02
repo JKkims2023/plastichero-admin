@@ -280,33 +280,7 @@ export async function POST(request) {
 
                       console.log('main roof insert success : ' + {i})
 
-                      // 베이스 노드 처리(외부 API 호출)
-                      for(let j = 0; j < data.base_node_list.length; j++){
 
-                          if(true){
-
-                              console.log('sub roof insert before : ' + {j})
-
-                              const result_sub_node_query = await updateDataFromDb_sub_node(data.base_node_list[j]);
-
-                              console.log('sub roof insert after : ' + {j})
-
-                              if(result_sub_node_query.result == 'success'){
-
-                                  console.log('sub roof insert success : ' + {j})
-
-                              }else{
-
-                                console.log('sub roof insert fail : ' + {j})
-                                
-                                return NextResponse.json({ message: '서브노드 처리 실패' }, { status: 401 });
-
-                              }
-
-                          }else{
-
-                          }
-                      }
 
                   }else{
 

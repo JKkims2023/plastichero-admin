@@ -24,6 +24,8 @@ export async function POST(request) {
     console.log(username, password);
     const connection = await getConnection();
 
+    console.log(username, password);
+
     const sql = `
     
       SELECT * FROM tbl_system_user_main 
@@ -48,12 +50,7 @@ export async function POST(request) {
 
     if (rows[0].user_id == username) {
 
-//        const crypto_pw = await bcrypt.hash(password, 10);
-
-//        console.log(crypto_pw);
-//        console.log(rows[0].user_pw);
-      
-        const isValidPassword = await bcrypt.compare(password, rows[0].user_pw);
+        const isValidPassword = await bcrypt.compare(password, rows[0].password);
         
         if(isValidPassword){
           
@@ -76,38 +73,44 @@ export async function POST(request) {
               .setExpirationTime('12h')
               .sign(Buffer.from(JWT_SECRET));
 
-          
-          const serializedCookie = serialize('token', token, {
-              httpOnly: true,
-              secure: process.env.NODE_ENV === 'production',
-              sameSite: 'strict',
-              path: '/',
-              maxAge:12 * 60 * 60,});
+                
+                const serializedCookie = serialize('token', token, {
+                    httpOnly: true,
+                    secure: process.env.NODE_ENV === 'production',
+                    sameSite: 'strict',
+                    path: '/',
+                    maxAge:12 * 60 * 60,});
 
-          const response = NextResponse.json({ 
+                const response = NextResponse.json({ 
+                    
+                    message: 'Login successful',
+                    user_id : username,
+                    user_name :  rows[0].user_name,
+                    user_type : rows[0].user_type,
+                    menu_auth : rows[0].menu_auth,
+
+                  });
+
+                // Set-Cookie 헤더 설정
+                response.headers.set('Set-Cookie', serializedCookie);
+
+                connection.release(); // 연결 반환
               
-              message: 'Login successful',
-              user_id : username,
-              user_name :  rows[0].user_name,
-              user_type : rows[0].user_type,
-              menu_auth : rows_menu,
+                return response;
+              
+              
+              }else{
 
-            });
+                connection.release(); // 연결 반환
+                return NextResponse.json({ message: '비밀번호가 일치하지 않습니다.' }, { status: 401 });
+         
+              }
 
-            // Set-Cookie 헤더 설정
-            response.headers.set('Set-Cookie', serializedCookie);
-
-            connection.release(); // 연결 반환
-          
-            return response;
-          
-          
-          }else{
-
-            connection.release(); // 연결 반환
-            return NextResponse.json({ message: '비밀번호가 일치하지 않습니다.' }, { status: 401 });
-     
-          }
+        } catch (error) {
+            console.error('Password comparison error:', error);
+            connection.release();
+            return NextResponse.json({ message: '비밀번호 검증 중 오류가 발생했습니다.' }, { status: 500 });
+        }
 
     } else {
       

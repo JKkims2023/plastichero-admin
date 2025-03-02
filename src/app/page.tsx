@@ -77,8 +77,6 @@ export default function Home() {
 
       const data = await response.json(); 
 
-      console.log(data);
-
       if (response.ok) {
 
         setIntroList(data.result_data.map((data, idx) => ({ id: idx + 1, ...data })));
@@ -102,12 +100,9 @@ export default function Home() {
 
   React.useEffect(() => {
 
-
   }, [nodeSummary]);
 
   React.useEffect(() => {
-
-    console.log(companyNode);
 
   }, [companyNode]);
 
@@ -249,13 +244,13 @@ export default function Home() {
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', height: '100%', marginTop:'5px', }}>
             <div style={{ width: '100%',  backgroundColor: '#efefef', padding: '10px', borderRadius: '10px' }}>
-              <Typography sx={{fontSize:"16px",  color: '#1f1f26', fontWeight:'bold' }}>
+              <Typography sx={{fontSize:"16px",  color: '#1f1f26', fontWeight:'bold'}}>
                 오늘의 지급량
               </Typography>
             </div>
             <div style={{ display: 'flex', flexDirection: 'row', marginTop:'20px', width:'100%' }}>
               <Typography sx={{fontSize:"13px",  color: '#1f1f26', fontWeight:'bold', marginLeft:'10px' }}>
-                유저지급 {todayUserPayCount}
+                유저지급 
               </Typography>
               <Typography sx={{fontSize:"13px",  color: '#1f1f26', marginLeft:'auto', marginRight:'10px' }}>
                 {todayUserPayAmount} PTH
@@ -285,7 +280,7 @@ export default function Home() {
             </div>
 
             <div style={{ width: '100%',  backgroundColor: '#efefef', padding: '10px', borderRadius: '10px', marginTop:'20px', paddingRight:'20px' }}>
-              <Typography sx={{fontSize:"16px",  color: '#1f1f26', }}>
+              <Typography sx={{fontSize:"16px",  color: '#1f1f26', fontWeight:'bold'}}>
                 오늘의 소각량
               </Typography>
             </div>
