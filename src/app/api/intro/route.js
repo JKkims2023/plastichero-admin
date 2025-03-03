@@ -8,6 +8,7 @@ export async function POST(request) {
   try{
 
     const { fromDate } = await request.json();
+    console.log('fromDate : ', fromDate);
 
     const connection = await getConnection();
 
@@ -27,13 +28,13 @@ export async function POST(request) {
 
     const sql_summary = `
     
-    SELECT 
+      SELECT 
 
-      sum(node_no) as node_count, 
-      node_type,
-      if(node_type = '0', '그룹 노드', if(node_type = '1', '키오스크 노드','개별 노드')) as node_type_name
+        sum(node_no) as node_count, 
+        node_type,
+        if(node_type = '0', '그룹 노드', if(node_type = '1', '키오스크 노드','개별 노드')) as node_type_name
 
-    FROM g5_node_list where delete_flag = 'N' group by node_type;
+      FROM g5_node_list where delete_flag = 'N' group by node_type;
       
   `;
 
@@ -45,7 +46,8 @@ export async function POST(request) {
 
         (select count(node_no) from g5_node_list where delete_flag = 'N') as node_count, 
         (select count(node_no) from g5_node_list where delete_flag = 'N' and stop_yn = 'N') as run_count,
-        (select count(node_no) from g5_node_list where delete_flag = 'N' and stop_yn = 'Y') as stop_count
+        (select count(node_no) from g5_node_list where delete_flag = 'N' and stop_yn = 'Y') as stop_count,
+        (select sum(mining_amount) from g5_node_list where delete_flag = 'N' and stop_yn = 'N') as mining_amount
         
     `;
 
@@ -61,6 +63,63 @@ export async function POST(request) {
 
     const [rows_company_node, fields_company_node] = await connection.execute(sql_company_node);
 
+    const sql_round_summary = `
+      
+
+      SELECT  
+
+      if((select sum(mining_amount) from g5_mining_history where tx_hash is not null and mainnet_request_status = 'S') is null, 0, (select sum(mining_amount) from g5_mining_history where tx_hash is not null and mainnet_request_status = 'S')) as successAmount, 
+      if((select count(node_no) from g5_mining_history where tx_hash is not null and mainnet_request_status = 'S') is null, 0, (select count(node_no) from g5_mining_history where tx_hash is not null and mainnet_request_status = 'S')) as successCount
+
+
+
+        
+    `;
+
+    const [rows_round_summary, fields_round_summary] = await connection.execute(sql_round_summary);
+
+    console.log(rows_round_summary);
+
+    const sql_done_schedule = `
+      
+      SELECT  
+
+      schedule_no, 
+      date_format(start_date, '%Y-%m-%d %H:%i:%s') as start_date, 
+      date_format(done_date, '%Y-%m-%d %H:%i:%s') as done_date, 
+      scheduled_yn
+
+      from g5_mining_batch_schedule
+
+      where round_date = '${fromDate.toString().replace(/-/g, '')}'
+        
+    `;
+
+    let result_done_schedule = {
+
+      schedule_no : -1,
+      start_date : '',
+      done_date : '',
+      success_yn : 'N',
+
+    };
+
+
+    const [rows_done_schedule, fields_done_schedule] = await connection.execute(sql_done_schedule);
+
+
+    if(rows_done_schedule.length > 0){
+
+      result_done_schedule = {
+
+        schedule_no : rows_done_schedule[0].schedule_no,
+        start_date : rows_done_schedule[0].start_date,
+        done_date : rows_done_schedule[0].done_date,
+        success_yn : rows_done_schedule[0].success_yn,
+
+      };
+
+    }
 
     const response = NextResponse.json({ 
         
@@ -69,7 +128,8 @@ export async function POST(request) {
         result_summary : rows_summary,
         result_node_summary : rows_mining[0],
         result_company_node : rows_company_node,
-
+        result_round_summary : rows_round_summary[0],
+        result_done_schedule : result_done_schedule,
 
       });
 

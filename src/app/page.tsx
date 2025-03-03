@@ -7,7 +7,8 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs from 'dayjs';
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
-import { Typography } from '@mui/material';
+import { Typography, LinearProgress, Box } from '@mui/material';
+import { BarChart, Bar, XAxis, YAxis, Tooltip } from 'recharts';
 
 export default function Home() {
 
@@ -21,19 +22,31 @@ export default function Home() {
     node_count : 0,
     run_count : 0,
     stop_count : 0,
+    mining_amount : 0,
+  });
+  const [roundSummary, setRoundSummary] = React.useState({
+    successCount : 0,
+    successAmount : 0,
+  });
+  const [doneSchedule, setDoneSchedule] = React.useState({
+
+    schedule_no : -1,
+    start_date : '',
+    done_date : '',
+    success_yn : 'N',
 
   });
-  const [companyNode, setCompanyNode] = React.useState([]);
 
+  const [companyNode, setCompanyNode] = React.useState([]);
 
   const [todayUserPayCount, setTodayUserPayCount] = React.useState(0);
   const [todayUserPayAmount, setTodayUserPayAmount] = React.useState(0);
 
 
+
   const colors = ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40', '#FF5733', '#33FF57', '#3357FF']; // 각 항목별 색상
 
-  const [hoveredIndex, setHoveredIndex] = React.useState(null);
-  const [overlayPosition, setOverlayPosition] = React.useState(null);
+
 
   React.useEffect(() => {
     
@@ -46,61 +59,55 @@ export default function Home() {
   }, []);
 
   React.useEffect(() => {
-
-
     const totalValue = circleValues.reduce((acc, value) => acc + value.node_count, 0);
-
     setTotalValue(totalValue);
-
-
+    console.log('circleValues:', circleValues);
+    console.log('totalValue:', totalValue);
   }, [circleValues]);
 
   const getIntroInfo = async() => {
-
+    
     try {
 
-
-      const fromDate = '';
-        
       const response = await fetch('/api/intro', {
-
         method: 'POST',
         headers: {
-        
           'Content-Type': 'application/json',
-        
         },
-        
-        body: JSON.stringify({ fromDate }),
-      
+        body: JSON.stringify({ fromDate : selectedDate.format('YYYY-MM-DD') }),
       });
 
       const data = await response.json(); 
 
       if (response.ok) {
 
+         
         setIntroList(data.result_data.map((data, idx) => ({ id: idx + 1, ...data })));
         setCircleValues(data.result_data.map((data, idx) => ({ id: idx + 1, ...data }))); // 차트 데이터 설정
         setNodeSummary(data.result_node_summary);
         setCompanyNode(data.result_company_node);
-        
-      } else {
+        setRoundSummary(data.result_round_summary);
+        setDoneSchedule(data.result_done_schedule);
 
+      } else {
+      
         alert(data.message);
       
       }
     
     } catch (error) {
-    
       console.error('Error fetching intro info:', error);
-    
     }
-  
   };
 
   React.useEffect(() => {
 
   }, [nodeSummary]);
+
+  React.useEffect(() => {
+
+
+  }, [roundSummary]);
 
   React.useEffect(() => {
 
@@ -113,12 +120,12 @@ export default function Home() {
       <div style={{ borderBottom: '1px solid #888' }} />
       <LocalizationProvider dateAdapter={AdapterDayjs}>
         <div style={{ display: 'flex', padding: '10px', backgroundColor: '#1f1f26',  color: 'white' }}>
-          <div style={{ display: 'none', flexDirection: 'column', marginRight: '20px', alignItems:'center' }}>
-            <div style={{ color: 'green', fontSize: '35px',  }}>
+          <div style={{ display: 'flex', flexDirection: 'column', marginRight: '20px', alignItems:'center' }}>
+            <div style={{ color: 'green', fontSize: '30px', alignItems:'center', marginTop:'10px' }}>
               OVERVIEW : {selectedDate.format("YYYY/MM/DD")}
             </div>
           </div>
-          <div style={{ marginLeft: '-10px',  }}>
+          <div style={{ marginLeft: 'auto',  }}>
             <DatePicker 
               value={selectedDate} 
               onChange={(newValue) => setSelectedDate(newValue)} 
@@ -141,116 +148,315 @@ export default function Home() {
          width: '100%',
          height: 'calc(100% - 210px)',
       }}>
-        <div style={{ flex: 1, borderRight: '1px solid #888', padding: '10px', position: 'relative', height: 'calc(100% - 20px)', overflow: 'hidden' }}>
-          <Typography sx={{fontSize:"18px",  color: '#1f1f26', fontWeight:'bold', marginTop:'10px', marginLeft:'20px' }}>
-            현재 노드 현황
-          </Typography>
-          <div style={{ position: 'absolute', top: '10px', right: '10px', backgroundColor: '#fff', padding: '20px', borderRadius: '5px', boxShadow: '0 2px 5px rgba(0,0,0,0.2)' }}>
-            {circleValues.map((value, index) => {
-              if (value && value.node_type_name) {
-                const percentage = ((value.node_count / totalValue) * 100).toFixed(2);
+        <div style={{ flex: 1, padding: '10px', paddingRight: '50px', position: 'relative', height: 'calc(100% - 20px)', overflow: 'hidden' }}>
+          
+          <div style={{ display: 'flex',  flexDirection: 'column', height: '100%', padding: '20px' }}>
+            <Typography sx={{
+              fontSize:"20px", 
+              paddingLeft:'10px', 
+              color: '#1f1f26', 
+              fontWeight:'bold',
+              position: 'relative',
+              marginBottom: '20px',
+              '&:before': {
+                content: '""',
+                position: 'absolute',
+                left: '-10px',
+                top: '50%',
+                width: '4px',
+                height: '20px',
+                backgroundColor: '#60bb64',
+                transform: 'translateY(-50%)'
+              }
+            }}>
+              노드 구성현황
+            </Typography>
+
+            <Box 
+              sx={{
+              
+                width: '100%',
+                height: '40px',
+                bgcolor: '#f5f5f5',
+                borderRadius: '10px',
+                display: 'flex',
+                flexDirection: 'row',
+                overflow: 'hidden'
+              }}
+            >
+              {circleValues.map((value, index) => {
+                if (!value || !value.node_count || !value.node_type_name) return null;
+                
+                const width = totalValue > 0 ? (value.node_count / totalValue) * 100 : 0;
+                
                 return (
-                  <div key={index} style={{ display: 'flex', alignItems: 'center', marginBottom: '5px' }}>
-                    <div style={{ width: '20px', height: '20px', backgroundColor: colors[index], marginRight: '5px' }} />
-                    <div style={{ fontSize: '13px', fontWeight: 'bold', color: '#1f1f26' }}> {value.node_type_name} : {value.node_count} ({percentage}%)</div>
+                  <div
+                    key={index}
+                    style={{
+                      width: `${width}%`,
+                      height: '100%',
+                      backgroundColor: colors[index],
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: 'white',
+                      fontSize: '14px',
+                      fontWeight: 'bold',
+                      borderRight: index < circleValues.length - 1 ? '1px solid rgba(255,255,255,0.2)' : 'none'
+                    }}
+                  >
+                    {width > 8 && value.node_count}
                   </div>
                 );
-              }
-              return null;
-            })}
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', height: 'calc(100% - 50px)' }}>
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={circleValues.map((value, index) => {
+              })}
+            </Box>
+            
+            <div style={{ marginTop: '20px', display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
+              {circleValues.map((value, index) => (
+                value && value.node_type_name && (
+                  <div key={index} style={{ display: 'flex', alignItems: 'center', margin: '5px 10px' }}>
+                    <div style={{ 
+                      width: '20px', 
+                      height: '20px', 
+                      backgroundColor: colors[index], 
+                      marginRight: '8px',
+                      borderRadius: '4px'
+                    }} />
+                    <span style={{ fontSize: '13px', color: '#1f1f26', fontWeight: 'bold' }}>
+                      {value.node_type_name}: {value.node_count}
+                    </span>
+                  </div>
+                )
+              ))}
+            </div>
+            
 
-                    if (value && value.node_count !== undefined) {
-                      return { value: value.node_count, name: value.node_type_name };
-                    }
-                    return { value: 0, name: 'Unknown' };
-                  })}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius="40%"
-                  outerRadius="70%"
-                  fill="#8884d8"
-                  dataKey="value"
-                  onMouseEnter={(data, index, event) => {
-                    setHoveredIndex(index);
-                    const { clientX, clientY } = event;
-                    setOverlayPosition({ x: clientX, y: clientY });
-                  }}
-                  onMouseLeave={() => {
-                    setHoveredIndex(null);
-                    setOverlayPosition(null);
-                  }}
-                >
-                  {circleValues.map((_, index) => (
-                    <Cell key={`cell-${index}`} fill={colors[index]} />
-                  ))}
-                </Pie>
-                <text x="50%" y="50%" textAnchor="middle" dominantBaseline="middle" fill="#1f1f26" fontSize="15px">
-                노드수 : {totalValue}
-                </text>
-                {hoveredIndex !== null && overlayPosition && (
-                  <foreignObject 
-                    x={overlayPosition.x} 
-                    y={overlayPosition.y} 
-                    width="150" 
-                    height="50"
-                    style={{ pointerEvents: 'none', transform: 'translate(0, -100%)' }}
-                  >
-                    <div style={{
-                      backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                      border: '1px solid #888',
-                      borderRadius: '5px',
-                      padding: '5px',
-                      textAlign: 'center'
-                    }}>
-                      {circleValues[hoveredIndex]?.node_type_name}: {circleValues[hoveredIndex]?.node_count}
-                    </div>
-                  </foreignObject>
-                )}
-              </PieChart>
-            </ResponsiveContainer>
+
+            <Typography sx={{
+              marginTop:'40px',
+              fontSize:"20px", 
+              paddingLeft:'10px',
+              color: '#1f1f26', 
+              fontWeight:'bold',
+              position: 'relative',
+              '&:before': {
+                content: '""',
+                position: 'absolute',
+                left: '-10px',
+                top: '50%',
+                width: '4px',
+                height: '20px',
+                backgroundColor: '#60bb64',
+                transform: 'translateY(-50%)'
+              }
+            }}>
+              노드 운영현황
+            </Typography>
+            
+            <Box sx={{ 
+              display: 'flex', 
+              gap: 2, 
+              mt: 2, 
+              justifyContent: 'flex-start'
+            }}>
+              <Box sx={{
+                width: '200px',
+                bgcolor: '#f8f9fa',
+                borderRadius: 2,
+                p: 2,
+                textAlign: 'flex-start',
+                boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+                transition: 'transform 0.2s',
+                '&:hover': {
+                  transform: 'translateY(-2px)',
+                  boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
+                }
+              }}>
+                <Typography sx={{ color: '#666', fontSize: '0.9rem', mb: 1 }}>
+                  총 채굴노드
+                </Typography>
+                <Typography sx={{ color: '#1f1f26', fontSize: '1.5rem', fontWeight: 'bold' }}>
+                  {nodeSummary.node_count.toLocaleString()}
+                </Typography>
+              </Box>
+
+              <Box sx={{
+                width: '200px',
+                bgcolor: '#f8f9fa',
+                borderRadius: 2,
+                p: 2,
+                textAlign: 'flex-start',
+                boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+                transition: 'transform 0.2s',
+                '&:hover': {
+                  transform: 'translateY(-2px)',
+                  boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
+                }
+              }}>
+                <Typography sx={{ color: '#666', fontSize: '0.9rem', mb: 1 }}>
+                  활성화 된  노드
+                </Typography>
+                <Typography sx={{ color: '#60bb64', fontSize: '1.5rem', fontWeight: 'bold' }}>
+                  {nodeSummary.run_count.toLocaleString()}
+                </Typography>
+              </Box>
+
+              <Box sx={{
+                width: '200px',
+                bgcolor: '#f8f9fa',
+                borderRadius: 2,
+                p: 2,
+                textAlign: 'flex-start',
+                boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+                transition: 'transform 0.2s',
+                '&:hover': {
+                  transform: 'translateY(-2px)',
+                  boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
+                }
+              }}>
+                <Typography sx={{ color: '#666', fontSize: '0.9rem', mb: 1 }}>
+                  중지된 노드
+                </Typography>
+                <Typography sx={{ color: '#ff6b6b', fontSize: '1.5rem', fontWeight: 'bold' }}>
+                  {nodeSummary.stop_count.toLocaleString()}
+                </Typography>
+              </Box>
+            </Box>
+
+
+            <Typography sx={{
+              marginTop:'40px',
+              fontSize:"20px", 
+              paddingLeft:'10px', 
+              color: '#1f1f26', 
+              fontWeight:'bold',
+              position: 'relative',
+              '&:before': {
+                content: '""',
+                position: 'absolute',
+                left: '-10px',
+                top: '50%',
+                width: '4px',
+                height: '20px',
+                backgroundColor: '#60bb64',
+                transform: 'translateY(-50%)'
+              }
+            }}>
+              일별 채굴 계획
+            </Typography>
+
+            <Box sx={{ 
+              display: 'flex', 
+              gap: 2, 
+              mt: 2, 
+              justifyContent: 'flex-start',
+              flexWrap: 'wrap'
+            }}>
+              <Box sx={{
+                width: '200px',
+                bgcolor: '#f8f9fa',
+                borderRadius: 2,
+                p: 2,
+                textAlign: 'flex-start',
+                boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+                transition: 'transform 0.2s',
+                '&:hover': {
+                  transform: 'translateY(-2px)',
+                  boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
+                }
+              }}>
+                <Typography sx={{ color: '#666', fontSize: '0.9rem', mb: 1 }}>
+                  설정된 채굴건수 (노드수)
+                </Typography>
+                <Typography sx={{ color: '#1f1f26', fontSize: '1.5rem', fontWeight: 'bold' }}>
+                  {nodeSummary.run_count.toLocaleString()}
+                </Typography>
+              </Box>
+
+              <Box sx={{
+                width: '200px',
+                bgcolor: '#f8f9fa',
+                borderRadius: 2,
+                p: 2,
+                textAlign: 'flex-start',
+                boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+                transition: 'transform 0.2s',
+                '&:hover': {
+                  transform: 'translateY(-2px)',
+                  boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
+                }
+              }}>
+                <Typography sx={{ color: '#666', fontSize: '0.9rem', mb: 1 }}>
+                  예정된 채굴량
+                </Typography>
+                <Typography sx={{ color: '#60bb64', fontSize: '1.5rem', fontWeight: 'bold' }}>
+                  {(nodeSummary.mining_amount ? Number(nodeSummary.mining_amount).toLocaleString() : '0')} PTH
+                </Typography>
+              </Box>
+
+              <Box sx={{
+                width: '200px',
+                bgcolor: '#f8f9fa',
+                borderRadius: 2,
+                p: 2,
+                textAlign: 'flex-start',
+                boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+                transition: 'transform 0.2s',
+                '&:hover': {
+                  transform: 'translateY(-2px)',
+                  boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
+                }
+              }}>
+                <Typography sx={{ color: '#666', fontSize: '0.9rem', mb: 1 }}>
+                  분배 예정 수
+                </Typography>
+                <Typography sx={{ color: '#1f1f26', fontSize: '1.5rem', fontWeight: 'bold' }}>
+                  {(nodeSummary.run_count * (companyNode.length + 1)).toLocaleString()}
+                </Typography>
+              </Box>
+
+            </Box>
+
           </div>
         </div>
-        <div style={{ flex: 1, padding: '10px', paddingTop:'10px', paddingLeft:'10px', paddingRight:'10px', height: 'calc(100% - 20px)' }}>
+        <div style={{ flex: 1, padding: '10px', paddingTop:'10px', paddingLeft:'80px', paddingRight:'10px', height: 'calc(100% - 20px)' }}>
           {/* 오른쪽 영역 내용 */}
 
-          <Typography sx={{fontSize:"25px",  color: '#1f1f26', fontWeight:'bold' }}>
+          <Typography sx={{fontSize:"25px", paddingLeft:'0px', paddingTop: '10px', color: '#1f1f26', fontWeight:'bold' }}>
             채굴현황
           </Typography>
           <div style={{display:'flex', flexDirection:'row', marginTop:'10px', width:'100%'}}>
             <Typography sx={{fontSize:"16px",  color: '#1f1f26', fontWeight:'bold', marginTop:'5px', marginLeft:'0px' }}>
-              누적 총 채굴건수 : 
+              누적 총 채굴정보 : 
             </Typography>
-            <Typography sx={{fontSize:"16px",  color: '#60bb64', fontWeight:'bold', marginTop:'5px', marginLeft:'10px' }}>
-              800 건
+            <Typography sx={{fontSize:"16px",  color: '#60bb64', marginTop:'5px', marginLeft:'10px' }}>
+              채굴건수 : {roundSummary?.successCount?.toLocaleString()} 건
             </Typography>
-          </div>
-          <div style={{display:'flex', flexDirection:'row', marginTop:'10px', width:'100%'}}>
-            <Typography sx={{fontSize:"13px",  color: '#1f1f26', fontWeight:'bold', marginTop:'0px', marginLeft:'0px' }}>
-              오늘 채굴건수 : 
-            </Typography>
-            <Typography sx={{fontSize:"13px",  color: '#60bb64', fontWeight:'bold', marginTop:'0px', marginLeft:'10px' }}>
-              {nodeSummary.run_count} 건 (총 노드수 : {nodeSummary.node_count} / 중지된 노드 : {nodeSummary.stop_count}) 
+            <Typography sx={{fontSize:"16px",  color: '#60bb64', marginTop:'5px', marginLeft:'30px' }}>
+              채굴량 : {roundSummary?.successAmount?.toLocaleString()} PTH
             </Typography>
           </div>
-          <div style={{display:'flex', flexDirection:'row', marginTop:'0px', paddingRight:'5px', width:'100%'}}>
-          <Typography sx={{fontSize:"13px",  color: '#1f1f26', marginTop:'0px', marginLeft:'auto' }}>
-            채굴현황
-          </Typography>
+          <div style={{display:'flex', flexDirection:'row', marginTop:'10px', width:'100%', alignContent:'center', alignItems:'center' }}>
+            <Typography sx={{fontSize:"16px",  color: '#1f1f26', fontWeight:'bold', marginTop:'0px', marginLeft:'0px' }}>
+              채굴 실행 : 
+            </Typography>
+            <Typography sx={{fontSize:"16px",  color: '#60bb64', marginTop:'0px', marginLeft:'10px' }}>
+              {doneSchedule.schedule_no == -1 ? 
+              '실행 전' 
+              : 
+              '실행 완료' + ' ('  + doneSchedule.start_date + ' - ' + doneSchedule.done_date + ')'
+              } 
+            </Typography>
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', height: '100%', marginTop:'5px', }}>
+          
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', height: '100%', marginTop:'15px', }}>
             <div style={{ width: '100%',  backgroundColor: '#efefef', padding: '10px', borderRadius: '10px' }}>
               <Typography sx={{fontSize:"16px",  color: '#1f1f26', fontWeight:'bold'}}>
                 오늘의 지급량
               </Typography>
             </div>
             <div style={{ display: 'flex', flexDirection: 'row', marginTop:'20px', width:'100%' }}>
-              <Typography sx={{fontSize:"13px",  color: '#1f1f26', fontWeight:'bold', marginLeft:'10px' }}>
+              <Typography sx={{ color: '#1f1f26', fontSize: '0.9rem', mb: 1, marginLeft:'10px',  }}>
                 유저지급 
               </Typography>
               <Typography sx={{fontSize:"13px",  color: '#1f1f26', marginLeft:'auto', marginRight:'10px' }}>
@@ -260,10 +466,10 @@ export default function Home() {
             {companyNode.map((data, idx)=>{
               return(
               <div key={idx} style={{ display: 'flex', flexDirection: 'row', marginTop:'10px', width:'100%' }}>
-              <Typography sx={{fontSize:"13px",  color: '#1f1f26', fontWeight:'bold', marginLeft:'10px' }}>
+              <Typography sx={{ color: '#1f1f26', fontSize: '0.9rem', mb: 1, marginLeft:'10px',  }}>
                 {data.node_name} 
               </Typography>
-              <Typography sx={{fontSize:"13px",  color: '#1f1f26', marginLeft:'auto', marginRight:'10px' }}>
+              <Typography sx={{ color: '#1f1f26', fontSize: '0.9rem', mb: 1, marginLeft:'auto', marginRight:'10px',  }}>
                 {(data.mining_amount * nodeSummary.run_count).toLocaleString()} PTH
               </Typography>
             </div>
@@ -272,7 +478,7 @@ export default function Home() {
             <div style={{width:'100%', height:'1px', backgroundColor:'#DBDBDB', marginTop:'10px'}} />
 
             <div style={{display:'flex', flexDirection:'row', marginTop:'20px', width:'100%', paddingRight:'10px'}}>
-              <Typography sx={{fontSize:"13px",  color: '#1f1f26', fontWeight:'bold', marginLeft:'10px' }}>
+              <Typography sx={{ color: '#1f1f26', fontSize: '0.9rem', mb: 1, marginLeft:'10px',  }}>
                 총 지급량
               </Typography>
               <Typography sx={{fontSize:"25px",  marginLeft:'auto', color:'#60bb64'}}>

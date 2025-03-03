@@ -177,26 +177,50 @@ export default function Home() {
           editable: false,
       },
       {
-          field: 'done_status',
-          headerName: '처리상태',
+          field: 'done_status_dummy',
+          headerName: '처리결과',
           type: 'string',
           flex: 0.07,
           disableColumnMenu: true,
           editable: false,
+          renderCell: (params) => {
+            if (params.row.tx_hash !== null && params.row.mainnet_request_status === 'S') {
+                return '완료';
+            } else if (params.row.tx_hash === null && params.row.mainnet_request_status === 'S') {
+                return '채굴중';
+            } else {
+                return '실패';
+            }
+        }
       },
       {
-        field: 'send_status',
-        headerName: '전송상태',
-        type: 'string',
-        flex: 0.07,
-        disableColumnMenu: true,
-        editable: false,
-    },
+          field: 'mainnet_request_status',
+            headerName: '채굴요청',
+            type: 'string',
+            flex: 0.07,
+            disableColumnMenu: true,
+            editable: false,
+            valueFormatter: (params) => {
+                // @ts-ignore
+                switch (params) {
+                    case 'N':
+                        return '요청전';
+                    case 'F':
+                        return '실패';
+                    case 'S':
+                        return '완료';
+                    default:{
+                        // @ts-ignore
+                        return params;
+                    }
+                }
+            }
+      },
       {
-          field: 'tx_id',
-          headerName: 'TXID',
+          field: 'send_status',
+          headerName: '전송요청',
           type: 'string',
-          flex: 0.2,
+          flex: 0.07,
           disableColumnMenu: true,
           editable: false,
       },
