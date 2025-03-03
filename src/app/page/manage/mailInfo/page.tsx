@@ -605,19 +605,40 @@ export default function Home() {
 
             <div style={{display:"flex", float:"left", marginLeft:"auto", width:"100%"}}>
 
-              <FormControl fullWidth  style={{ width:"110px",marginTop:"0px", marginLeft:"auto", backgroundColor:'white', color:'black'}}>
+              <FormControl fullWidth sx={{ 
+                  width: "110px", 
+                  marginTop: "0px", 
+                  marginLeft: "auto",
+                  '& .MuiOutlinedInput-root': {
+                      height: '33px',
+                      backgroundColor: 'white'
+                  },
+                  '& .MuiInputLabel-root': {
+                      fontSize: '14px'
+                  }
+              }}>
                   <Select
-                  labelId="demo-simple-select-label"
-                  id="demo-simple-select"
-                  style={{color:'black'}}
-                  value={filterContentTypeMethod}
-                  size="small"
-                  onChange={handleChangeFilterContentType}
+                      labelId="demo-simple-select-label"
+                      id="demo-simple-select"
+                      sx={{
+                          color: 'black',
+                          height: '33px',
+                          '& .MuiSelect-select': {
+                              height: '33px',
+                              padding: '0 14px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              fontSize: '14px'
+                          }
+                      }}
+                      value={filterContentTypeMethod}
+                      size="small"
+                      onChange={handleChangeFilterContentType}
                   >
-                  <MenuItem style={{fontSize:13}} value={10}>전체</MenuItem>
-                  <MenuItem style={{fontSize:13}} value={20}>이메일주소</MenuItem>
-                  <MenuItem style={{fontSize:13}} value={30}>사용자ID</MenuItem>
-                  <MenuItem style={{fontSize:13}} value={40}>사용자명</MenuItem>
+                      <MenuItem style={{fontSize:14}} value={10}>전체</MenuItem>
+                      <MenuItem style={{fontSize:14}} value={20}>이메일주소</MenuItem>
+                      <MenuItem style={{fontSize:14}} value={30}>사용자ID</MenuItem>
+                      <MenuItem style={{fontSize:14}} value={40}>사용자명</MenuItem>
                   </Select>
               </FormControl>
             </div>
@@ -630,33 +651,74 @@ export default function Home() {
               style={{marginLeft:'5px'}}
               autoComplete="off">
 
-
               <FormControl sx={{minWidth: '300px' }} variant="outlined">
-                <InputLabel id='keywordLabel' size="small" sx={{height:"40px",}}>키워드를 입력하세요</InputLabel>
-                <OutlinedInput
-                  sx={{height:"33px", backgroundColor:'white'}}
-                  id="keywordInfoField"
-                  type='text'
-                  value={filterInfo}
-                  onChange={(text)=>{
-
-                    setFilterInfo(text.target.value);
-
-                  }}
-                  endAdornment={
-                    <InputAdornment position="end">
-                      <ClearIcon
-
-                        onClick={handleClickDeleteKeyword}
-                      />
-                  
-                    </InputAdornment>
-                  }
-                  label="Password"
-                />
+                  <InputLabel 
+                      id='keywordLabel' 
+                      size="small" 
+                      sx={{
+                          height: "40px",
+                          fontSize: '14px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          '&.MuiInputLabel-root': {
+                              marginBottom: '0px',
+                              transform: 'translate(14px, -2px)',
+                              '&.MuiInputLabel-shrink': {
+                                  transform: 'translate(14px, -14px) scale(0.75)'
+                              }
+                          }
+                      }}
+                  >
+                      키워드를 입력하세요
+                  </InputLabel>
+                  <OutlinedInput
+                      sx={{
+                          height: '33px',
+                          backgroundColor:'white',
+                          fontSize: '14px',
+                          '& .MuiOutlinedInput-input': {
+                              fontSize: '14px',
+                              padding: '0 14px',
+                              height: '33px',
+                              display: 'flex',
+                              alignItems: 'center'
+                          },
+                          '& input': {
+                              paddingTop: 0,
+                              paddingBottom: 0,
+                              height: '100%',
+                              display: 'flex',
+                              alignItems: 'center'
+                          }
+                      }}
+                      id="keywordInfoField"
+                      type='text'
+                      value={filterInfo}
+                      onChange={(text)=>{ 
+                          setFilterInfo(text.target.value);
+                      }}
+                      endAdornment={
+                          <InputAdornment position="end">
+                              <ClearIcon onClick={handleClickDeleteKeyword} />
+                          </InputAdornment>
+                      }
+                      label="키워드를 입력하세요"
+                  />
               </FormControl>
             </Box>
-            <Button id="keyBtns" variant="outlined" style={{color:"white",backgroundColor:"#1f1f26", borderColor:"#CBCBCB" ,height:"33px" , marginRight:"10px"}}  onClick={handleClickSearch}>
+            <Button 
+              id="keyBtns" 
+              variant="outlined" 
+              style={{
+                color:"white", 
+                backgroundColor:"#1f1f26", 
+                borderColor:"#CBCBCB",
+                height:"33px",
+                marginRight:"5px",
+                fontSize: '14px'
+              }}  
+              onClick={handleClickSearch}
+            >
               검색
             </Button>
 

@@ -836,23 +836,39 @@ export default function Home() {
                 autoComplete="off">
 
                 <FormControl sx={{minWidth: '300px' }} variant="outlined">
-                    <InputLabel id='keywordLabel' size="small" sx={{height:"33px", fontSize: '13px'}}>키워드를 입력하세요</InputLabel>
+                    <InputLabel id='keywordLabel' size="small" sx={{height:"40px",}}>키워드를 입력하세요</InputLabel>
                     <OutlinedInput
-                        sx={{height:"33px", backgroundColor:'white', fontSize: '13px'}}
+                        sx={{
+                            height: '33px',
+                            backgroundColor:'white',
+                            fontSize: '14px',
+                            '& .MuiOutlinedInput-input': {
+                                fontSize: '14px',
+                                padding: '0 14px',
+                                height: '33px',
+                                display: 'flex',
+                                alignItems: 'center'
+                            },
+                            '& input': {
+                                paddingTop: 0,
+                                paddingBottom: 0,
+                                height: '100%',
+                                display: 'flex',
+                                alignItems: 'center'
+                            }
+                        }}
                         id="keywordInfoField"
                         type='text'
                         value={filterInfo}
-                        onChange={(text)=>{
+                        onChange={(text)=>{ 
                             setFilterInfo(text.target.value);
                         }}
                         endAdornment={
                             <InputAdornment position="end">
-                                <ClearIcon
-                                    onClick={handleClickDeleteKeyword}
-                                />
+                                <ClearIcon onClick={handleClickDeleteKeyword} />
                             </InputAdornment>
                         }
-                        label="Password"
+                        label="키워드를 입력하세요"
                     />
                 </FormControl>
             </Box>
@@ -860,13 +876,13 @@ export default function Home() {
                 id="keyBtns" 
                 variant="outlined" 
                 style={{
-                    color:"white",
+                    color:"white", 
                     backgroundColor:"#1f1f26", 
                     borderColor:"#CBCBCB",
                     height:"33px",
-                    marginRight:"10px",
-                    fontSize: '13px'
-                }} 
+                    marginRight:"5px",
+                    fontSize: '14px'
+                }}  
                 onClick={handleClickSearch}
             >
                 검색

@@ -780,7 +780,17 @@ export default function Home() {
                         <Select
                         labelId="demo-simple-select-label"
                         id="demo-simple-select"
-                        style={{color:'black'}}
+                        sx={{
+                            color: 'black',
+                            height: '33px',
+                            '& .MuiSelect-select': {
+                                height: '33px',
+                                padding: '0 14px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                fontSize: '14px'
+                            }
+                        }}
                         value={filterContentTypeMethod}
                         size="small"
                         onChange={handleChangeFilterContentType}
@@ -795,7 +805,7 @@ export default function Home() {
                 </div>
             </div>
 
-            <div style={{display:"flex", float:"left", marginLeft:"20px", alignContent:'center', alignItems:'center', justifyContent:'center'}}>
+            <div style={{display:"flex", float:"left", marginLeft:"0px", alignContent:'center', alignItems:'center', justifyContent:'center'}}>
                   
                 <div style={{display:"flex", float:"left"}}>
 
@@ -803,7 +813,17 @@ export default function Home() {
                         <Select
                         labelId="demo-simple-select-label"
                         id="demo-simple-select"
-                        style={{color:'black'}}
+                        sx={{
+                            color: 'black',
+                            height: '33px',
+                            '& .MuiSelect-select': {
+                                height: '33px',
+                                padding: '0 14px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                fontSize: '14px'
+                            }
+                        }}
                         value={filterKycTypeMethod}
                         size="small"
                         onChange={handleChangeFilterKycType}
@@ -826,25 +846,73 @@ export default function Home() {
               autoComplete="off">
 
               <FormControl sx={{minWidth: '300px' }} variant="outlined">
-                <InputLabel id='keywordLabel' size="small" sx={{height:"40px",}}>키워드를 입력하세요</InputLabel>
-                <OutlinedInput
-                  sx={{height:"33px", backgroundColor:'white'}}
-                  id="keywordInfoField"
-                  type='text'
-                  value={filterInfo}
-                  onChange={(text)=>{ 
-                    setFilterInfo(text.target.value);
-                  }}
-                  endAdornment={
-                    <InputAdornment position="end">
-                      <ClearIcon onClick={handleClickDeleteKeyword} />
-                    </InputAdornment>
-                  }
-                  label="키워드를 입력하세요"
-                />
+                  <InputLabel 
+                      id='keywordLabel' 
+                      size="small" 
+                      sx={{
+                          height: "40px",
+                          fontSize: '14px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          '&.MuiInputLabel-root': {
+                              marginBottom: '0px',
+                              transform: 'translate(14px, -2px)',
+                              '&.MuiInputLabel-shrink': {
+                                  transform: 'translate(14px, -14px) scale(0.75)'
+                              }
+                          }
+                      }}
+                  >
+                      키워드를 입력하세요
+                  </InputLabel>
+                  <OutlinedInput
+                      sx={{
+                          height: '33px',
+                          backgroundColor:'white',
+                          fontSize: '14px',
+                          '& .MuiOutlinedInput-input': {
+                              fontSize: '14px',
+                              padding: '0 14px',
+                              height: '33px',
+                              display: 'flex',
+                              alignItems: 'center'
+                          },
+                          '& input': {
+                              paddingTop: 0,
+                              paddingBottom: 0,
+                              height: '100%',
+                              display: 'flex',
+                              alignItems: 'center'
+                          }
+                      }}
+                      id="keywordInfoField"
+                      type='text'
+                      value={filterInfo}
+                      onChange={(text)=>{ 
+                          setFilterInfo(text.target.value);
+                      }}
+                      endAdornment={
+                          <InputAdornment position="end">
+                              <ClearIcon onClick={handleClickDeleteKeyword} />
+                          </InputAdornment>
+                      }
+                      label="키워드를 입력하세요"
+                  />
               </FormControl>
             </Box>
-            <Button id="keyBtns" variant="outlined" style={{color:"white", backgroundColor:"#1f1f26", borderColor:"#CBCBCB" ,height:"33px" , marginRight:"10px"}}  onClick={handleClickSearch}>
+            <Button 
+              id="keyBtns" 
+              variant="outlined" 
+              style={{
+                color:"white", 
+                backgroundColor:"#1f1f26", 
+                borderColor:"#CBCBCB",
+                height:"33px",
+                marginRight:"5px",
+                fontSize: '14px'
+              }}  
+              onClick={handleClickSearch}
+            >
               검색
             </Button>
 

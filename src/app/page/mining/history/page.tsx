@@ -977,23 +977,57 @@ export default function Home() {
                 autoComplete="off">
 
                 <FormControl sx={{minWidth: '300px' }} variant="outlined">
-                    <InputLabel id='keywordLabel' size="small" sx={{height:"33px", fontSize: '13px'}}>키워드를 입력하세요</InputLabel>
+                    <InputLabel 
+                        id='keywordLabel' 
+                        size="small" 
+                        sx={{
+                            height: "40px",
+                            fontSize: '14px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            '&.MuiInputLabel-root': {
+                                marginBottom: '0px',
+                                transform: 'translate(14px, -2px)',
+                                '&.MuiInputLabel-shrink': {
+                                    transform: 'translate(14px, -14px) scale(0.75)'
+                                }
+                            }
+                        }}
+                    >
+                        키워드를 입력하세요
+                    </InputLabel>
                     <OutlinedInput
-                        sx={{height:"33px", backgroundColor:'white', fontSize: '13px'}}
+                        sx={{
+                            height: '33px',
+                            backgroundColor:'white',
+                            fontSize: '14px',
+                            '& .MuiOutlinedInput-input': {
+                                fontSize: '14px',
+                                padding: '0 14px',
+                                height: '33px',
+                                display: 'flex',
+                                alignItems: 'center'
+                            },
+                            '& input': {
+                                paddingTop: 0,
+                                paddingBottom: 0,
+                                height: '100%',
+                                display: 'flex',
+                                alignItems: 'center'
+                            }
+                        }}
                         id="keywordInfoField"
                         type='text'
                         value={filterInfo}
-                        onChange={(text)=>{
+                        onChange={(text)=>{ 
                             setFilterInfo(text.target.value);
                         }}
                         endAdornment={
                             <InputAdornment position="end">
-                                <ClearIcon
-                                    onClick={handleClickDeleteKeyword}
-                                />
+                                <ClearIcon onClick={handleClickDeleteKeyword} />
                             </InputAdornment>
                         }
-
+                        label="키워드를 입력하세요"
                     />
                 </FormControl>
             </Box>
@@ -1006,7 +1040,7 @@ export default function Home() {
                     borderColor:"#CBCBCB",
                     height:"33px",
                     marginRight:"10px",
-                    fontSize: '13px'
+                    fontSize: '14px'
                 }} 
                 onClick={handleClickSearch}
             >
