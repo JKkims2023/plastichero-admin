@@ -23,6 +23,10 @@ export default function Home() {
     run_count : 0,
     stop_count : 0,
     mining_amount : 0,
+    company_mining_amount : 0,
+    total_mining_amount : 0,
+    total_mining_count : 0,
+
   });
   const [roundSummary, setRoundSummary] = React.useState({
     successCount : 0,
@@ -151,7 +155,8 @@ export default function Home() {
         <div style={{ flex: 1, padding: '10px', paddingRight: '50px', position: 'relative', height: 'calc(100% - 20px)', overflow: 'hidden' }}>
           
           <div style={{ display: 'flex',  flexDirection: 'column', height: '100%', padding: '20px' }}>
-            <Typography sx={{
+           
+           <Typography sx={{
               fontSize:"20px", 
               paddingLeft:'10px', 
               color: '#1f1f26', 
@@ -230,8 +235,6 @@ export default function Home() {
               ))}
             </div>
             
-
-
             <Typography sx={{
               marginTop:'40px',
               fontSize:"20px", 
@@ -272,10 +275,10 @@ export default function Home() {
                   boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
                 }
               }}>
-                <Typography sx={{ color: '#666', fontSize: '0.9rem', mb: 1 }}>
+                <Typography sx={{ color: '#666', fontSize: '1.2rem', mb: 1 }}>
                   총 채굴노드
                 </Typography>
-                <Typography sx={{ color: '#1f1f26', fontSize: '1.5rem', fontWeight: 'bold' }}>
+                <Typography sx={{ color: '#1f1f26', fontSize: '1.9rem', }}>
                   {nodeSummary.node_count.toLocaleString()}
                 </Typography>
               </Box>
@@ -293,10 +296,10 @@ export default function Home() {
                   boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
                 }
               }}>
-                <Typography sx={{ color: '#666', fontSize: '0.9rem', mb: 1 }}>
+                <Typography sx={{ color: '#666', fontSize: '1.2rem', mb: 1 }}>
                   활성화 된  노드
                 </Typography>
-                <Typography sx={{ color: '#60bb64', fontSize: '1.5rem', fontWeight: 'bold' }}>
+                <Typography sx={{ color: '#60bb64', fontSize: '1.9rem', }}>
                   {nodeSummary.run_count.toLocaleString()}
                 </Typography>
               </Box>
@@ -314,10 +317,10 @@ export default function Home() {
                   boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
                 }
               }}>
-                <Typography sx={{ color: '#666', fontSize: '0.9rem', mb: 1 }}>
+                <Typography sx={{ color: '#666', fontSize: '1.2rem', mb: 1 }}>
                   중지된 노드
                 </Typography>
-                <Typography sx={{ color: '#ff6b6b', fontSize: '1.5rem', fontWeight: 'bold' }}>
+                <Typography sx={{ color: '#ff6b6b', fontSize: '1.9rem',  }}>
                   {nodeSummary.stop_count.toLocaleString()}
                 </Typography>
               </Box>
@@ -365,10 +368,10 @@ export default function Home() {
                   boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
                 }
               }}>
-                <Typography sx={{ color: '#666', fontSize: '0.9rem', mb: 1 }}>
+                <Typography sx={{ color: '#666', fontSize: '1.2rem', mb: 1 }}>
                   설정된 채굴건수 (노드수)
                 </Typography>
-                <Typography sx={{ color: '#1f1f26', fontSize: '1.5rem', fontWeight: 'bold' }}>
+                <Typography sx={{ color: '#1f1f26', fontSize: '1.9rem',}}>
                   {nodeSummary.run_count.toLocaleString()}
                 </Typography>
               </Box>
@@ -386,10 +389,10 @@ export default function Home() {
                   boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
                 }
               }}>
-                <Typography sx={{ color: '#666', fontSize: '0.9rem', mb: 1 }}>
+                <Typography sx={{ color: '#666', fontSize: '1.2rem', mb: 1 }}>
                   예정된 채굴량
                 </Typography>
-                <Typography sx={{ color: '#60bb64', fontSize: '1.5rem', fontWeight: 'bold' }}>
+                <Typography sx={{ color: '#60bb64', fontSize: '1.9rem',  }}>
                   {(nodeSummary.mining_amount ? Number(nodeSummary.mining_amount).toLocaleString() : '0')} PTH
                 </Typography>
               </Box>
@@ -407,10 +410,10 @@ export default function Home() {
                   boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
                 }
               }}>
-                <Typography sx={{ color: '#666', fontSize: '0.9rem', mb: 1 }}>
+                <Typography sx={{ color: '#666', fontSize: '1.2rem', mb: 1 }}>
                   분배 예정 수
                 </Typography>
-                <Typography sx={{ color: '#1f1f26', fontSize: '1.5rem', fontWeight: 'bold' }}>
+                <Typography sx={{ color: '#1f1f26', fontSize: '1.9rem',}}>
                   {(nodeSummary.run_count * (companyNode.length + 1)).toLocaleString()}
                 </Typography>
               </Box>
@@ -419,21 +422,43 @@ export default function Home() {
 
           </div>
         </div>
-        <div style={{ flex: 1, padding: '10px', paddingTop:'10px', paddingLeft:'80px', paddingRight:'10px', height: 'calc(100% - 20px)' }}>
+        <div style={{ flex: 1, padding: '10px', paddingTop:'10px', paddingLeft:'80px', paddingRight:'40px', height: 'calc(100% - 20px)' }}>
           {/* 오른쪽 영역 내용 */}
 
-          <Typography sx={{fontSize:"25px", paddingLeft:'0px', paddingTop: '10px', color: '#1f1f26', fontWeight:'bold' }}>
-            채굴현황
+          <Typography sx={{
+
+              marginTop:'15px',
+              marginLeft:'10px',
+              fontSize:"20px", 
+              paddingLeft:'10px', 
+              color: '#1f1f26', 
+              fontWeight:'bold',
+              position: 'relative',
+              marginBottom: '20px',
+              '&:before': {
+                content: '""',
+                position: 'absolute',
+                left: '-10px',
+                top: '50%',
+                width: '4px',
+                height: '20px',
+                backgroundColor: '#60bb64',
+                transform: 'translateY(-50%)'
+              }
+            }}>
+              채굴현황
+
           </Typography>
-          <div style={{display:'flex', flexDirection:'row', marginTop:'10px', width:'100%'}}>
+
+          <div style={{display:'flex', flexDirection:'row', marginTop:'-10px', width:'100%'}}>
             <Typography sx={{fontSize:"16px",  color: '#1f1f26', fontWeight:'bold', marginTop:'5px', marginLeft:'0px' }}>
               누적 총 채굴정보 : 
             </Typography>
             <Typography sx={{fontSize:"16px",  color: '#60bb64', marginTop:'5px', marginLeft:'10px' }}>
-              채굴건수 : {roundSummary?.successCount?.toLocaleString()} 건
+              채굴건수 : {nodeSummary?.total_mining_count?.toLocaleString()} 건
             </Typography>
             <Typography sx={{fontSize:"16px",  color: '#60bb64', marginTop:'5px', marginLeft:'30px' }}>
-              채굴량 : {roundSummary?.successAmount?.toLocaleString()} PTH
+              채굴량 : {nodeSummary?.total_mining_amount?.toLocaleString()} PTH
             </Typography>
           </div>
           <div style={{display:'flex', flexDirection:'row', marginTop:'10px', width:'100%', alignContent:'center', alignItems:'center' }}>
@@ -450,26 +475,37 @@ export default function Home() {
           </div>
           
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', height: '100%', marginTop:'15px', }}>
-            <div style={{ width: '100%',  backgroundColor: '#efefef', padding: '10px', borderRadius: '10px' }}>
+            <div style={{display:'flex', flexDirection:'row', width: '100%',  backgroundColor: '#efefef', padding: '10px', borderRadius: '10px' }}>
               <Typography sx={{fontSize:"16px",  color: '#1f1f26', fontWeight:'bold'}}>
-                오늘의 지급량
+                {doneSchedule.schedule_no == -1 ? '오늘의 지급 예정 수량' : '오늘의 지급 완료 수량'}
+              </Typography>
+              <Typography sx={{display:doneSchedule.schedule_no == -1 ? 'none' : 'block', fontSize:"1.2rem",  color: '#1f1f26',  marginLeft:'auto', marginRight:'5px'}}>
+                계획 / 지급 
               </Typography>
             </div>
             <div style={{ display: 'flex', flexDirection: 'row', marginTop:'20px', width:'100%' }}>
-              <Typography sx={{ color: '#1f1f26', fontSize: '0.9rem', mb: 1, marginLeft:'10px',  }}>
+              <Typography sx={{ color: '#1f1f26', fontSize: '1.2rem', mb: 1, marginLeft:'10px', fontWeight:'bold'  }}>
                 유저지급 
               </Typography>
-              <Typography sx={{fontSize:"13px",  color: '#1f1f26', marginLeft:'auto', marginRight:'10px' }}>
-                {todayUserPayAmount} PTH
+              <Typography sx={{fontSize:"1.2rem",  color: '#1f1f26', marginLeft:'auto', marginRight:'10px' }}>
+              {(nodeSummary.mining_amount ? Number(nodeSummary.run_count * 135).toLocaleString() : '0')} PTH
               </Typography>
             </div>
             {companyNode.map((data, idx)=>{
               return(
               <div key={idx} style={{ display: 'flex', flexDirection: 'row', marginTop:'10px', width:'100%' }}>
-              <Typography sx={{ color: '#1f1f26', fontSize: '0.9rem', mb: 1, marginLeft:'10px',  }}>
-                {data.node_name} 
+              <Typography sx={{ color: '#1f1f26', fontSize: '1.2rem', mb: 1, marginLeft:'10px', fontWeight:'bold'  }}>
+                {data.node_name}  
               </Typography>
-              <Typography sx={{ color: '#1f1f26', fontSize: '0.9rem', mb: 1, marginLeft:'auto', marginRight:'10px',  }}>
+              <Typography sx={{ color: '#1f1f26', fontSize: '1.2rem', mb: 1, marginLeft:'auto', marginRight:'10px',  }}>
+                {(data.mining_amount * nodeSummary.run_count).toLocaleString()} PTH
+              </Typography>
+
+              <Typography sx={{display:doneSchedule.schedule_no == -1 ? 'none' : 'block', color: '#1f1f26', fontSize: '1.2rem', mb: 1, marginLeft:'0px', marginRight:'10px',  }}>
+                /
+              </Typography>
+
+              <Typography sx={{display:doneSchedule.schedule_no == -1 ? 'none' : 'block',  color: '#1f1f26', fontSize: '1.2rem', mb: 1, marginLeft:'0px', marginRight:'10px',  }}>
                 {(data.mining_amount * nodeSummary.run_count).toLocaleString()} PTH
               </Typography>
             </div>
@@ -478,11 +514,11 @@ export default function Home() {
             <div style={{width:'100%', height:'1px', backgroundColor:'#DBDBDB', marginTop:'10px'}} />
 
             <div style={{display:'flex', flexDirection:'row', marginTop:'20px', width:'100%', paddingRight:'10px'}}>
-              <Typography sx={{ color: '#1f1f26', fontSize: '0.9rem', mb: 1, marginLeft:'10px',  }}>
+              <Typography sx={{ color: '#1f1f26', fontSize: '1.5rem', mb: 1, marginLeft:'10px',  }}>
                 총 지급량
               </Typography>
               <Typography sx={{fontSize:"25px",  marginLeft:'auto', color:'#60bb64'}}>
-                {todayUserPayAmount} PTH
+              {(nodeSummary.mining_amount ? Number((nodeSummary.run_count * 135) + (nodeSummary.company_mining_amount * nodeSummary.run_count)).toLocaleString() : '0')} PTH
               </Typography>
             </div>
 

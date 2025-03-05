@@ -47,8 +47,10 @@ export async function POST(request) {
         (select count(node_no) from g5_node_list where delete_flag = 'N') as node_count, 
         (select count(node_no) from g5_node_list where delete_flag = 'N' and stop_yn = 'N') as run_count,
         (select count(node_no) from g5_node_list where delete_flag = 'N' and stop_yn = 'Y') as stop_count,
-        (select sum(mining_amount) from g5_node_list where delete_flag = 'N' and stop_yn = 'N') as mining_amount
-        
+        (select sum(mining_amount) from g5_node_list where delete_flag = 'N' and stop_yn = 'N') as mining_amount,
+        (select sum(mining_amount) from g5_node_company_list where delete_flag = 'N' and stop_yn = 'N') as company_mining_amount,
+        if((select sum(mining_amount) from g5_mining_history where tx_hash is not null and mainnet_request_status = 'S') is null, 0, (select sum(mining_amount) from g5_mining_history where tx_hash is not null and mainnet_request_status = 'S')) as total_mining_amount,
+        if((select count(node_no) from g5_mining_history where tx_hash is not null and mainnet_request_status = 'S') is null, 0, (select count(node_no) from g5_mining_history where tx_hash is not null and mainnet_request_status = 'S')) as total_mining_count
     `;
 
     const [rows_mining, fields_mining] = await connection.execute(sql_mining);
@@ -57,7 +59,18 @@ export async function POST(request) {
       
       SELECT 
 
-        * from g5_node_company_list where stop_yn = 'N' order by order_idx 
+        node_company_no,
+        node_name,
+        user_key,
+        wallet_no,
+        wallet_idx,
+        mining_amount,
+        stop_yn,
+        reg_date,
+        order_idx,
+        delete_flag
+
+      from g5_node_company_list where stop_yn = 'N' order by order_idx 
         
     `;
 

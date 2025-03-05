@@ -1017,7 +1017,14 @@ export default function Home() {
 
     return (
 
-      <div style={{display:'flex', flexDirection:'column',  width:'100%', height:'100vh',  paddingLeft:'20px', paddingRight:'20px',}}>
+      <div style={{
+        display:'flex', 
+        flexDirection:'column',  
+        width:'100%', 
+        height:'100vh',  
+        paddingLeft:'20px', 
+        paddingRight:'20px'
+      }}>
 
         <div style={{display:'flex', flexDirection:'row', marginTop:'20px'}}>
 
@@ -1085,7 +1092,6 @@ export default function Home() {
         </div>
 
         <div style={{
-          
           display:"flex", 
           float:"left",  
           marginTop:'10px', 
@@ -1098,99 +1104,105 @@ export default function Home() {
           borderWidth:'2px', 
           backgroundColor:'#efefef',
           alignContent:'center',
-          alignItems:'center',
-          
-          }}>
+          alignItems:'center'
+        }}>
             
             <div style={{display:"flex", float:"left"}}>
-
-              <FormControl fullWidth sx={{ 
-                  width: "175px", 
-                  marginTop: "0px", 
-                  marginLeft: "8px",
-                  '& .MuiOutlinedInput-root': {
-                      height: '33px',
-                      backgroundColor: 'white'
-                  },
-                  '& .MuiInputLabel-root': {
-                      fontSize: '14px'
-                  }
-              }}>
-                  <Select
-                      labelId="demo-simple-select-label"
-                      id="demo-simple-select"
-                      sx={{
-                          color: 'black',
-                          height: '33px',
-                          '& .MuiSelect-select': {
-                              height: '33px',
-                              padding: '0 14px',
-                              display: 'flex',
-                              alignItems: 'center',
-                              fontSize: '14px'
-                          }
-                      }}
-                      value={filterContentTypeMethod}
-                      size="small"
-                      onChange={handleChangeFilterContentType}
-                  >
-                      <MenuItem style={{fontSize:14}} value={10}>전체</MenuItem>
-                      <MenuItem style={{fontSize:14}} value={20}>회사정책</MenuItem>
-                      <MenuItem style={{fontSize:14}} value={30}>기타</MenuItem>
-                      <MenuItem style={{fontSize:14}} value={40}>해킹</MenuItem>
-                  </Select>
-              </FormControl>
-
+                <FormControl fullWidth sx={{ 
+                    width: "175px", 
+                    marginTop: "0px", 
+                    marginLeft: "8px",
+                    '& .MuiOutlinedInput-root': {
+                        height: '33px',
+                        backgroundColor: 'white'
+                    },
+                    '& .MuiInputLabel-root': {
+                        fontSize: '14px'
+                    }
+                }}>
+                    <Select
+                        labelId="demo-simple-select-label"
+                        id="demo-simple-select"
+                        sx={{
+                            color: 'black',
+                            height: '33px',
+                            '& .MuiSelect-select': {
+                                height: '33px',
+                                padding: '0 14px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                fontSize: '14px'
+                            }
+                        }}
+                        value={filterContentTypeMethod}
+                        size="small"
+                        onChange={handleChangeFilterContentType}
+                    >
+                        <MenuItem style={{fontSize:14}} value={10}>전체</MenuItem>
+                        <MenuItem style={{fontSize:14}} value={20}>회사정책</MenuItem>
+                        <MenuItem style={{fontSize:14}} value={30}>기타</MenuItem>
+                        <MenuItem style={{fontSize:14}} value={40}>해킹</MenuItem>
+                    </Select>
+                </FormControl>
             </div>
 
-
             <div style={{display:"flex", float:"left", marginLeft:"auto", width:"100%"}}>
+                <FormControl fullWidth sx={{ 
+                    width: "110px", 
+                    marginTop: "0px", 
+                    marginLeft: "auto",
+                    '& .MuiOutlinedInput-root': {
+                        height: '33px',
+                        backgroundColor: 'white'
+                    },
+                    '& .MuiInputLabel-root': {
+                        fontSize: '14px'
+                    }
+                }}>
+                    <Select
+                        labelId="demo-simple-select-label"
+                        id="demo-simple-select"
+                        sx={{
+                            color: 'black',
+                            height: '33px',
+                            '& .MuiSelect-select': {
+                                height: '33px',
+                                padding: '0 14px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                fontSize: '14px'
+                            }
+                        }}
+                        value={filterSellStatusMethod}
+                        size="small"
+                        onChange={handleChangeFilterSellStatus}
+                    >
+                        <MenuItem style={{fontSize:14}} value={10}>전체</MenuItem>
+                        <MenuItem style={{fontSize:14}} value={20}>지갑주소</MenuItem>
+                        <MenuItem style={{fontSize:14}} value={30}>이용자명</MenuItem>
+                        <MenuItem style={{fontSize:14}} value={40}>이용자ID</MenuItem>
+                        <MenuItem style={{fontSize:14}} value={50}>연결된 메일</MenuItem>
+                    </Select>
+                </FormControl>
 
-              <FormControl fullWidth sx={{ 
-                  width: "110px", 
-                  marginTop: "0px", 
-                  marginLeft: "auto",
-                  '& .MuiOutlinedInput-root': {
-                      height: '33px',
-                      backgroundColor: 'white'
-                  },
-                  '& .MuiInputLabel-root': {
+                <Button 
+                    variant="contained" 
+                    style={{
+                      color:"white", 
+                      backgroundColor:"#1f1f26", 
+                      borderColor:"#CBCBCB",
+                      height:"33px",
+                      marginLeft:"5px",
+                      marginRight:"5px",
                       fontSize: '14px'
-                  }
-              }}>
-                  <Select
-                      labelId="demo-simple-select-label"
-                      id="demo-simple-select"
-                      sx={{
-                          color: 'black',
-                          height: '33px',
-                          '& .MuiSelect-select': {
-                              height: '33px',
-                              padding: '0 14px',
-                              display: 'flex',
-                              alignItems: 'center',
-                              fontSize: '14px'
-                          }
-                      }}
-                      value={filterSellStatusMethod}
-                      size="small"
-                      onChange={handleChangeFilterSellStatus}
-                  >
-                      <MenuItem style={{fontSize:14}} value={10}>전체</MenuItem>
-                      <MenuItem style={{fontSize:14}} value={20}>지갑주소</MenuItem>
-                      <MenuItem style={{fontSize:14}} value={30}>이용자명</MenuItem>
-                      <MenuItem style={{fontSize:14}} value={40}>이용자ID</MenuItem>
-                      <MenuItem style={{fontSize:14}} value={50}>연결된 메일</MenuItem>
-                  </Select>
-              </FormControl>
-              }}  
-              onClick={handleClickSearch}
-            >
-              검색
-            </Button>
+                    }}  
+                    onClick={handleClickSearch}
+                >
+                    검색
+                </Button>
 
-            {registerButton}
-
+                {registerButton}
+            </div>
         </div>
 
         <div ref={ref_Div} style={{

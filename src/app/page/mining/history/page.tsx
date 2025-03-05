@@ -223,6 +223,25 @@ export default function Home() {
           flex: 0.07,
           disableColumnMenu: true,
           editable: false,
+          renderCell: (params) => {
+              const status = params.row.tx_hash != null ? '완료' : '요청전';
+              return (
+                  <div style={{ 
+                      width: '100%',
+                      height: '100%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                  }}>
+                      <Typography sx={{ 
+                          fontSize: '13px',
+                          color: params.row.tx_hash != null ? 'green' : 'inherit'
+                      }}>
+                          {status}
+                      </Typography>
+                  </div>
+              );
+          }
       },
       {
           field: 'req_date',
@@ -334,6 +353,19 @@ export default function Home() {
             headerName: '처리결과',
             flex: 0.2,
             disableColumnMenu: true,
+            renderCell: (params) => {
+
+                console.log(params.row);
+                const isCompleted = params.row.mainnet_request_status == 'S' && params.row.tx_id == 'testtxid';
+                return (
+                    <Typography sx={{ 
+                        fontSize: '13px',
+                        color: isCompleted ? 'green' : 'inherit'
+                    }}>
+                        {isCompleted ? '완료' : '처리 대기'}
+                    </Typography>
+                );
+            }
         },
     ];
 
@@ -508,7 +540,7 @@ export default function Home() {
                 sx={{
                     width: '100%',
                     '.MuiDataGrid-columnSeparator': {
-                    display: 'none',
+                        display: 'none',
                     },
                     "& .MuiDataGrid-columnHeader": {
                         borderTopColor:"green",
@@ -538,15 +570,15 @@ export default function Home() {
                         fontSize:13.5,
                     },
                     '& .MuiMenuItem-root': {
-                            fontSize: 1,
-                        },
-                        '& .MuiTypography-root': {
-                            color: 'dodgerblue',
-                            fontSize: 1,
-                        },
-                        '& .MuiDataGrid-filterForm': {
-                            bgcolor: 'lightblue',
-                        },
+                        fontSize: 1,
+                    },
+                    '& .MuiTypography-root': {
+                        fontSize: '13px',
+                        color: 'inherit'
+                    },
+                    '& .MuiDataGrid-filterForm': {
+                        bgcolor: 'lightblue',
+                    },
                     '& .MuiDataGrid-footerContainer': {
                         justifyContent: 'center',
                     },
@@ -794,10 +826,17 @@ export default function Home() {
     };
 
     const handleTestFunc = async() => {
+        
         try {
+
+            if(filterInfo.length == 0) {
+                alert('키워드를 입력하세요');
+                return;
+            }
+
             const response = await axios.post('http://localhost:3002/mining/result', {
                 // 전송할 데이터 객체
-                result_key: 'c78b28f5-fb8c-4557-8cef-192036f4c2f4',
+                result_key: filterInfo,
 
             }, {
                 headers: {
@@ -852,13 +891,13 @@ export default function Home() {
             <Paper style={{ padding: '10px', flex: 1, marginRight: '10px', display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
                 <Typography style={{ fontSize: '14px', color: "#1f1f26"  }}>채굴완료</Typography>
                 <Typography style={{ fontSize: "24px", fontWeight: "bold", color: "#1f1f26" }}>
-                    {filterNodeList.filter(node => node.mainnet_request_status === 'S').length.toLocaleString('ko-KR')}
+                    {filterNodeList.filter(node => node.mainnet_request_status == 'S' && node.tx_hash != null).length.toLocaleString('ko-KR')}
                 </Typography>
             </Paper>
             <Paper style={{ padding: '10px', flex: 1, marginRight: '10px', display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
                 <Typography style={{ fontSize: '14px', color: "#1f1f26"  }}>채굴중</Typography>
                 <Typography style={{ fontSize: "24px", fontWeight: "bold", color: "#1f1f26"}}>
-                    {filterNodeList.filter(node => node.mainnet_request_status === 'N').length.toLocaleString('ko-KR')}
+                    {filterNodeList.filter(node => node.mainnet_request_status == 'S' && node.tx_hash == null).length.toLocaleString('ko-KR')}
                 </Typography>
             </Paper>
             <Paper style={{ padding: '10px', flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
@@ -1042,7 +1081,7 @@ export default function Home() {
                     marginRight:"10px",
                     fontSize: '14px'
                 }} 
-                onClick={handleClickSearch}
+                onClick={handleTestFunc}
             >
                 검색
             </Button>

@@ -27,7 +27,8 @@ export async function POST(request) {
         T.reg_date, 
         T.update_date,
         N.node_name,
-        N.node_company_no
+        N.node_company_no,
+        T.mainnet_request_status
         
       FROM tbl_pth_transfer_dummy as T left outer join g5_node_company_list as N on T.wallet_idx = N.wallet_idx and N.delete_flag = 'N'
 
