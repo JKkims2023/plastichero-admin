@@ -539,7 +539,7 @@ export default function Home() {
                 boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
                 textAlign: 'left',
               }}>
-                <Typography variant="h6" style={{ color: '#1f1f26', marginBottom: '4px' }}>{title}</Typography>
+                <Typography variant="h6" sx={{ color: '#1f1f26', fontSize: '14px', mb: 1 }}>{title}</Typography>
                 <Typography variant="body1" style={{ color: 'black', fontSize: '24px', fontWeight: 'bold' }}>
                   {index === 0 ? totalUserCount.toLocaleString() : 
                     index === 1 ? userList.length.toLocaleString() :

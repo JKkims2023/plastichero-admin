@@ -37,6 +37,8 @@ import {
 } from '@mui/x-data-grid';
 import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
+import VerifiedUserIcon from '@mui/icons-material/VerifiedUser';
+import SecurityIcon from '@mui/icons-material/Security';
 
 type Anchor = 'bottom';
 
@@ -78,12 +80,17 @@ const StripedDataGrid = styled(DataGrid)(({ theme }) => ({
 
 // 타입 정의 개선
 interface KYCContent {
+  key_no: number;
   kyc_path: string;
   kyc_path2: string;
   kyc_path3: string;
   kyc_name: string;
   kyc_birth: string;
   approval_yn: string;
+  mb_email: string;
+  mb_name: string;
+  mb_hp: string;
+  mb_id: string;
   // ... other fields
 }
 
@@ -99,13 +106,19 @@ export default function Home() {
     const [kycList, setKycList] = React.useState([]);
     const [filterKycList, setFilterKycList] = React.useState([]);
     const [selectedContent, setSelectedContent] = React.useState<KYCContent>({
+
+      key_no: 0,
       kyc_path: '',
       kyc_path2: '',
       kyc_path3: '',
       kyc_name: '',
       kyc_birth: '',
       approval_yn: '',
-      // ... other fields
+      mb_email: '',
+      mb_name: '',
+      mb_hp: '',
+      mb_id: ''
+
     });
 
     const [filterContentTypeMethod, setFilterContentTypeMethod] = React.useState(10);
@@ -449,21 +462,44 @@ export default function Home() {
     };
 
     const handleCloseDialog = () => {
-        
-        try{
+        setOpenDialog(false);
+        setApprovalStatus('');
+        setApprovalComment('');
+        setCurrentImageIndex(0);
+    };
 
-          setOpenDialog(false);
+    const handleClickApproval = async() => {
 
-          ref_SelectedFiles.current = [];
+      try{
 
-          setSelectedFiles([]);
-          setCurrentImageIndex(0);
+        const response = await fetch('/api/user/kycApproval', {
 
-        }catch(error){
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ approval_yn : approvalStatus, reject_comment : approvalComment, key_no : selectedContent?.key_no }),
+        });
 
-          console.log(error);
-        
+        const data = await response.json();
+
+        if(response.ok){
+          
+          handleCloseDialog();
+          get_UserInfo();
+          alert('처리가 완료되었습니다.');
+          
+        }else{
+
+          alert(data.message);
+       
         }
+
+      }catch(error){
+
+        console.log(error);
+
+      }
 
     };
 
@@ -477,11 +513,11 @@ export default function Home() {
         return imagePath;
       }
 
-      console.log('imagePath:', imagePath);
-      console.log('JK why?');
-
       // 상대 경로인 경우 기본 URL과 결합
-      return `/uploads${imagePath.startsWith('/') ? imagePath : `/${imagePath}`}`;
+    //  return `/uploads${imagePath.startsWith('/') ? imagePath : `/${imagePath}`}`;
+
+      console.log(`${process.env.NEXT_PUBLIC_IMG_URL_LOCAL}${imagePath}`);
+      return `${process.env.NEXT_PUBLIC_IMG_URL_LOCAL}${imagePath}`;
     };
 
     // ImageDisplay 컴포넌트 수정
@@ -492,6 +528,45 @@ export default function Home() {
 
       return (
         <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+          
+
+          <div style={{
+            display: 'flex',
+            alignItems: 'flex-start',
+            width: '100%',
+            backgroundColor: '#f5f5f5',
+            padding: '8px 12px',
+            borderRadius: '4px',
+            marginBottom: '8px'
+          }}>
+            {currentImageIndex === 0 ? (
+                <>
+                    <VerifiedUserIcon 
+                        sx={{ 
+                            fontSize: '18px',
+                            color: '#2196f3',
+                            marginRight: '8px'
+                        }} 
+                    />
+                    <Typography sx={{ fontSize: '14px' }}>
+                        KYC 인증수단
+                    </Typography>
+                </>
+            ) : (
+                <>
+                    <SecurityIcon 
+                        sx={{ 
+                            fontSize: '18px',
+                            color: '#4caf50',
+                            marginRight: '8px'
+                        }} 
+                    />
+                    <Typography sx={{ fontSize: '14px' }}>
+                        KYC 인증 수단 + 실물
+                    </Typography>
+                </>
+            )}
+          </div>
           <Box sx={{
             position: 'relative',
             width: '100%',
@@ -568,7 +643,7 @@ export default function Home() {
             gap: 1
           }}>
             {/* 현재 페이지 표시 */}
-            <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+            <Typography variant="body2" sx={{ display:'none', color: 'text.secondary' }}>
               {`${currentImageIndex + 1} / ${ref_SelectedFiles.current.length}`}
             </Typography>
             
@@ -576,6 +651,8 @@ export default function Home() {
             <Box sx={{ 
               display: 'flex', 
               gap: 1,
+              marginTop:'10px',
+              marginBottom:'10px',
               justifyContent: 'center'
             }}>
               {ref_SelectedFiles.current.map((_, index) => (
@@ -600,6 +677,7 @@ export default function Home() {
               ))}
             </Box>
           </Box>
+
         </Box>
       );
     };
@@ -616,6 +694,30 @@ export default function Home() {
       {
           field: 'mb_id',
           headerName: '유저 아이디',
+          type: 'string',
+          flex: 1,
+          disableColumnMenu: true,
+          editable: false,
+      },
+      {
+          field: 'mb_name',
+          headerName: '이름',
+          type: 'string',
+          flex: 1,
+          disableColumnMenu: true,
+          editable: false,
+      },
+      {
+          field: 'mb_hp',
+          headerName: '전화번호',
+          type: 'string',
+          flex: 1,
+          disableColumnMenu: true,
+          editable: false,
+      },
+      {
+          field: 'mb_email',
+          headerName: '이메일',
           type: 'string',
           flex: 1,
           disableColumnMenu: true,
@@ -728,7 +830,14 @@ export default function Home() {
 
     return (
 
-      <div style={{display:'flex', flexDirection:'column',  width:'100%', height:'100vh',  paddingLeft:'20px', paddingRight:'20px',}}>
+      <div style={{
+        display: 'flex', 
+        flexDirection: 'column',  
+        width: '100%', 
+        height: '100vh',  
+        paddingLeft: '20px', 
+        paddingRight: '20px'
+    }}>
 
         <div style={{display:'flex', flexDirection:'row', marginTop:'20px'}}>
 
@@ -1094,32 +1203,48 @@ export default function Home() {
             aria-labelledby="kyc-dialog-title"
             keepMounted={false}
             disablePortal={false}
+            PaperProps={{
+                sx: {
+                    maxWidth: '600px'
+                }
+            }}
         >
-            <DialogTitle id="kyc-dialog-title">
+            <DialogTitle 
+                id="kyc-dialog-title"
+                sx={{ 
+                    py: 1.5,  // 상하 패딩 축소
+                    px: 2     // 좌우 패딩 유지
+                }}
+            >
                 <Box>
-                    <Typography variant="h6">KYC 정보 확인</Typography>
-                    {selectedContent && (
-                        <Typography 
-                            variant="subtitle2" 
-                            color="textSecondary"
-                            sx={{ mt: 1 }}
-                        >
-                            {`${selectedContent.kyc_name} - ${selectedContent.kyc_birth}`}
-                        </Typography>
-                    )}
+                    <Typography 
+                        variant="h6" 
+                        sx={{ 
+                            fontSize: '16px',
+                            fontWeight: 'bold'
+                        }}
+                    >
+                        KYC 정보 확인
+                    </Typography>
+
                 </Box>
             </DialogTitle>
-            <DialogContent>
-                <Box sx={{ mb: 2, p: 2, bgcolor: '#f5f5f5', borderRadius: 1 }}>
-                    <Grid container spacing={2}>
+            <DialogContent sx={{ pt: 1 }}>
+                <Box sx={{ 
+                    mb: 1.5, 
+                    p: 1.5, 
+                    bgcolor: '#f5f5f5', 
+                    borderRadius: 1 
+                }}>
+                    <Grid container spacing={1.5}>
                         <Grid item xs={6}>
-                            <Typography variant="body1">
-                                이름: {selectedContent?.kyc_name || '-'}
+                            <Typography sx={{ fontSize: '14px' }}>
+                                이름 : {selectedContent?.mb_name}
                             </Typography>
                         </Grid>
                         <Grid item xs={6}>
-                            <Typography variant="body1">
-                                생년월일: {selectedContent?.kyc_birth || '-'}
+                            <Typography sx={{ fontSize: '14px' }}>
+                                이메일 : {selectedContent?.mb_email}
                             </Typography>
                         </Grid>
                     </Grid>
@@ -1127,34 +1252,73 @@ export default function Home() {
                 
                 <ImageDisplay />
                 
-                <FormControl fullWidth sx={{ mb: 2, marginTop: "15px" }}>
-                    <InputLabel id="approval-status-label">처리상태</InputLabel>
+                <FormControl 
+                    fullWidth 
+                    sx={{ 
+                        mb: 1.5, 
+                        mt: 1.5,
+                        '& .MuiInputLabel-root': {
+                            fontSize: '14px',
+                            transform: 'translate(14px, 8px)',
+                            '&.MuiInputLabel-shrink': {
+                                transform: 'translate(14px, -9px) scale(0.75)'
+                            }
+                        },
+                        '& .MuiSelect-select': {
+                            fontSize: '14px',
+                            padding: '0 14px',
+                            height: '33px',
+                            display: 'flex',
+                            alignItems: 'center'
+                        },
+                        '& .MuiOutlinedInput-root': {
+                            height: '33px'
+                        }
+                    }}
+                >
+                    <InputLabel id="approval-status-label">승인 여부를 선택 하세요.</InputLabel>
                     <Select
                         labelId="approval-status-label"
                         id="approval-status-select"
                         value={approvalStatus}
                         onChange={(e) => setApprovalStatus(e.target.value)}
-                        label="처리상태"
+                        label="승인 여부를 선택 하세요."
+                        size="small"
                     >
-                        <MenuItem value="Y">승인</MenuItem>
-                        <MenuItem value="N">거부</MenuItem>
+                        <MenuItem value="Y" sx={{ fontSize: '14px' }}>승인</MenuItem>
+                        <MenuItem value="N" sx={{ fontSize: '14px' }}>거부</MenuItem>
                     </Select>
                 </FormControl>
                 
-                <TextField
-                    id="approval-comment"
-                    fullWidth
-                    label="승인/거부 사유"
-                    multiline
-                    rows={3}
-                    value={approvalComment}
-                    onChange={(e) => setApprovalComment(e.target.value)}
-                />
+                {approvalStatus === 'N' && (
+                    <TextField
+                        id="approval-comment"
+                        fullWidth
+                        label="거부 사유를 입력해주세요"
+                        multiline
+                        rows={2}
+                        value={approvalComment}
+                        onChange={(e) => setApprovalComment(e.target.value)}
+                        sx={{
+                            '& .MuiInputLabel-root': {
+                                fontSize: '14px'
+                            },
+                            '& .MuiInputBase-input': {
+                                fontSize: '14px'
+                            }
+                        }}
+                    />
+                )}
             </DialogContent>
-            <DialogActions>
+            <DialogActions sx={{ p: 1.5 }}>
                 <Button 
                     onClick={handleCloseDialog}
                     tabIndex={0}
+                    sx={{ 
+                        fontSize: '14px',
+                        minWidth: '60px',
+                        px: 1.5
+                    }}
                 >
                     취소
                 </Button>
@@ -1162,9 +1326,14 @@ export default function Home() {
                     variant="contained" 
                     color="primary"
                     onClick={() => {
-                        handleCloseDialog();
+                        handleClickApproval();
                     }}
                     tabIndex={0}
+                    sx={{ 
+                        fontSize: '14px',
+                        minWidth: '60px',
+                        px: 1.5
+                    }}
                 >
                     확인
                 </Button>

@@ -65,6 +65,28 @@ export async function POST(request) {
     
       SELECT
       
+        DATE_FORMAT(N.mb_datetime , '%Y-%m-%d %H:%i:%S') as mb_datetime,
+        N.mb_email,
+        M.mb_name, 
+        M.mb_id,
+        W.address as real_address,
+        W.email as real_email,
+        W.idx as wallet_idx,
+        W.user_idx,
+        if(W.address is null, 'Y', 'N') as not_match_user,
+        if(W.address is null, '미 매칭 사용자', '매칭 사용자') as not_match_user_text        
+
+      from g5_member as N inner join g5_member_kyc as K ON N.mb_no = K.mb_user_key and K.approval_yn = 'Y' left outer join tbl_pth_wallet_info as W ON BINARY(N.mb_email) = BINARY(W.email) and W.active = 'O' left outer join g5_member as M ON W.user_idx = M.mb_no 
+
+      order by N.mb_datetime desc;
+
+    `;
+
+
+    /*
+
+      SELECT
+      
         DATE_FORMAT(N.reg_date , '%Y-%m-%d %H:%i:%S') as mb_datetime,
         N.mb_email,
         N.mb_invite_code,
@@ -82,8 +104,7 @@ export async function POST(request) {
       from g5_node_member as N left outer join tbl_pth_wallet_info as W ON BINARY(N.mb_email) = BINARY(W.email) and W.active = 'O' left outer join g5_member as M ON W.user_idx = M.mb_no 
 
       order by N.reg_date desc;
-
-    `;
+    */
 
     const [rows_node_member, fields_node_member] = await connection.execute(sql_node_member);
 

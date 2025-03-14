@@ -864,23 +864,23 @@ export default function Home() {
 
         <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '10px',}}>
           <Paper style={{ padding: '10px', flex: 1, marginRight: '10px' }}>
-            <Typography variant="h6">총 키오스크 수</Typography>
+            <Typography variant="h6" sx={{ color: '#1f1f26', fontSize: '14px', mb: 1 }}>총 키오스크 수</Typography>
             <Typography sx={{fontSize: "24px", fontWeight: "bold", color: "#1f1f26"}}>{kioskList.length}</Typography>
           </Paper>
           <Paper style={{ padding: '10px', flex: 1, marginRight: '10px' }}>
-            <Typography variant="h6">판매전</Typography>
+            <Typography variant="h6" sx={{ color: '#1f1f26', fontSize: '14px', mb: 1 }}>판매전</Typography>
             <Typography sx={{fontSize: "24px", fontWeight: "bold", color: "#1f1f26"}}>{kioskList.filter(kiosk => kiosk.sell_status === '0').length}</Typography>
           </Paper>
           <Paper style={{ padding: '10px', flex: 1, marginRight: '10px' }}>
-            <Typography variant="h6">판매중</Typography>
+            <Typography variant="h6" sx={{ color: '#1f1f26', fontSize: '14px', mb: 1 }}>판매중</Typography>
             <Typography sx={{fontSize: "24px", fontWeight: "bold", color: "#1f1f26"}}>{kioskList.filter(kiosk => kiosk.sell_status === '1').length}</Typography>
           </Paper>
           <Paper style={{ padding: '10px', flex: 1, marginRight: '10px' }}>
-            <Typography variant="h6">판매완료(직접채굴)</Typography>
+            <Typography variant="h6" sx={{ color: '#1f1f26', fontSize: '14px', mb: 1 }}>판매완료(직접채굴)</Typography>
             <Typography sx={{fontSize: "24px", fontWeight: "bold", color: "#1f1f26"}}>{kioskList.filter(kiosk => kiosk.sell_status === '2').length}</Typography>
           </Paper>
           <Paper style={{ padding: '10px', flex: 1 }}>
-            <Typography variant="h6">판매완료(운영지원금)</Typography>
+            <Typography variant="h6" sx={{ color: '#1f1f26', fontSize: '14px', mb: 1 }}>판매완료(운영지원금)</Typography>
             <Typography sx={{fontSize: "24px", fontWeight: "bold", color: "#1f1f26"}}>{kioskList.filter(kiosk => kiosk.sell_status === '3').length}</Typography>
           </Paper>
         </div>
@@ -909,7 +909,17 @@ export default function Home() {
                   <Select
                   labelId="demo-simple-select-label"
                   id="demo-simple-select"
-                  style={{color:'black'}}
+                  sx={{
+                      color: 'black',
+                      height: '33px',
+                      '& .MuiSelect-select': {
+                          height: '33px',
+                          padding: '0 14px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          fontSize: '14px'
+                      }
+                  }}
                   value={filterSellStatusMethod}
                   size="small"
                   onChange={handleChangeFilterSellStatus}
@@ -931,7 +941,17 @@ export default function Home() {
                   <Select
                   labelId="demo-simple-select-label"
                   id="demo-simple-select"
-                  style={{color:'black'}}
+                  sx={{
+                      color: 'black',
+                      height: '33px',
+                      '& .MuiSelect-select': {
+                          height: '33px',
+                          padding: '0 14px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          fontSize: '14px'
+                      }
+                  }}
                   value={filterContentTypeMethod}
                   size="small"
                   onChange={handleChangeFilterContentType}
@@ -1186,8 +1206,8 @@ export default function Home() {
                 <div style={{display: openType == 'edit' ? 'flex' : 'none', flexDirection:'column'}}>
                 <div style={{width:'100%', height:'1px', backgroundColor:'#edccd4'}}/>
                 <div style={{display:'flex', flexDirection:'row', width:'100%', }}>
-                  <div style={{flex:1, padding:'10px', backgroundColor:'#f1f1f1', paddingRight:'35px', paddingLeft:'35px', alignItems:'center', alignContent:'center', justifyContent:'center'}}>
-                    <Typography sx={{fontSize:"13px",  color: '#1f1f26', marginLeft:"0px", fontWeight:'bold' }}>
+                  <div style={{padding:'10px', backgroundColor:'#f1f1f1', alignItems:'center', alignContent:'center', justifyContent:'center'}}>
+                  <Typography sx={{fontSize:"13px",  color: '#1f1f26', padding:'10px', paddingRight:'13px', paddingLeft:'25px', marginLeft:"0px", fontWeight:'bold' }}>
                         키오스크 상태
                     </Typography>
                   </div>
@@ -1202,8 +1222,34 @@ export default function Home() {
                               setInfoSellStatus('2');
                             }
                         }}>
-                            <FormControlLabel value="운영지원금" checked={infoSellStatus == '3'} control={<Radio />} label="판매완료(운영지원금)" />
-                            <FormControlLabel value="직접채굴" checked={infoSellStatus == '2'} control={<Radio />} label="판매완료(직접채굴)" />
+                            <FormControlLabel 
+                                value="운영지원금" 
+                                checked={infoSellStatus == '3'} 
+                                control={<Radio size="small" />} 
+                                label="판매완료(운영지원금)"
+                                sx={{
+                                    '& .MuiFormControlLabel-label': {
+                                        fontSize: '14px'
+                                    },
+                                    '& .MuiRadio-root': {
+                                        padding: '4px'
+                                    }
+                                }}
+                            />
+                            <FormControlLabel 
+                                value="직접채굴" 
+                                checked={infoSellStatus == '2'} 
+                                control={<Radio size="small" />} 
+                                label="판매완료(직접채굴)"
+                                sx={{
+                                    '& .MuiFormControlLabel-label': {
+                                        fontSize: '14px'
+                                    },
+                                    '& .MuiRadio-root': {
+                                        padding: '4px'
+                                    }
+                                }}
+                            />
                         </RadioGroup>
                     </FormControl>
                   </div>
@@ -1212,13 +1258,13 @@ export default function Home() {
                 <div style={{width:'100%', height:'1px', backgroundColor:'#edccd4'}}/>
                 <div style={{display:'flex', flexDirection:'row', width:'100%', }}>
                   <div style={{padding:'10px', backgroundColor:'#f1f1f1', alignItems:'center', alignContent:'center', justifyContent:'center'}}>
-                    <Typography sx={{fontSize:"13px",  color: '#1f1f26', padding:'10px', paddingRight:'55px', paddingLeft:'25px', marginLeft:"0px", fontWeight:'bold' }}>
+                    <Typography sx={{fontSize:"13px",  color: '#1f1f26', padding:'10px', paddingRight:'37px', paddingLeft:'25px', marginLeft:"0px", fontWeight:'bold' }}>
                         관리자ID
                     </Typography>
                   </div>
-                  <div style={{display:'flex', flexDirection:'row', padding:'15px', paddingRight:'35px', paddingLeft:'35px', backgroundColor:'white'}}>
+                  <div style={{display:'flex', flexDirection:'row', padding:'15px', paddingRight:'0px', paddingLeft:'35px', backgroundColor:'white'}}>
  
-                      <div style={{flex:1, width:'100%', marginLeft:'-10px', borderRadius:'5px', borderWidth:'1px', borderColor:'#edccd4', backgroundColor:"#e9ecef", padding:'10px', }}>
+                      <div style={{flex:1, width:'100%', marginLeft:'-10px', borderRadius:'5px', borderWidth:'1px', borderColor:'#edccd4', backgroundColor:"#e9ecef", padding:'10px', paddingRight:'70px'}}>
 
                         <Typography sx={{fontSize:"13px", width:'250px',  color: '#1f1f26', marginLeft:"0px", fontWeight:'bold' }}>
                             {infoManagerID}
@@ -1231,19 +1277,21 @@ export default function Home() {
                 <div style={{width:'100%', height:'1px', backgroundColor:'#edccd4'}}/>
                 <div style={{display:'flex', flexDirection:'row', width:'100%', }}>
                   <div style={{padding:'10px', backgroundColor:'#f1f1f1', alignItems:'center', alignContent:'center', justifyContent:'center'}}>
-                    <Typography sx={{fontSize:"13px",  color: '#1f1f26', padding:'0px', paddingRight:'55px', paddingLeft:'25px', marginLeft:"0px", fontWeight:'bold' }}>
+                    <Typography sx={{fontSize:"13px",  color: '#1f1f26', padding:'0px', paddingRight:'37px', paddingLeft:'25px', marginLeft:"0px", fontWeight:'bold' }}>
                         소유자ID
                     </Typography>
                   </div>
-                  <div style={{display:'flex', flexDirection:'row', padding:'15px', paddingRight:'35px', paddingLeft:'25px',  backgroundColor:'white'}}>
+                  <div style={{display:'flex', flexDirection:'row', padding:'15px', paddingRight:'60px', paddingLeft:'25px', paddingBottom:'15px',  backgroundColor:'white'}}>
  
-                      <FormControl sx={{minWidth: '273px' }} variant="outlined">
+                      <FormControl sx={{minWidth: '330px' }} variant="outlined">
                         <OutlinedInput
                           id="keywordInfoField"
                           sx={{
                             height: "33px",
                             backgroundColor: 'white',
-                            borderColor: '#edccd4'
+                            borderColor: '#edccd4',
+                            fontSize: '14px'
+
                           }}
                           type='text'
                           value={infoOwnerID}
@@ -1312,7 +1360,7 @@ export default function Home() {
                 <div style={{width:'100%', height:'1px', backgroundColor:'#edccd4'}}/>
                 <div style={{display:'flex', flexDirection:'row', width:'100%', }}>
                   <div style={{padding:'10px', backgroundColor:'#f1f1f1', alignItems:'center', alignContent:'center', justifyContent:'center'}}>
-                    <Typography sx={{fontSize:"13px",  color: '#1f1f26', padding:'10px', paddingRight:'55px', paddingLeft:'25px', marginLeft:"0px", fontWeight:'bold' }}>
+                    <Typography sx={{fontSize:"13px",  color: '#1f1f26', padding:'10px', paddingRight:'39px', paddingLeft:'25px', marginLeft:"0px", fontWeight:'bold' }}>
                         매칭주소
                     </Typography>
                   </div>

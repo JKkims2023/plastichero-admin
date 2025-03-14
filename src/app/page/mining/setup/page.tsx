@@ -764,10 +764,10 @@ export default function Home() {
                             boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
                             textAlign: 'left',
                         }}>
-                            <Typography variant="h6" style={{ color: '#1f1f26', marginBottom: '4px' }}>
+                            <Typography variant="h6" sx={{ color: '#1f1f26', fontSize: '14px', mb: 1 }}>
                                 {item.title}
                             </Typography>
-                            <Typography variant="body1" style={{ color: 'black', fontSize: '24px', fontWeight: 'bold' }}>
+                            <Typography sx={{fontSize: "24px", fontWeight: "bold", color: "#1f1f26"}}>
                                 {item.value.toLocaleString()}
                             </Typography>
                         </div>
@@ -836,7 +836,21 @@ export default function Home() {
                 autoComplete="off">
 
                 <FormControl sx={{minWidth: '300px' }} variant="outlined">
-                    <InputLabel id='keywordLabel' size="small" sx={{height:"40px",}}>키워드를 입력하세요</InputLabel>
+                    <InputLabel id='keywordLabel' 
+                    size="small" 
+                    sx={{
+                        height: "40px",
+                        fontSize: '14px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        '&.MuiInputLabel-root': {
+                            marginBottom: '0px',
+                            transform: 'translate(14px, -2px)',
+                            '&.MuiInputLabel-shrink': {
+                                transform: 'translate(14px, -14px) scale(0.75)'
+                            }
+                        }
+                    }}>키워드를 입력하세요</InputLabel>
                     <OutlinedInput
                         sx={{
                             height: '33px',

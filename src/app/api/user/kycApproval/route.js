@@ -12,33 +12,30 @@ export async function POST(request) {
 
   try{
 
-    const { pagingIdx, fromDate, toDate } = await request.json();
+    const { approval_yn, reject_comment, key_no } = await request.json();
 
     const connection = await getConnection();
 
+    let sql_comment = '';
+
+    if(approval_yn == 'N'){
+
+      sql_comment = `, reject_comment = '${reject_comment}' `;
+
+    }
+
     const sql = `
     
-      SELECT 
+      UPDATE g5_member_kyc
 
-        L.idx, 
-        L.address, 
-        L.memo,
-        L.lock_type,
-        L.lock_balance,
-        if(L.lock_type = '0', '지갑','금액') as lock_type_text,
-        DATE_FORMAT(L.reg_date , '%Y-%m-%d %H:%i:%S') as reg_date,  
-        DATE_FORMAT(L.unlock_date , '%Y-%m-%d %H:%i:%S') as unlock_date, 
-        W.user_idx,
-        W.email,
-        M.mb_id,
-        M.mb_name,
-        M.mb_email
+      SET approval_yn = '${approval_yn}'
+      ${sql_comment}
 
-
-      FROM tbl_pth_lock as L left outer join tbl_pth_wallet_info as W ON L.address = W.address left outer join g5_member as M ON W.user_idx = M.mb_no
-      WHERE L.delete_flag = 'N'
+      WHERE key_no = ${key_no}
       
-      order by reg_date desc;
+      order by reg_date desc
+      
+      ;
 
     `;
 

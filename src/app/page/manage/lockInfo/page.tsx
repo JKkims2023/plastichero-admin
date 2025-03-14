@@ -54,6 +54,18 @@ import TableCell from '@mui/material/TableCell';
 import Paper from '@mui/material/Paper';
 import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
+import LockIcon from '@mui/icons-material/Lock';
+import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
+import PersonIcon from '@mui/icons-material/Person';
+import BadgeIcon from '@mui/icons-material/Badge';
+import EmailIcon from '@mui/icons-material/Email';
+import DescriptionIcon from '@mui/icons-material/Description';
+import EventIcon from '@mui/icons-material/Event';
+import SearchIcon from '@mui/icons-material/Search';
+import EditIcon from '@mui/icons-material/Edit';
+import SaveIcon from '@mui/icons-material/Save';
+import CancelIcon from '@mui/icons-material/Cancel';
+import Divider from '@mui/material/Divider';
 
 type Anchor = 'bottom';
 
@@ -93,8 +105,6 @@ const StripedDataGrid = styled(DataGrid)(({ theme }) => ({
     },
 }));
 
-
-
 export default function Home() {
 
     const ref_Div = React.useRef<HTMLDivElement>(null);
@@ -123,7 +133,8 @@ export default function Home() {
         mb_id: '',
         email: '',
         unlock_date: '',
-        lock_reason: ''
+        lock_type: '',
+        lock_balance: '-1'
     });
 
     const [openSearchDialog, setOpenSearchDialog] = React.useState(false);
@@ -137,6 +148,8 @@ export default function Home() {
     const [openManageDialog, setOpenManageDialog] = React.useState(false);
 
     const [searchOption, setSearchOption] = React.useState('address'); // 기본 검색 옵션 설정
+
+    const [openConfirmDialog, setOpenConfirmDialog] = React.useState(false);
 
     const page_info = 'Home > 운영관리 > Lock 설정';
 
@@ -219,6 +232,8 @@ export default function Home() {
                 sx={{ fontSize: '12px' }}
                 onClick={(event) => {
                     event.stopPropagation();
+
+                    console.log(filterKioskList[params.row.id - 1]);
                     handleOpenManageDialog(filterKioskList[params.row.id - 1]);
                 }}
             >
@@ -555,21 +570,115 @@ export default function Home() {
             mb_id: '',
             email: '',
             unlock_date: '',
-            lock_reason: ''
+            lock_type: '',
+            lock_balance: '-1'
         });
     };
 
-    const handleSubmit = async () => {
+    const handleSubmit = () => {
+        // 유효성 검사
+        if (!newLockInfo.address) {
+            alert('지갑주소를 입력해주세요.');
+            return;
+        }
+
+        if (!newLockInfo.lock_type) {
+            alert('Lock 타입을 선택해주세요.');
+            return;
+        }
+
+        if (newLockInfo.lock_type === 'amount_lock' && 
+            (!newLockInfo.lock_balance || newLockInfo.lock_balance === '0' || newLockInfo.lock_balance === '')) {
+            alert('Lock 금액을 입력해주세요.');
+            return;
+        }
+
+        if (!newLockInfo.unlock_date) {
+            alert('해지 예정일을 선택해주세요.');
+            return;
+        }
+
+        // API 호출 로직
+        handleRegister();
+    };
+
+    // 새로운 함수 추가: 버튼 클릭 시 유효성 검사
+    const handleButtonClick = () => {
+        if (!newLockInfo.address) {
+            alert('지갑주소를 입력해주세요.');
+            return;
+        }
+
+        if (!newLockInfo.lock_type) {
+            alert('Lock 타입을 선택해주세요.');
+            return;
+        }
+
+        if (newLockInfo.lock_type === 'amount_lock' && 
+            (!newLockInfo.lock_balance || newLockInfo.lock_balance === '0' || newLockInfo.lock_balance === '')) {
+            alert('Lock 금액을 입력해주세요.');
+            return;
+        }
+
+        if (!newLockInfo.unlock_date) {
+            alert('해지 예정일을 선택해주세요.');
+            return;
+        }
+
+        handleSubmit();
+    };
+
+    // 실제 등록 처리 함수
+    const handleRegister = async () => {
+        
         try {
+
             setLoading(true);
-            // TODO: API 호출하여 새로운 Lock 정보 등록
-            console.log('새로운 Lock 정보:', newLockInfo);
-            handleCloseDialog();
-            // 등록 후 목록 새로고침
-            await get_UserInfo();
+            
+            // 날짜를 MySQL datetime 형식으로 변환
+            const date = new Date(newLockInfo.unlock_date);
+            const formattedDate = date.getFullYear() + '-' + 
+                                String(date.getMonth() + 1).padStart(2, '0') + '-' + 
+                                String(date.getDate()).padStart(2, '0') + ' ' + 
+                                '00:00:00';
+            
+            const response = await fetch('/api/manage/lockInfo/register', {
+
+              method: 'POST',
+              headers: {
+              
+                'Content-Type': 'application/json',
+              
+              },
+              
+              body: JSON.stringify({ 
+                address: newLockInfo.address, 
+                memo: '', 
+                unlock_date: formattedDate, // MySQL datetime 형식으로 변환된 날짜
+                lock_type: newLockInfo.lock_type === 'amount_lock' ? '1' : '0', 
+                lock_balance: newLockInfo.lock_type === 'amount_lock' ? newLockInfo.lock_balance : '-1' 
+              }),
+            
+            });
+      
+            const data = await response.json(); 
+      
+            if (response.ok) {
+
+              handleCloseDialog();
+              // 등록 후 목록 새로고침
+              get_UserInfo();
+              
+            } else {
+      
+              alert(data.message);
+            
+            }
+
+
         } catch (error) {
             console.error('Lock 정보 등록 실패:', error);
-        } finally{
+        } finally {
             setLoading(false);
         }
     };
@@ -612,111 +721,290 @@ export default function Home() {
                 address: '',
                 mb_name: '',
                 mb_id: '',
-                email: ''
+                email: '',
+                lock_balance: '-1'
             });
         }
     };
 
     // 검색 다이얼로그 컴포넌트
     const searchDialog = (
-        <Dialog open={openSearchDialog} onClose={handleCloseSearchDialog} maxWidth="lg" fullWidth>
-            <DialogTitle sx={{ fontSize: '16px', fontWeight: 'bold' }}>
-                지갑주소 검색
-            </DialogTitle>
-            <DialogContent>
-                <Box sx={{ display: 'flex', gap: 1, mb: 2, mt: 1 }}>
-                    <FormControl size="small" sx={{ minWidth: 120 }}>
-                        <Select
-                            value={searchOption}
-                            onChange={(e) => setSearchOption(e.target.value)}
+            <Dialog 
+            open={openSearchDialog} 
+            onClose={handleCloseSearchDialog} 
+            maxWidth="lg" 
+                fullWidth
+                PaperProps={{
+                    sx: {
+                        maxHeight: '90vh',
+                        display: 'flex',
+                        flexDirection: 'column'
+                    }
+                }}
+            >
+                <DialogTitle 
+                    sx={{ 
+                        backgroundColor: '#1976d2',
+                        color: 'white',
+                        p: 2,
+                        flex: '0 0 auto'
+                    }}
+                >
+                    <Box sx={{ 
+                        display: 'flex', 
+                        alignItems: 'center',
+                        gap: 1 
+                    }}>
+                    <SearchIcon sx={{ fontSize: 20 }} />
+                        <Typography 
+                            component="span"
+                            sx={{ 
+                                fontSize: '16px',
+                                fontWeight: 'bold'
+                            }}
                         >
-                            <MenuItem value="address">지갑주소</MenuItem>
-                            <MenuItem value="ownerName">이용자명</MenuItem>
-                            <MenuItem value="userId">이용자ID</MenuItem>
-                            <MenuItem value="email">연결된 이메일</MenuItem>
-                        </Select>
-                    </FormControl>
-                    <TextField
-                        fullWidth
-                        label="키워드를 입력하세요"
-                        value={searchKeyword}
-                        onChange={(e) => setSearchKeyword(e.target.value)}
+                        지갑주소 검색
+                        </Typography>
+                    </Box>
+                </DialogTitle>
+            <DialogContent sx={{ p: 2.5 }}>
+                    <Box sx={{ 
+                        backgroundColor: '#ffffff',
+                        borderRadius: '10px',
+                        p: 2.5,
+                        marginTop:'15px',
+                        boxShadow: '0 2px 4px rgba(0,0,0,0.06)',
+                        border: '1px solid #eaeaea',
+                    }}>
+                    <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
+                        <FormControl 
+                                    size="small"
+                                    sx={{ 
+                                minWidth: 120,
+                                '& .MuiInputBase-root': {
+                                            fontSize: '13px',
+                                    height: '32px'
+                                }
+                            }}
+                        >
+                            <Select
+                                value={searchOption}
+                                onChange={(e) => setSearchOption(e.target.value)}
+                            >
+                                <MenuItem value="address" sx={{ fontSize: '13px' }}>지갑주소</MenuItem>
+                                <MenuItem value="ownerName" sx={{ fontSize: '13px' }}>이용자명</MenuItem>
+                                <MenuItem value="userId" sx={{ fontSize: '13px' }}>이용자ID</MenuItem>
+                                <MenuItem value="email" sx={{ fontSize: '13px' }}>연결된 이메일</MenuItem>
+                            </Select>
+                        </FormControl>
+                        <TextField
+                            fullWidth
+                            placeholder="키워드를 입력하세요"
+                            value={searchKeyword}
+                            onChange={(e) => setSearchKeyword(e.target.value)}
+                            size="small"
+                        sx={{
+                                '& .MuiInputBase-root': {
+                                    fontSize: '13px',
+                                    height: '32px'
+                                }
+                            }}
+                            InputProps={{
+                                endAdornment: (
+                                    searchKeyword && (
+                                        <InputAdornment position="end">
+                                            <IconButton
+                                                onClick={() => {
+                                                    setSearchKeyword('');
+                                                    setSearchResults([]);
+                                                }}
+                                                edge="end"
                         size="small"
-                        InputProps={{
-                            endAdornment: (
-                                searchKeyword && (
-                                    <InputAdornment position="end">
-                                        <ClearIcon
-                                            onClick={() => {
-                                              setSearchKeyword('');
-                                              setSearchResults([]);
-                                            }}
-                                            style={{ cursor: 'pointer' }}
-                                        />
-                                    </InputAdornment>
+                                            >
+                                                <ClearIcon sx={{ fontSize: 18 }} />
+                                            </IconButton>
+                                        </InputAdornment>
+                                    )
                                 )
-                            )
-                        }}
-                    />
-                    <Button 
-                        variant="contained" 
-                        onClick={() => {
-                            // TODO: 실제 검색 API 호출
-                            console.log('검색:', searchKeyword, '옵션:', searchOption);
-
-                            if(searchKeyword.length > 0){
-                              handleSearchTargetInfo(searchOption, searchKeyword);
-                            }
+                            }}
+                        />
+                        <Button 
+                            variant="contained" 
+                            onClick={() => {
+                                if(searchKeyword.length > 0){
+                                    handleSearchTargetInfo(searchOption, searchKeyword);
+                                }
+                            }}
+                            startIcon={<SearchIcon sx={{ fontSize: 18 }} />}
+                            sx={{ 
+                                height: '32px',
+                                fontSize: '13px',
+                                padding: '0 16px',
+                                minWidth: '80px'
+                            }}
+                        >
+                            검색
+                        </Button>
+                    </Box>
+                    <TableContainer 
+                        component={Paper}
+                        sx={{ 
+                            border: '1px solid #e0e0e0',
+                            borderRadius: '4px'
                         }}
                     >
-                        검색
-                    </Button>
-                </Box>
-                <TableContainer component={Paper}>
-                    <Table size="small">
-                        <TableHead>
-                            <TableRow>
-                                <TableCell style={{ fontSize: '14px', whiteSpace: 'normal', lineHeight: '1.2', maxWidth: '200px', height: '48px', padding: '0 16px' }}>지갑주소</TableCell>
-                                <TableCell style={{ fontSize: '14px', height: '48px', padding: '0 16px', width: '150px' }}>이용자명명</TableCell>
-                                <TableCell style={{ fontSize: '14px', height: '48px', padding: '0 16px', width: '100px' }}>이용자ID</TableCell>
-                                <TableCell style={{ fontSize: '14px', height: '48px', padding: '0 16px', width: '150px' }}>이메일</TableCell>
-                                <TableCell style={{ fontSize: '14px', height: '48px', padding: '0 16px', width: '80px' }}>선택</TableCell>
-                            </TableRow>
-                        </TableHead>
-                        <TableBody>
-                            {searchResults.map((result, index) => (
-                                <TableRow key={index}>
-                                    <TableCell style={{ fontSize: '14px', whiteSpace: 'normal', lineHeight: '1.2', maxWidth: '200px' }}>{result.address}</TableCell>
-                                    <TableCell style={{ fontSize: '14px' }}>{result.mb_name}</TableCell>
-                                    <TableCell style={{ fontSize: '14px' }}>{result.mb_id}</TableCell>
-                                    <TableCell style={{ fontSize: '14px' }}>{result.email}</TableCell>
-                                    <TableCell>
-                                        <Button
-                                            size="small"
-                                            variant="contained"
-                                            onClick={() => {
-                                                setNewLockInfo({
-                                                    ...newLockInfo,
-                                                    address: result.address,
-                                                    mb_name: result.mb_name,
-                                                    mb_id: result.mb_id,
-                                                    email: result.email
-                                                });
-                                                handleCloseSearchDialog();
-                                            }}
-                                            style={{ fontSize: '12px' }}
-                                        >
-                                            선택
-                                        </Button>
+                        <Table size="small">
+                            <TableHead>
+                                <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
+                                    <TableCell sx={{ 
+                                        fontSize: '13px', 
+                                        fontWeight: 600,
+                                        color: '#444',
+                                        height: '40px',
+                                        padding: '0 16px'
+                                    }}>
+                                        지갑주소
+                                    </TableCell>
+                                    <TableCell sx={{ 
+                                        fontSize: '13px', 
+                                        fontWeight: 600,
+                                        color: '#444',
+                                        height: '40px',
+                                        padding: '0 16px',
+                                        width: '150px'
+                                    }}>
+                                        이용자명
+                                    </TableCell>
+                                    <TableCell sx={{ 
+                                        fontSize: '13px', 
+                                        fontWeight: 600,
+                                        color: '#444',
+                                        height: '40px',
+                                        padding: '0 16px',
+                                        width: '120px'
+                                    }}>
+                                        이용자ID
+                                    </TableCell>
+                                    <TableCell sx={{ 
+                                        fontSize: '13px', 
+                                        fontWeight: 600,
+                                        color: '#444',
+                                        height: '40px',
+                                        padding: '0 16px',
+                                        width: '180px'
+                                    }}>
+                                        이메일
+                                    </TableCell>
+                                    <TableCell sx={{ 
+                                        fontSize: '13px', 
+                                        fontWeight: 600,
+                                        color: '#444',
+                                        height: '40px',
+                                        padding: '0 16px',
+                                        width: '80px'
+                                    }}>
+                                        선택
                                     </TableCell>
                                 </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
-                </TableContainer>
+                            </TableHead>
+                            <TableBody>
+                                {searchResults.map((result, index) => (
+                                    <TableRow 
+                                        key={index}
+                                        sx={{
+                                            '&:nth-of-type(even)': {
+                                                backgroundColor: '#f8f9fa',
+                                            },
+                                            '&:hover': {
+                                                backgroundColor: '#f5f5f5',
+                                            }
+                                        }}
+                                    >
+                                        <TableCell sx={{ 
+                                            fontSize: '13px',
+                                            padding: '8px 16px',
+                                            color: '#333'
+                                        }}>
+                                            {result.address}
+                                        </TableCell>
+                                        <TableCell sx={{ 
+                                            fontSize: '13px',
+                                            padding: '8px 16px',
+                                            color: '#333'
+                                        }}>
+                                            {result.mb_name}
+                                        </TableCell>
+                                        <TableCell sx={{ 
+                                            fontSize: '13px',
+                                            padding: '8px 16px',
+                                            color: '#333'
+                                        }}>
+                                            {result.mb_id}
+                                        </TableCell>
+                                        <TableCell sx={{ 
+                                            fontSize: '13px',
+                                            padding: '8px 16px',
+                                            color: '#333'
+                                        }}>
+                                            {result.email}
+                                        </TableCell>
+                                        <TableCell sx={{ 
+                                            padding: '8px 16px'
+                                        }}>
+                                            <Button
+                                                size="small"
+                                                variant="contained"
+                                                onClick={() => {
+                                                    setNewLockInfo({
+                                                        ...newLockInfo,
+                                                        address: result.address,
+                                                        mb_name: result.mb_name,
+                                                        mb_id: result.mb_id,
+                                                        email: result.email
+                                                    });
+                                                    handleCloseSearchDialog();
+                                                }}
+                                                sx={{ 
+                                                    fontSize: '12px',
+                                                    minWidth: '60px',
+                                                    height: '28px'
+                                                }}
+                                            >
+                                                선택
+                                            </Button>
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </TableContainer>
+                </Box>
             </DialogContent>
-            <DialogActions>
-                <Button onClick={handleCloseSearchDialog}>닫기</Button>
+            <DialogActions 
+                sx={{ 
+                    p: 2,
+                    backgroundColor: '#f8f9fa',
+                    borderTop: '1px solid #eaeaea'
+                }}
+            >
+                <Button 
+                    onClick={handleCloseSearchDialog}
+                    variant="outlined"
+                    startIcon={<CancelIcon sx={{ fontSize: 18 }} />}
+                    sx={{ 
+                        fontSize: '13px',
+                        height: '32px',
+                        padding: '0 16px',
+                        color: '#666',
+                        borderColor: '#ccc',
+                        '&:hover': {
+                            borderColor: '#999',
+                            backgroundColor: '#f5f5f5'
+                        }
+                    }}
+                >
+                    닫기
+                </Button>
             </DialogActions>
         </Dialog>
     );
@@ -724,155 +1012,362 @@ export default function Home() {
     // 등록 다이얼로그 컴포넌트 추가
     const registerDialog = (
         <>
-            <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="sm" fullWidth>
-                <DialogTitle sx={{ fontSize: '16px', fontWeight: 'bold' }}>
-                    Lock 설정 등록
+            <Dialog 
+                open={openDialog} 
+                onClose={handleCloseDialog} 
+                maxWidth="sm" 
+                fullWidth
+                PaperProps={{
+                    sx: {
+                        maxHeight: '90vh',
+                        display: 'flex',
+                        flexDirection: 'column'
+                    }
+                }}
+            >
+                <DialogTitle 
+                    sx={{ 
+                        backgroundColor: '#1976d2',
+                        color: 'white',
+                        p: 2,
+                        flex: '0 0 auto'
+                    }}
+                >
+                    <Box sx={{ 
+                        display: 'flex', 
+                        alignItems: 'center',
+                        gap: 1 
+                    }}>
+                        <LockIcon sx={{ fontSize: 20 }} />
+                        <Typography 
+                            component="span"
+                            sx={{ 
+                                fontSize: '14px',
+                                fontWeight: 'bold'
+                            }}
+                        >
+                            Lock 설정 등록
+                        </Typography>
+                    </Box>
                 </DialogTitle>
-                <DialogContent>
-                    <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-start' }}>
-                        <Box sx={{ flex: 1 }}>
-                            <TextField
-                                fullWidth
-                                label="지갑주소"
-                                value={newLockInfo.address}
-                                onChange={(e) => {
-                                    setNewLockInfo({...newLockInfo, address: e.target.value});
-                                }}
-                                margin="normal"
-                                size="small"
-                                disabled={!isManualInput}
-                                sx={{ 
-                                    backgroundColor: !isManualInput ? '#f5f5f5' : 'white',
-                                    '& .MuiInputBase-input.Mui-disabled': {
-                                        WebkitTextFillColor: '#666666',
-                                    }
-                                }}
-                                InputProps={{
-                                    endAdornment: (
-                                        isManualInput && newLockInfo.address && (
-                                            <InputAdornment position="end">
-                                                <ClearIcon
-                                                    onClick={() => setNewLockInfo({ ...newLockInfo, address: '' })}
-                                                    style={{ cursor: 'pointer' }}
-                                                />
-                                            </InputAdornment>
-                                        )
-                                    )
-                                }}
-                            />
-                            {newLockInfo.address && ( // 지갑주소가 입력된 경우에만 나머지 항목 보이기
+                
+                <DialogContent 
+                    sx={{ 
+                        p: 2.5,
+                        flex: '1 1 auto',
+                        overflow: 'hidden',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: 2,
+                    }}
+                >
+                    <Box sx={{ 
+                        backgroundColor: '#ffffff',
+                        borderRadius: '10px',
+                        marginTop:'15px',
+                        p: 2.5,
+                        boxShadow: '0 2px 4px rgba(0,0,0,0.06)',
+                        border: '1px solid #eaeaea',
+                    }}>
+                        <Grid container spacing={2}>
+                            <Grid item xs={12}>
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.2, mb: 0.8 }}>
+                                    <AccountBalanceWalletIcon sx={{ color: '#1976d2', fontSize: 18 }} />
+                                    <Typography variant="subtitle2" sx={{ 
+                                        color: '#444',
+                                        fontSize: '13px',
+                                        fontWeight: 600,
+                                    }}>
+                                        지갑주소
+                                    </Typography>
+                                </Box>
+                                <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-start' }}>
+                                    <TextField
+                                        fullWidth
+                                        value={newLockInfo.address}
+                                        onChange={(e) => setNewLockInfo({...newLockInfo, address: e.target.value})}
+                                        size="small"
+                                        disabled={!isManualInput}
+                                        sx={{ 
+                                            mt: 1,
+                                            backgroundColor: !isManualInput ? '#f5f5f5' : 'white',
+                                            '& .MuiInputBase-input': {
+                                                fontSize: '13px',
+                                                padding: '8px 12px',
+                                                height: '16px',
+                                            },
+                                            '& .MuiInputBase-input.Mui-disabled': {
+                                                WebkitTextFillColor: '#666666',
+                                                fontSize: '13px',
+                                            }
+                                        }}
+                                        InputProps={{
+                                            endAdornment: isManualInput && newLockInfo.address && (
+                                                <InputAdornment position="end">
+                                                    <ClearIcon
+                                                        onClick={() => setNewLockInfo({ ...newLockInfo, address: '' })}
+                                                        style={{ cursor: 'pointer' }}
+                                                    />
+                                                </InputAdornment>
+                                            )
+                                        }}
+                                    />
+                                    <Button 
+                                        variant="contained" 
+                                        size="small" 
+                                        onClick={handleOpenSearchDialog}
+                                        startIcon={<SearchIcon sx={{ fontSize: 18 }} />}
+                                        sx={{ 
+                                            height: '32px',
+                                            width: '100px',
+                                            fontSize: '13px',
+                                            padding: '0 16px',
+                                            marginTop: '8px',
+                                            minHeight: '32px',
+                                            boxSizing: 'border-box'
+                                        }}
+                                    >
+                                        검색
+                                    </Button>
+                                </Box>
+                                <Divider sx={{ mt: 2, mb: 1 }} />
+                            </Grid>
+
+                            {newLockInfo.address && (
                                 <>
-                                    <TextField
-                                        fullWidth
-                                        label="이용자명명"
-                                        value={newLockInfo.mb_name}
-                                        margin="normal"
-                                        size="small"
-                                        disabled
-                                        sx={{ 
-                                            backgroundColor: '#f5f5f5',
-                                            '& .MuiInputBase-input.Mui-disabled': {
-                                                WebkitTextFillColor: '#666666',
-                                            }
-                                        }}
-                                    />
-                                    <TextField
-                                        fullWidth
-                                        label="이용자 ID"
-                                        value={newLockInfo.mb_id}
-                                        margin="normal"
-                                        size="small"
-                                        disabled
-                                        sx={{ 
-                                            backgroundColor: '#f5f5f5',
-                                            '& .MuiInputBase-input.Mui-disabled': {
-                                                WebkitTextFillColor: '#666666',
-                                            }
-                                        }}
-                                    />
-                                    <TextField
-                                        fullWidth
-                                        label="연결된 이메일"
-                                        value={newLockInfo.email}
-                                        margin="normal"
-                                        size="small"
-                                        disabled
-                                        sx={{ 
-                                            backgroundColor: '#f5f5f5',
-                                            '& .MuiInputBase-input.Mui-disabled': {
-                                                WebkitTextFillColor: '#666666',
-                                            }
-                                        }}
-                                    />
-                                    <TextField
-                                        fullWidth
-                                        label="Lock 사유"
-                                        value={newLockInfo.lock_reason}
-                                        onChange={(e) => setNewLockInfo({...newLockInfo, lock_reason: e.target.value})}
-                                        margin="normal"
-                                        size="small"
-                                        multiline
-                                        rows={3}
-                                        required
-                                    />
-                                    <TextField
-                                        fullWidth
-                                        label="해지 예정일"
-                                        type="date"
-                                        value={newLockInfo.unlock_date}
-                                        onChange={(e) => setNewLockInfo({...newLockInfo, unlock_date: e.target.value})}
-                                        margin="normal"
-                                        size="small"
-                                        required
-                                        InputLabelProps={{
-                                            shrink: true,
-                                        }}
-                                    />
+                                    <Grid item xs={12}>
+                                        <Box sx={{ 
+                                            display: 'flex', 
+                                            gap: 2 
+                                        }}>
+                                            <Box sx={{ flex: 1 }}>
+                                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.2, mb: 0.8 }}>
+                                                    <PersonIcon sx={{ color: '#1976d2', fontSize: 18 }} />
+                                                    <Typography variant="subtitle2" sx={{ 
+                                                        color: '#444',
+                                                        fontSize: '13px',
+                                                        fontWeight: 600,
+                                                    }}>
+                                                        이용자명
+                                                    </Typography>
+                                                </Box>
+                                                <TextField
+                                                    fullWidth
+                                                    value={newLockInfo.mb_name}
+                                                    size="small"
+                                                    disabled
+                                                    sx={{ 
+                                                        mt: 1,
+                                                        backgroundColor: '#f5f5f5',
+                                                        '& .MuiInputBase-input.Mui-disabled': {
+                                                            WebkitTextFillColor: '#666666',
+                                                            fontSize: '13px',
+                                                        }
+                                                    }}
+                                                />
+                                            </Box>
+                                            <Box sx={{ flex: 1 }}>
+                                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.2, mb: 0.8 }}>
+                                                    <BadgeIcon sx={{ color: '#1976d2', fontSize: 18 }} />
+                                                    <Typography variant="subtitle2" sx={{ 
+                                                        color: '#444',
+                                                        fontSize: '13px',
+                                                        fontWeight: 600,
+                                                    }}>
+                                                        이용자 ID
+                                                    </Typography>
+                                                </Box>
+                                                <TextField
+                                                    fullWidth
+                                                    value={newLockInfo.mb_id}
+                                                    size="small"
+                                                    disabled
+                                                    sx={{ 
+                                                        mt: 1,
+                                                        backgroundColor: '#f5f5f5',
+                                                        '& .MuiInputBase-input.Mui-disabled': {
+                                                            WebkitTextFillColor: '#666666',
+                                                            fontSize: '13px',
+                                                        }
+                                                    }}
+                                                />
+                                            </Box>
+                                        </Box>
+                                        <Divider sx={{ mt: 2, mb: 1 }} />
+                                    </Grid>
+
+                                    <Grid item xs={12}>
+                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.2, mb: 0.8 }}>
+                                            <EmailIcon sx={{ color: '#1976d2', fontSize: 18 }} />
+                                            <Typography variant="subtitle2" sx={{ 
+                                                color: '#444',
+                                                fontSize: '13px',
+                                                fontWeight: 600,
+                                            }}>
+                                                연결된 이메일
+                                            </Typography>
+                                        </Box>
+                                                <TextField
+                                                    fullWidth
+                                                    value={newLockInfo.email}
+                                                    size="small"
+                                                    disabled
+                                                    sx={{ 
+                                                        mt: 1,
+                                                        backgroundColor: '#f5f5f5',
+                                                        '& .MuiInputBase-input.Mui-disabled': {
+                                                            WebkitTextFillColor: '#666666',
+                                                            fontSize: '13px',
+                                                        }
+                                                    }}
+                                                />
+                                                <Divider sx={{ mt: 2, mb: 1 }} />
+                                    </Grid>
+
+                                    <Grid item xs={12}>
+                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.2, mb: 0.8 }}>
+                                            <DescriptionIcon sx={{ color: '#1976d2', fontSize: 18 }} />
+                                            <Typography variant="subtitle2" sx={{ 
+                                                color: '#444',
+                                                fontSize: '13px',
+                                                fontWeight: 600,
+                                            }}>
+                                                Lock 타입 설정
+                                            </Typography>
+                                        </Box>
+                                        <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-start' }}>
+                                            <FormControl 
+                                                fullWidth
+                                                size="small"
+                                            >
+                                                <Select
+                                                    value={newLockInfo.lock_type === '0' ? '지갑' : '금액'}
+                                                    onChange={(e) => {
+                                                        const newLockType = e.target.value === '지갑' ? '0' : '1';
+                                                        const newLockBalance = newLockType === '1' ? 
+                                                            (newLockInfo.lock_balance === '') ? '' : newLockInfo.lock_balance : 
+                                                            '-1';
+                                                        
+                                                        setNewLockInfo({
+                                                            ...newLockInfo,
+                                                            lock_type: newLockType,
+                                                            //@ts-ignore
+                                                            lock_type_text: e.target.value === '지갑' ? '지갑 Lock' : '금액 Lock',
+                                                            lock_balance: newLockBalance
+                                                        });
+                                                    }}
+                                                    sx={{ 
+                                                        mt: 1,
+                                                        backgroundColor: 'white',
+                                                        height: '32px',
+                                                        '& .MuiInputBase-input': {
+                                                            fontSize: '13px',
+                                                            padding: '8px 12px',
+                                                        }
+                                                    }}
+                                                >
+                                                    <MenuItem value="지갑" sx={{ fontSize: '13px' }}>지갑</MenuItem>
+                                                    <MenuItem value="금액" sx={{ fontSize: '13px' }}>금액</MenuItem>
+                                                </Select>
+                                            </FormControl>
+                                        </Box>
+                                        <Divider sx={{ mt: 2, mb: 1 }} />
+                                    </Grid>
+
+                                    <Grid item xs={12}>
+                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.2, mb: 0.8 }}>
+                                            <EventIcon sx={{ color: '#1976d2', fontSize: 18 }} />
+                                            <Typography variant="subtitle2" sx={{ 
+                                                color: '#444',
+                                                fontSize: '13px',
+                                                fontWeight: 600,
+                                            }}>
+                                                해지 예정일
+                                            </Typography>
+                                        </Box>
+                                                <TextField
+                                                    fullWidth
+                                                    type="date"
+                                                    value={newLockInfo.unlock_date}
+                                                    onChange={(e) => setNewLockInfo({...newLockInfo, unlock_date: e.target.value})}
+                                                    size="small"
+                                                    required
+                                                    sx={{ 
+                                                        mt: 1,
+                                                        '& .MuiInputBase-input': {
+                                                            fontSize: '13px',
+                                                            padding: '8px 12px',
+                                                            height: '16px'
+                                                        }
+                                                    }}
+                                                    InputLabelProps={{
+                                                        shrink: true,
+                                                    }}
+                                                />
+                                        <Divider sx={{ mt: 2, mb: 1 }} />
+                                    </Grid>
                                 </>
                             )}
-                        </Box>
-                        <Box sx={{ mt: '16px' }}>
-                            <Button 
-                                variant="contained" 
-                                size="small" 
-                                onClick={handleOpenSearchDialog}
-                                sx={{ 
-                                    mr: 1,
-                                    height: '33px',
-                                    minWidth: '60px',
-                                    padding: '0px 10px',
-                                    fontSize: '13px'
-                                }}
-                            >
-                                검색
-                            </Button>
-                            <Button 
-                                variant="contained" 
-                                size="small"
-                                onClick={handleManualInput}
-                                color={isManualInput ? "secondary" : "primary"}
-                                sx={{ 
-                                    height: '33px',
-                                    minWidth: '80px',
-                                    padding: '0px 10px',
-                                    fontSize: '13px'
-                                }}
-                            >
-                                수기등록
-                            </Button>
-                        </Box>
+                        </Grid>
                     </Box>
-                    
+
+                    <Box sx={{ display: 'none', gap: 1, justifyContent: 'flex-end' }}>
+                        <Button 
+                            variant="contained" 
+                            size="small"
+                            onClick={handleManualInput}
+                            startIcon={<EditIcon />}
+                            color={isManualInput ? "secondary" : "primary"}
+                            sx={{ 
+                            height: '32px',
+                            fontSize: '13px',
+                                padding: '0 16px'
+                            }}
+                        >
+                            수기등록
+                        </Button>
+                    </Box>
                 </DialogContent>
-                <DialogActions>
-                    <Button onClick={handleCloseDialog} color="primary">
+
+                <DialogActions 
+                    sx={{ 
+                        p: 2,
+                        backgroundColor: '#f8f9fa',
+                        borderTop: '1px solid #eaeaea',
+                        gap: 1
+                    }}
+                >
+                    <Button 
+                        onClick={handleCloseDialog} 
+                        variant="outlined" 
+                        startIcon={<CancelIcon sx={{ fontSize: 18 }} />}
+                        sx={{ 
+                            fontSize: '13px',
+                            height: '32px',
+                            padding: '0 16px',
+                            color: '#666',
+                            borderColor: '#ccc',
+                            '&:hover': {
+                                borderColor: '#999',
+                                backgroundColor: '#f5f5f5'
+                            }
+                        }}
+                    >
                         취소
                     </Button>
                     <Button 
-                        onClick={handleSubmit} 
-                        color="primary" 
-                        variant="contained"
-                        disabled={!newLockInfo.address}
+                        onClick={handleButtonClick}
+                        variant="contained" 
+                        startIcon={<SaveIcon sx={{ fontSize: 18 }} />}
+                        sx={{ 
+                            fontSize: '13px',
+                            height: '32px',
+                            padding: '0 16px',
+                            backgroundColor: '#1976d2',
+                            '&:hover': {
+                                backgroundColor: '#1565c0'
+                            }
+                        }}
                     >
                         등록
                     </Button>
@@ -893,94 +1388,535 @@ export default function Home() {
         setOpenManageDialog(false);
     };
 
-    const handleEdit = () => {
-        console.log('수정');
+    const handleEdit = async () => {
+        try {
+            // 날짜가 유효한지 확인
+            //@ts-ignore
+            if (!selectedContent.unlock_date) {
+                alert('유효한 날짜를 선택해주세요.');
+                return;
+            }
+
+            // 날짜 변환 시 안전하게 처리
+            //@ts-ignore
+            const date = new Date(selectedContent.unlock_date);
+            if (isNaN(date.getTime())) {
+                alert('유효하지 않은 날짜 형식입니다.');
+                return;
+            }
+
+            const formattedDate = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')} 00:00:00`;
+
+            // API 호출을 위한 데이터 준비
+            const updateData = {
+                //@ts-ignore
+                address: selectedContent.address || '',
+                unlock_date: formattedDate,
+                //@ts-ignore
+                lock_type: selectedContent.lock_type || '0',
+                //@ts-ignore
+                lock_balance: selectedContent.lock_type === '1' ? (selectedContent.lock_balance || '0') : '-1'
+            };
+
+            console.log('Update Data:', updateData);
+        } catch (error) {
+            console.error('수정 중 오류 발생:', error);
+            alert('수정 중 오류가 발생했습니다.');
+        }
     };
 
-    const handleDelete = () => {
-        console.log('삭제');
+    // 핸들러 함수들을 먼저 정의
+    const handleCloseConfirmDialog = React.useCallback(() => {
+        setOpenConfirmDialog(false);
+    }, []);
+
+
+    const handleDelete = async () => {
+        try {
+
+            setLoading(true);
+            
+            const response = await fetch('/api/manage/lockInfo/unlock', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ 
+                    //@ts-ignore
+                    idx: selectedContent.idx 
+                }),
+            });
+
+            if (response.ok) {
+                alert('Lock이 해제되었습니다.');
+                handleCloseManageDialog();
+                get_UserInfo(); // 목록 새로고침
+            } else {
+                alert('Lock 해제에 실패했습니다.');
+            }
+        } catch (error) {
+            console.error('Lock 해제 중 오류 발생:', error);
+            alert('Lock 해제 중 오류가 발생했습니다.');
+        } finally {
+            setLoading(false);
+        }
     };
 
     // 관리 다이얼로그 컴포넌트 추가
     const manageDialog = (
-        <Dialog open={openManageDialog} onClose={handleCloseManageDialog} maxWidth="sm" fullWidth>
-            <DialogTitle sx={{ fontSize: '18px', fontWeight: 'bold', padding: '16px' }}>
-                Lock 대상 정보
+        <Dialog 
+            open={openManageDialog} 
+            onClose={handleCloseManageDialog} 
+            maxWidth="sm" 
+            fullWidth
+            PaperProps={{
+                sx: {
+                    maxHeight: '90vh',
+                    display: 'flex',
+                    flexDirection: 'column'
+                }
+            }}
+        >
+            <DialogTitle 
+                sx={{ 
+                    backgroundColor: '#1976d2',
+                    color: 'white',
+                    p: 2,
+                    flex: '0 0 auto'
+                }}
+            >
+                <Box sx={{ 
+                    display: 'flex', 
+                    alignItems: 'center',
+                    gap: 1 
+                }}>
+                    <LockIcon sx={{ fontSize: 20 }} />
+                    <Typography 
+                        component="span"
+                        sx={{ 
+                            fontSize: '14px',
+                            fontWeight: 'bold'
+                        }}
+                    >
+                        Lock 대상 정보
+                </Typography>
+                </Box>
             </DialogTitle>
-            <DialogContent sx={{ padding: '16px' }}>
-                <Grid container spacing={2}>
-                    <Grid item xs={12}>
-                        <Typography sx={{ fontSize: '14px', fontWeight: 'bold' }}>지갑주소:</Typography>
-                        {/* @ts-ignore */}
-                        <Typography sx={{ fontSize: '14px', marginBottom: '8px' }}>{selectedContent.address}</Typography>
+            <DialogContent 
+                        sx={{
+                    p: 2.5,
+                    flex: '1 1 auto',
+                    overflow: 'hidden',
+                                display: 'flex',
+                    flexDirection: 'column',
+                    gap: 2,
+                }}
+            >
+                <Box sx={{ 
+                    backgroundColor: '#ffffff',
+                    borderRadius: '10px',
+                    marginTop:'15px',
+                    p: 2.5,
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.06)',
+                    border: '1px solid #eaeaea',
+                }}>
+                    <Grid container spacing={2}>
+                        <Grid item xs={12}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.2, mb: 0.8 }}>
+                                <AccountBalanceWalletIcon sx={{ color: '#1976d2', fontSize: 18 }} />
+                                <Typography variant="subtitle2" sx={{ 
+                                    color: '#444',
+                                    fontSize: '13px',
+                                    fontWeight: 600,
+                                }}>
+                                    지갑주소
+                                </Typography>
+                            </Box>
+                            <TextField
+                                fullWidth
+                                //@ts-ignore
+                                value={selectedContent.address}
+                                size="small"
+                                disabled
+                        sx={{
+                                    mt: 1,
+                                    backgroundColor: '#f5f5f5',
+                                    '& .MuiInputBase-input.Mui-disabled': {
+                                        WebkitTextFillColor: '#666666',
+                                        fontSize: '13px',
+                                    }
+                                }}
+                            />
+                            <Divider sx={{ mt: 2, mb: 1 }} />
+                        </Grid>
+
+                        <Grid item xs={12}>
+                            <Box sx={{ 
+                                display: 'flex', 
+                                gap: 2 
+                            }}>
+                                <Box sx={{ flex: 1 }}>
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.2, mb: 0.8 }}>
+                                        <PersonIcon sx={{ color: '#1976d2', fontSize: 18 }} />
+                                        <Typography variant="subtitle2" sx={{ 
+                                            color: '#444',
+                                            fontSize: '13px',
+                                            fontWeight: 600,
+                                        }}>
+                                            이용자명
+                                        </Typography>
+                                    </Box>
+                                    <TextField
+                                        fullWidth
+                                        //@ts-ignore
+                                        value={selectedContent.mb_name}
+                                        size="small"
+                                        disabled
+                                        sx={{ 
+                                            mt: 1,
+                                            backgroundColor: '#f5f5f5',
+                                            '& .MuiInputBase-input.Mui-disabled': {
+                                                WebkitTextFillColor: '#666666',
+                                                fontSize: '13px',
+                                            }
+                                        }}
+                                    />
+                                </Box>
+                                <Box sx={{ flex: 1 }}>
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.2, mb: 0.8 }}>
+                                        <BadgeIcon sx={{ color: '#1976d2', fontSize: 18 }} />
+                                        <Typography variant="subtitle2" sx={{ 
+                                            color: '#444',
+                                            fontSize: '13px',
+                                            fontWeight: 600,
+                                        }}>
+                                            이용자 ID
+                                        </Typography>
+                                    </Box>
+                                    <TextField
+                                        fullWidth
+                                        //@ts-ignore
+                                        value={selectedContent.mb_id}
+                                        size="small"
+                                        disabled
+                                        sx={{
+                                            mt: 1,
+                                            backgroundColor: '#f5f5f5',
+                                            '& .MuiInputBase-input.Mui-disabled': {
+                                                WebkitTextFillColor: '#666666',
+                                                fontSize: '13px',
+                                            }
+                                        }}
+                                    />
+                                </Box>
+                            </Box>
+                            <Divider sx={{ mt: 2, mb: 1 }} />
+                        </Grid>
+
+                        <Grid item xs={12}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.2, mb: 0.8 }}>
+                                <EmailIcon sx={{ color: '#1976d2', fontSize: 18 }} />
+                                <Typography variant="subtitle2" sx={{ 
+                                    color: '#444',
+                                    fontSize: '13px',
+                                    fontWeight: 600,
+                                }}>
+                                    연결된 이메일
+                      </Typography>
+                            </Box>
+                            <TextField
+                                fullWidth
+                                //@ts-ignore
+                                value={selectedContent.email}
+                                size="small"
+                                disabled
+                                sx={{ 
+                                    mt: 1,
+                                    backgroundColor: '#f5f5f5',
+                                    '& .MuiInputBase-input.Mui-disabled': {
+                                        WebkitTextFillColor: '#666666',
+                                        fontSize: '13px',
+                                    }
+                                }}
+                            />
+                            <Divider sx={{ mt: 2, mb: 1 }} />
+                        </Grid>
+
+                        <Grid item xs={12}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.2, mb: 0.8 }}>
+                                <EventIcon sx={{ color: '#1976d2', fontSize: 18 }} />
+                                <Typography variant="subtitle2" sx={{ 
+                                    color: '#444',
+                                    fontSize: '13px',
+                                    fontWeight: 600,
+                                }}>
+                                    해지 예정일
+                                </Typography>
+                            </Box>
+                            <TextField
+                                fullWidth
+                                //@ts-ignore
+                                value={selectedContent.unlock_date?.substring(0, 10) || ''}
+                                size="small"
+                                type="date"
+                                onChange={(e) => setSelectedContent({
+                                    ...selectedContent,
+                                    //@ts-ignore
+                                    unlock_date: e.target.value
+                                })}
+                                sx={{ 
+                                    mt: 1,
+                                    backgroundColor: 'white',
+                                    '& .MuiInputBase-input': {
+                                        fontSize: '13px',
+                                        padding: '8px 12px',
+                                        height: '16px',
+                                        color: '#666666'
+                                    }
+                                }}
+                            />
+                            <Divider sx={{ mt: 2, mb: 1 }} />
+                        </Grid>
+
+                        <Grid item xs={12}>
+                            <Box sx={{ 
+                                display: 'flex', 
+                                gap: 2 
+                            }}>
+                                <Box sx={{ flex: 1 }}>
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.2, mb: 0.8 }}>
+                                        <DescriptionIcon sx={{ color: '#1976d2', fontSize: 18 }} />
+                                        <Typography variant="subtitle2" sx={{ 
+                                            color: '#444',
+                                            fontSize: '13px',
+                                            fontWeight: 600,
+                                        }}>
+                                            Lock 타입
+                                        </Typography>
+                                    </Box>
+                                    <FormControl 
+                                        fullWidth
+                                        size="small"
+                                    >
+                                        <Select
+                                            //@ts-ignore
+                                            value={selectedContent.lock_type === '0' ? '지갑' : '금액'}
+                                            onChange={(e) => {
+                                                const newLockType = e.target.value === '지갑' ? '0' : '1';
+                                                setSelectedContent({
+                                                    ...selectedContent,
+                                                    //@ts-ignore
+                                                    lock_type: newLockType,
+                                                    //@ts-ignore
+                                                    lock_type_text: e.target.value === '지갑' ? '지갑 Lock' : '금액 Lock',
+                                                    //@ts-ignore
+                                                    lock_balance: newLockType === '1' ? (selectedContent.lock_balance || '') : '-1'
+                                                });
+                                            }}
+                                            sx={{ 
+                                                mt: 1,
+                                                backgroundColor: 'white',
+                                                height: '32px',
+                                                '& .MuiInputBase-input': {
+                                                    fontSize: '13px',
+                                                    padding: '8px 12px',
+                                                }
+                                            }}
+                                        >
+                                            <MenuItem value="지갑" sx={{ fontSize: '13px' }}>지갑</MenuItem>
+                                            <MenuItem value="금액" sx={{ fontSize: '13px' }}>금액</MenuItem>
+                                        </Select>
+                                    </FormControl>
+                                </Box>
+                                {
+                                //@ts-ignore
+                                selectedContent.lock_type === '1' && (
+                                    <Box sx={{ flex: 1 }}>
+                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.2, mb: 0.8 }}>
+                                            <AccountBalanceWalletIcon sx={{ color: '#1976d2', fontSize: 18 }} />
+                                            <Typography variant="subtitle2" sx={{ 
+                                                color: '#444',
+                                                fontSize: '13px',
+                                                fontWeight: 600,
+                                            }}>
+                                                설정 금액
+                                            </Typography>
+                                        </Box>
+                                        <TextField
+                                            fullWidth
+                                            //@ts-ignore
+                                            value={selectedContent.lock_type === '1' ? (selectedContent.lock_balance || '') : ''}
+                                            size="small"
+                                            type="number"
+                                            onChange={(e) => setSelectedContent({
+                                                ...selectedContent,
+                                                //@ts-ignore
+                                                lock_balance: e.target.value
+                                            })}
+                                            InputProps={{
+                                                endAdornment: <InputAdornment position="end">PTH</InputAdornment>,
+                                                sx: {
+                                                    height: '32px'
+                                                }
+                                            }}
+                                            sx={{ 
+                                                mt: 1,
+                                                backgroundColor: 'white',
+                                                '& .MuiInputBase-input': {
+                                                    fontSize: '13px',
+                                                    padding: '8px 12px',
+                                                    height: '16px',
+                                                    color: '#666666'
+                                                },
+                                                '& .MuiInputAdornment-root': {
+                                                    '& .MuiTypography-root': {
+                                                        fontSize: '13px',
+                                                        color: '#666666'
+                                                    }
+                                                }
+                                            }}
+                                        />
+                                    </Box>
+                                )}
+                            </Box>
+                            <Divider sx={{ mt: 2, mb: 1 }} />
+                        </Grid>
                     </Grid>
-                    <Grid item xs={12}>
-                        <Typography sx={{ fontSize: '14px', fontWeight: 'bold' }}>이용자명:</Typography>
-                        {/* @ts-ignore */}
-                        <Typography sx={{ fontSize: '14px', marginBottom: '8px' }}>{selectedContent.mb_name}</Typography>
-                    </Grid>
-                    <Grid item xs={12}>
-                        <Typography sx={{ fontSize: '14px', fontWeight: 'bold' }}>이용자ID:</Typography>
-                        {/* @ts-ignore */}
-                        <Typography sx={{ fontSize: '14px', marginBottom: '8px' }}>{selectedContent.mb_id}</Typography>
-                    </Grid>
-                    <Grid item xs={12}>
-                        <Typography sx={{ fontSize: '14px', fontWeight: 'bold' }}>연결된 이메일:</Typography>
-                        {/* @ts-ignore */}
-                        <Typography sx={{ fontSize: '14px', marginBottom: '8px' }}>{selectedContent.email}</Typography>
-                    </Grid>
-                    <Grid item xs={12}>
-                        <Typography sx={{ fontSize: '14px', fontWeight: 'bold' }}>해지 예정일:</Typography>
-                        {/* @ts-ignore */}
-                        <Typography sx={{ fontSize: '14px', marginBottom: '8px' }}>{selectedContent.unlock_date}</Typography>
-                    </Grid>
-                    <Grid item xs={12}>
-                        <Typography sx={{ fontSize: '14px', fontWeight: 'bold' }}>등록일시:</Typography>
-                        {/* @ts-ignore */}
-                        <Typography sx={{ fontSize: '14px', marginBottom: '8px' }}>{selectedContent.reg_date}</Typography>
-                    </Grid>
-                    <Grid item xs={12}>
-                        <TextField
-                            fullWidth
-                            label="메모"
-                            value={blockMemo}
-                            onChange={(e) => setBlockMemo(e.target.value)}
-                            margin="normal"
-                            size="small"
-                            multiline
-                            rows={3}
-                            sx={{ marginTop: '8px' }}
-                        />
-                    </Grid>
-                </Grid>
+                </Box>
             </DialogContent>
-            <DialogActions sx={{ padding: '16px' }}>
-
+            <DialogActions 
+                sx={{ 
+                    p: 2,
+                    backgroundColor: '#f8f9fa',
+                    borderTop: '1px solid #eaeaea',
+                    gap: 1,
+                    display: 'flex',
+                    justifyContent: 'space-between'
+                }}
+            >
                 <Button 
-                    onClick={handleCloseManageDialog} 
-                    color="primary" 
+                    onClick={handleDelete}
                     variant="contained"
-                    sx={{ width: '100px', marginLeft:'auto' }}
+                    color="error"
+                    startIcon={<CancelIcon sx={{ fontSize: 18 }} />}
+                    sx={{ 
+                        fontSize: '13px',
+                        height: '32px',
+                        padding: '0 16px'
+                    }}
                 >
-                    닫기
+                    Lock 해제
                 </Button>
+                <Box sx={{ display: 'flex', gap: 1 }}>
                 <Button 
-                    onClick={handleEdit} 
-                    color="primary" 
-                    variant="contained" 
-                    sx={{ width: '100px', marginLeft: 'auto' }}
-                >
-                    수정
-                </Button>
-                <Button 
-                    onClick={handleDelete} 
-                    color="primary" 
-                    variant="contained"
-                    sx={{ width: '100px', marginLeft: '0px', marginRight: '0px' }}
-                >
-                    삭제
-                </Button>
+                        onClick={handleCloseManageDialog}
+                        variant="outlined" 
+                        startIcon={<CancelIcon sx={{ fontSize: 18 }} />}
+                        sx={{
+                            fontSize: '13px',
+                            height: '32px',
+                            padding: '0 16px',
+                            color: '#666',
+                            borderColor: '#ccc',
+                            '&:hover': {
+                                borderColor: '#999',
+                                backgroundColor: '#f5f5f5'
+                            }
+                        }}
+                    >
+                        닫기
+                    </Button>
+                    <Button 
+                        onClick={handleEdit}
+                        variant="contained" 
+                        startIcon={<EditIcon sx={{ fontSize: 18 }} />}
+                        sx={{ 
+                            fontSize: '13px',
+                            height: '32px',
+                            padding: '0 16px'
+                        }}
+                    >
+                        수정
+                    </Button>
+                </Box>
+            </DialogActions>
+        </Dialog>
+    );
 
+    // 확인 다이얼로그 컴포넌트
+    const confirmDialog = (
+        <Dialog
+            open={openConfirmDialog}
+            onClose={handleCloseConfirmDialog}
+            maxWidth="xs"
+            fullWidth
+        >
+            <DialogTitle sx={{ 
+                backgroundColor: '#f8f9fa',
+                borderBottom: '1px solid #eaeaea',
+                p: 2
+            }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <LockIcon sx={{ color: '#dc3545', fontSize: 20 }} />
+                    <Typography sx={{ 
+                        fontSize: '14px',
+                        fontWeight: 'bold',
+                        color: '#444'
+                    }}>
+                        Lock 해제 확인
+                    </Typography>
+                </Box>
+            </DialogTitle>
+            <DialogContent sx={{ p: 3 }}>
+                <Typography sx={{ fontSize: '14px', color: '#444' }}>
+                    정말 Lock을 해제하시겠습니까?
+                </Typography>
+                <Box sx={{ mt: 2, color: '#666', fontSize: '13px' }}>
+                    <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', mb: 1 }}>
+                        <AccountBalanceWalletIcon sx={{ fontSize: 16 }} />
+                        {/* @ts-ignore */}
+                        지갑주소: {selectedContent.address}
+                    </Box>
+                    <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+                        <LockIcon sx={{ fontSize: 16 }} />
+                        {/* @ts-ignore */}
+                        Lock 타입: {selectedContent.lock_type_text}
+                    </Box>
+                </Box>
+            </DialogContent>
+            <DialogActions sx={{ 
+                p: 2,
+                backgroundColor: '#f8f9fa',
+                borderTop: '1px solid #eaeaea',
+                gap: 1
+            }}>
+                <Button
+                    onClick={handleCloseConfirmDialog}
+                    variant="outlined"
+                    sx={{ 
+                        fontSize: '13px',
+                        height: '32px',
+                        color: '#666',
+                        borderColor: '#ccc',
+                        '&:hover': {
+                            borderColor: '#999',
+                            backgroundColor: '#f5f5f5'
+                        }
+                    }}
+                >
+                    취소
+                </Button>
+                <Button
+                    onClick={handleDelete}
+                    variant="contained"
+                    color="error"
+                    sx={{ 
+                        fontSize: '13px',
+                        height: '32px'
+                    }}
+                >
+                    확인
+                </Button>
             </DialogActions>
         </Dialog>
     );
@@ -1013,7 +1949,6 @@ export default function Home() {
       }
 
     };
-
 
     return (
 
@@ -1069,7 +2004,7 @@ export default function Home() {
                     <Box sx={{ padding: '16px', backgroundColor: '#f5f5f5', borderRadius: '8px', width: '100%' }}>
                         
                         <Typography variant="h6" sx={{ color: '#1f1f26', fontSize: '14px', mb: 1 }}>
-                          기타
+                            기타
                         </Typography>
                         <Typography sx={{fontSize: "24px", fontWeight: "bold", color: "#1f1f26"}}>
                             {filterKioskList.filter(user => user.lock_type === '0').length.toLocaleString()}
@@ -1119,7 +2054,8 @@ export default function Home() {
                     '& .MuiInputLabel-root': {
                         fontSize: '14px'
                     }
-                }}>
+                }}
+                >
                     <Select
                         labelId="demo-simple-select-label"
                         id="demo-simple-select"
@@ -1158,7 +2094,8 @@ export default function Home() {
                     '& .MuiInputLabel-root': {
                         fontSize: '14px'
                     }
-                }}>
+                }}
+                >
                     <Select
                         labelId="demo-simple-select-label"
                         id="demo-simple-select"
@@ -1387,6 +2324,7 @@ export default function Home() {
         {registerDialog}
 
         {manageDialog}
+        {confirmDialog}
 
         <Backdrop
             sx={{ color: '#fff',  display: 'flex', flexDirection: 'column', zIndex: (theme) => theme.zIndex.drawer + 1 }}

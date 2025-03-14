@@ -17,9 +17,6 @@ export async function POST(request) {
     const connection = await getConnection();
 
 
-    console.log(filterInfo);
-    console.log(keyword);
-
     let sql = '';
 
     switch(filterInfo){
@@ -32,7 +29,7 @@ export async function POST(request) {
 
           W.user_idx,
           W.email,
-          W.address,
+          W.new_address as address,
           M.mb_id,
           M.mb_name
 
@@ -53,7 +50,7 @@ export async function POST(request) {
           M.mb_id,
           M.mb_name,
           W.user_idx,
-          W.address,
+          W.new_address,
           W.email
 
 
@@ -75,7 +72,7 @@ export async function POST(request) {
             M.mb_id,
             M.mb_name,
             W.user_idx,
-            W.address,
+            W.new_address as address,
             W.email
 
 
@@ -96,7 +93,7 @@ export async function POST(request) {
 
           W.user_idx,
           W.email,
-          W.address,
+          W.new_address as address,
           M.mb_id,
           M.mb_name
 

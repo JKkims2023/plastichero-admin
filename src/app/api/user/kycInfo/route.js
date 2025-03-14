@@ -28,21 +28,25 @@ export async function POST(request) {
     
       SELECT 
       
-        key_no, 
-        mb_user_key, 
-        mb_id, 
-        if(kyc_type = '0', '주민등록증', if(kyc_type = '1', '면허증', '여권')) as kyc_type, 
-        kyc_path,
-        kyc_path2,
-        kyc_path3, 
-        kyc_name, 
-        kyc_birth, 
-        approval_yn,
-        if(approval_yn = 'Y', '승인완료', if(approval_yn = 'N', '승인거부', '승인대기')) as approval_yn_text, 
-        reject_comment, 
-        DATE_FORMAT(reg_date , '%Y-%m-%d %H:%i:%S') as reg_date 
+        K.key_no, 
+        K.mb_user_key, 
+        M.mb_id, 
+        M.mb_email,
+        if(K.kyc_type = '0', '주민등록증', if(K.kyc_type = '1', '면허증', '여권')) as kyc_type, 
+        K.kyc_path,
+        K.kyc_path2,
+        K.kyc_path3, 
+        K.kyc_name, 
+        K.kyc_birth, 
+        K.approval_yn,
+        if(K.approval_yn = 'Y', '승인완료', if(K.approval_yn = 'N', '승인거부', '승인대기')) as approval_yn_text, 
+        K.reject_comment, 
+        DATE_FORMAT(K.reg_date , '%Y-%m-%d %H:%i:%S') as reg_date,
+        M.mb_hp,
+        M.mb_name,
+        M.mb_email
         
-        from g5_member_kyc
+        from g5_member_kyc as K left outer join g5_member as M on K.mb_user_key = M.mb_no
 
         where 1=1 ${sql_filter}
       
