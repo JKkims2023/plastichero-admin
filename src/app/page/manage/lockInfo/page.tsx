@@ -115,10 +115,15 @@ export default function Home() {
     const [kioskList, setKioskList] = React.useState([]);
     const [filterKioskList, setFilterKioskList] = React.useState([]);
     const [selectedContent, setSelectedContent] = React.useState({
-
-        contentID : '',
-        contentTitle : '',
-    
+        idx: '',
+        address: '',
+        mb_name: '',
+        mb_id: '',
+        email: '',
+        unlock_date: '',
+        lock_type: '0',
+        lock_type_text: '',
+        lock_balance: '0'
     });
 
     const [filterContentTypeMethod, setFilterContentTypeMethod] = React.useState(10);
@@ -134,7 +139,7 @@ export default function Home() {
         email: '',
         unlock_date: '',
         lock_type: '',
-        lock_balance: '-1'
+        lock_balance: '0'
     });
 
     const [openSearchDialog, setOpenSearchDialog] = React.useState(false);
@@ -231,9 +236,10 @@ export default function Home() {
                 size="small"
                 sx={{ fontSize: '12px' }}
                 onClick={(event) => {
+
                     event.stopPropagation();
 
-                    console.log(filterKioskList[params.row.id - 1]);
+                    console.log('jk1');
                     handleOpenManageDialog(filterKioskList[params.row.id - 1]);
                 }}
             >
@@ -571,7 +577,7 @@ export default function Home() {
             email: '',
             unlock_date: '',
             lock_type: '',
-            lock_balance: '-1'
+            lock_balance: '0'
         });
     };
 
@@ -656,7 +662,7 @@ export default function Home() {
                 memo: '', 
                 unlock_date: formattedDate, // MySQL datetime 형식으로 변환된 날짜
                 lock_type: newLockInfo.lock_type === 'amount_lock' ? '1' : '0', 
-                lock_balance: newLockInfo.lock_type === 'amount_lock' ? newLockInfo.lock_balance : '-1' 
+                lock_balance: newLockInfo.lock_type === 'amount_lock' ? newLockInfo.lock_balance : '0' 
               }),
             
             });
@@ -722,7 +728,7 @@ export default function Home() {
                 mb_name: '',
                 mb_id: '',
                 email: '',
-                lock_balance: '-1'
+                lock_balance: '0'
             });
         }
     };
@@ -1246,7 +1252,7 @@ export default function Home() {
                                                         const newLockType = e.target.value === '지갑' ? '0' : '1';
                                                         const newLockBalance = newLockType === '1' ? 
                                                             (newLockInfo.lock_balance === '') ? '' : newLockInfo.lock_balance : 
-                                                            '-1';
+                                                            '0';
                                                         
                                                         setNewLockInfo({
                                                             ...newLockInfo,
@@ -1379,8 +1385,25 @@ export default function Home() {
 
     // 관리 다이얼로그 열기 핸들러
     const handleOpenManageDialog = (content) => {
-        setSelectedContent(content);
-        setOpenManageDialog(true);
+        try {
+            console.log('content', content);
+            setSelectedContent({
+                ...selectedContent,
+                ...content,
+                address: content?.address || '',
+                mb_name: content?.mb_name || '',
+                mb_id: content?.mb_id || '',
+                email: content?.email || '',
+                unlock_date: content?.unlock_date || '',
+                lock_type: content?.lock_type || '0',
+                lock_type_text: content?.lock_type_text || '',
+                lock_balance: content?.lock_balance || '0'
+            });
+            setOpenManageDialog(true);
+        } catch (error) {
+            console.error('관리 다이얼로그 열기 중 오류 발생:', error);
+            alert('관리 다이얼로그 열기 중 오류가 발생했습니다.');
+        }
     };
 
     // 관리 다이얼로그 닫기 핸들러
@@ -1405,20 +1428,39 @@ export default function Home() {
                 return;
             }
 
+            // 오늘 날짜와 비교
+            const today = new Date();
+            today.setHours(0, 0, 0, 0); // 시간을 00:00:00으로 설정하여 날짜만 비교
+
+            if (date < today) {
+                alert('해지 예정일은 오늘 날짜보다 이후여야 합니다.');
+                return;
+            }
+
             const formattedDate = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')} 00:00:00`;
 
-            // API 호출을 위한 데이터 준비
-            const updateData = {
+            const response = await fetch('/api/manage/lockInfo/update', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
                 //@ts-ignore
-                address: selectedContent.address || '',
-                unlock_date: formattedDate,
-                //@ts-ignore
-                lock_type: selectedContent.lock_type || '0',
-                //@ts-ignore
-                lock_balance: selectedContent.lock_type === '1' ? (selectedContent.lock_balance || '0') : '-1'
-            };
+                body: JSON.stringify({
+                    //@ts-ignore
+                    idx: selectedContent.idx,
+                    unlock_date: formattedDate,
+                    lock_type: selectedContent.lock_type,
+                    lock_balance: selectedContent.lock_type === '1' ? (selectedContent.lock_balance || '0') : '0'
+                }),
+            });
 
-            console.log('Update Data:', updateData);
+            if (response.ok) {
+                alert('Lock 정보가 수정되었습니다.');
+                handleCloseManageDialog();
+                get_UserInfo(); // 목록 새로고침
+            } else {
+                alert('Lock 정보 수정에 실패했습니다.');
+            }
         } catch (error) {
             console.error('수정 중 오류 발생:', error);
             alert('수정 중 오류가 발생했습니다.');
@@ -1433,7 +1475,6 @@ export default function Home() {
 
     const handleDelete = async () => {
         try {
-
             setLoading(true);
             
             const response = await fetch('/api/manage/lockInfo/unlock', {
@@ -1535,7 +1576,7 @@ export default function Home() {
                             <TextField
                                 fullWidth
                                 //@ts-ignore
-                                value={selectedContent.address}
+                                value={selectedContent?.address}
                                 size="small"
                                 disabled
                         sx={{
@@ -1569,7 +1610,7 @@ export default function Home() {
                                     <TextField
                                         fullWidth
                                         //@ts-ignore
-                                        value={selectedContent.mb_name}
+                                        value={selectedContent?.mb_name}
                                         size="small"
                                         disabled
                                         sx={{ 
@@ -1596,7 +1637,7 @@ export default function Home() {
                                     <TextField
                                         fullWidth
                                         //@ts-ignore
-                                        value={selectedContent.mb_id}
+                                        value={selectedContent?.mb_id}
                                         size="small"
                                         disabled
                                         sx={{
@@ -1627,7 +1668,7 @@ export default function Home() {
                             <TextField
                                 fullWidth
                                 //@ts-ignore
-                                value={selectedContent.email}
+                                value={selectedContent?.email}
                                 size="small"
                                 disabled
                                 sx={{ 
@@ -1656,7 +1697,7 @@ export default function Home() {
                             <TextField
                                 fullWidth
                                 //@ts-ignore
-                                value={selectedContent.unlock_date?.substring(0, 10) || ''}
+                                value={selectedContent?.unlock_date?.substring(0, 10) || ''}
                                 size="small"
                                 type="date"
                                 onChange={(e) => setSelectedContent({
@@ -1700,7 +1741,7 @@ export default function Home() {
                                     >
                                         <Select
                                             //@ts-ignore
-                                            value={selectedContent.lock_type === '0' ? '지갑' : '금액'}
+                                            value={selectedContent?.lock_type === '0' ? '지갑' : '금액'}
                                             onChange={(e) => {
                                                 const newLockType = e.target.value === '지갑' ? '0' : '1';
                                                 setSelectedContent({
@@ -1710,7 +1751,7 @@ export default function Home() {
                                                     //@ts-ignore
                                                     lock_type_text: e.target.value === '지갑' ? '지갑 Lock' : '금액 Lock',
                                                     //@ts-ignore
-                                                    lock_balance: newLockType === '1' ? (selectedContent.lock_balance || '') : '-1'
+                                                    lock_balance: newLockType === '1' ? (selectedContent?.lock_balance || '') : '0'
                                                 });
                                             }}
                                             sx={{ 
@@ -1745,7 +1786,7 @@ export default function Home() {
                                         <TextField
                                             fullWidth
                                             //@ts-ignore
-                                            value={selectedContent.lock_type === '1' ? (selectedContent.lock_balance || '') : ''}
+                                            value={selectedContent.lock_type === '1' ? (selectedContent?.lock_balance || '') : ''}
                                             size="small"
                                             type="number"
                                             onChange={(e) => setSelectedContent({
