@@ -58,13 +58,82 @@ export default function Sidebar() {
       if (response.ok) {
 
         login(data);
-        setSidebarData(data.menu_auth);
+    //    setSidebarData(data.menu_auth);
 
       } else {
 
         logout();
 
       }
+
+      setSidebarData([
+        {
+            label: 'Overview',
+            show_yn: 'show',
+            checked: true,
+            href: '/',
+            children: []
+        },
+        {
+            label: '회원관리',
+            show_yn: 'show',
+            checked: true,
+            children: [
+                { href: '/page/user/normalUser', label: '• 일반 회원리스트', show_yn: 'show', checked: true },
+                { href: '/page/user/nodeUser', label: '• 노드 회원리스트', show_yn: 'show', checked: true },
+                { href: '/page/user/kycInfo', label: '• KYC 정보관리', show_yn: 'show', checked: true },
+            ],
+        },
+        {
+            label: '채굴(노드)관리',
+            show_yn: 'show',
+            checked: true,
+            children: [
+                { href: '/page/mining/setup', label: '• 채굴설정', show_yn: 'show', checked: true },
+                { href: '/page/mining/history', label: '• 채굴내역', show_yn: 'show', checked: true },
+                { href: '/page/mining/monitoring', label: '• 모니터링 / 재처리', show_yn: 'show', checked: true },
+            ],
+        },
+        {
+            label: '포인트관리',
+            show_yn: 'show',
+            checked: true,
+            children: [
+                { href: '/page/point/pointRewardInfo', label: '• 포인트 제공내역', show_yn: 'show', checked: true },
+                { href: '/page/point/pointHistoryInfo', label: '• 포인트 사용내역', show_yn: 'show', checked: true },
+                { href: '/page/point/pointSwapInfo', label: '• 포인트 전환내역', show_yn: 'show', checked: true },
+            ],
+        },
+        {
+            label: '운영관리',
+            show_yn: 'show',
+            checked: true,
+            children: [
+                { href: '/page/manage/noticeInfo', label: '• 공지 관리', show_yn: 'show', checked: true },
+                { href: '/page/manage/mailInfo', label: '• 메일 인증내역', show_yn: 'show', checked: true },
+                { href: '/page/manage/mailInfo', label: '• 메일 발송관리', show_yn: 'show', checked: true },
+                { href: '/page/manage/smsInfo', label: '• SMS 인증내역', show_yn: 'show', checked: true },
+                { href: '/page/manage/lockInfo', label: '• Lock 설정', show_yn: 'show', checked: true },
+                { href: '/page/user/blackList', label: '• 블랙리스트 관리', show_yn: 'show', checked: true },
+                { href: '/page/manage/appInfo', label: '• 앱 관리', show_yn: 'show', checked: true },
+            ],
+        },
+        {
+            label: '키오스크관리',
+            show_yn: 'show',
+            checked: true,
+            children: [
+                { href: '/page/kiosk/ownerInfo', label: '• 소유자 관리', show_yn: 'show', checked: true },
+                { href: '/page/kiosk/petDepositInfo', label: '• 플라스틱 수거현황', show_yn: 'show', checked: true },
+            ],
+        },
+        {
+            label: '설정',
+            children: [
+                { href: '/page/setup/manageList', label: '• 시스템 사용자 관리', show_yn: 'show', checked: true },
+            ],
+        },
+    ]);
 
     }catch(error){  
 

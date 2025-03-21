@@ -52,6 +52,8 @@ import RadioGroup from '@mui/material/RadioGroup';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Radio from '@mui/material/Radio';
 import Paper from '@mui/material/Paper';
+import CancelIcon from '@mui/icons-material/Cancel';
+import EditIcon from '@mui/icons-material/Edit';
 
 type Anchor = 'bottom';
 
@@ -1190,221 +1192,305 @@ export default function Home() {
             <Typography variant="h6" color="inherit">키오스크 소유자 정보를 불러오는 중입니다</Typography>
         </Backdrop>
 
-        <Dialog open={editDialogOpen} onClose={() => {
-            setEditDialogOpen(false);
-            setInfoOwnerID(''); // 값 초기화
-            setFilterInfoOwnerList([]); // 목록 비우기
-        }}>
-            <DialogTitle textAlign="center" sx={{fontSize:"17px",  color: '#1f1f26', marginLeft:"0px", fontWeight:'bold', alignContent:'center', alignItems:'center', justifyContent:'center' }}>{openType == 'edit' ? '수정' : '등록'}</DialogTitle>
-            <DialogContent onClick={(e) => {
-                // 다이얼로그 클릭 시 목록 비우기, 단 OutlinedInput 클릭 시에는 비우지 않음
-                if (!(e.target as HTMLElement).closest('#keywordInfoField')) {
-                    setFilterInfoOwnerList([]); // 다이얼로그 클릭 시 목록 비우기
+        <Dialog 
+            open={editDialogOpen} 
+            onClose={() => {
+                setEditDialogOpen(false);
+                setInfoOwnerID(''); // 값 초기화
+                setFilterInfoOwnerList([]); // 목록 비우기
+            }}
+            maxWidth="sm" 
+            fullWidth
+            PaperProps={{
+                sx: {
+                    maxHeight: '90vh',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                    borderRadius: '8px',
                 }
-            }}>
-              <div>
-                <div style={{display: openType == 'edit' ? 'flex' : 'none', flexDirection:'column'}}>
-                <div style={{width:'100%', height:'1px', backgroundColor:'#edccd4'}}/>
-                <div style={{display:'flex', flexDirection:'row', width:'100%', }}>
-                  <div style={{padding:'10px', backgroundColor:'#f1f1f1', alignItems:'center', alignContent:'center', justifyContent:'center'}}>
-                  <Typography sx={{fontSize:"13px",  color: '#1f1f26', padding:'10px', paddingRight:'13px', paddingLeft:'25px', marginLeft:"0px", fontWeight:'bold' }}>
-                        키오스크 상태
+            }}
+        >
+            <DialogTitle 
+                sx={{ 
+                    backgroundColor: '#1976d2',
+                    color: 'white',
+                    p: 2,
+                    flex: '0 0 auto',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between'
+                }}
+            >
+                <Box sx={{ 
+                    display: 'flex', 
+                    alignItems: 'center',
+                    gap: 1 
+                }}>
+                    <Typography 
+                        component="span"
+                        sx={{ 
+                            fontSize: '16px',
+                            fontWeight: 'bold'
+                        }}
+                    >
+                        {openType == 'edit' ? '수정' : '등록'}
                     </Typography>
-                  </div>
-                  <div style={{display:'flex', flexDirection:'row', padding:'15px', paddingRight:'35px', paddingLeft:'25px', paddingBottom:'10px', backgroundColor:'white'}}>
-                    <FormControl component="fieldset">
-                        <RadioGroup row aria-label="sell-status" name="sell-status" value={infoSellStatus} onChange={(e) => {
-                            const selectedValue = e.target.value;
-
-                            if(selectedValue === '운영지원금'){
-                              setInfoSellStatus('3');
-                            } else {
-                              setInfoSellStatus('2');
-                            }
-                        }}>
-                            <FormControlLabel 
-                                value="운영지원금" 
-                                checked={infoSellStatus == '3'} 
-                                control={<Radio size="small" />} 
-                                label="판매완료(운영지원금)"
-                                sx={{
-                                    '& .MuiFormControlLabel-label': {
-                                        fontSize: '14px'
-                                    },
-                                    '& .MuiRadio-root': {
-                                        padding: '4px'
-                                    }
-                                }}
-                            />
-                            <FormControlLabel 
-                                value="직접채굴" 
-                                checked={infoSellStatus == '2'} 
-                                control={<Radio size="small" />} 
-                                label="판매완료(직접채굴)"
-                                sx={{
-                                    '& .MuiFormControlLabel-label': {
-                                        fontSize: '14px'
-                                    },
-                                    '& .MuiRadio-root': {
-                                        padding: '4px'
-                                    }
-                                }}
-                            />
-                        </RadioGroup>
-                    </FormControl>
-                  </div>
-                </div>
-                </div>
-                <div style={{width:'100%', height:'1px', backgroundColor:'#edccd4'}}/>
-                <div style={{display:'flex', flexDirection:'row', width:'100%', }}>
-                  <div style={{padding:'10px', backgroundColor:'#f1f1f1', alignItems:'center', alignContent:'center', justifyContent:'center'}}>
-                    <Typography sx={{fontSize:"13px",  color: '#1f1f26', padding:'10px', paddingRight:'37px', paddingLeft:'25px', marginLeft:"0px", fontWeight:'bold' }}>
-                        관리자ID
-                    </Typography>
-                  </div>
-                  <div style={{display:'flex', flexDirection:'row', padding:'15px', paddingRight:'0px', paddingLeft:'35px', backgroundColor:'white'}}>
- 
-                      <div style={{flex:1, width:'100%', marginLeft:'-10px', borderRadius:'5px', borderWidth:'1px', borderColor:'#edccd4', backgroundColor:"#e9ecef", padding:'10px', paddingRight:'70px'}}>
-
-                        <Typography sx={{fontSize:"13px", width:'250px',  color: '#1f1f26', marginLeft:"0px", fontWeight:'bold' }}>
-                            {infoManagerID}
+                </Box>
+            </DialogTitle>
+            <DialogContent 
+                sx={{
+                    p: 3,
+                    flex: '1 1 auto',
+                    overflowY: 'auto',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 2,
+                    backgroundColor: '#f9f9f9',
+                }}
+                onClick={(e) => {
+                    if (!(e.target as HTMLElement).closest('#keywordInfoField')) {
+                        setFilterInfoOwnerList([]); // 다이얼로그 클릭 시 목록 비우기
+                    }
+                }}
+            >
+                <Box sx={{ 
+                    backgroundColor: '#ffffff',
+                    borderRadius: '10px',
+                    marginTop:'20px',
+                    p: 2.5,
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.06)',
+                    border: '1px solid #eaeaea',
+                }}>
+                    <div style={{display: openType == 'edit' ? 'flex' : 'none', flexDirection:'column'}}>
+                    <div style={{width:'100%', height:'1px', backgroundColor:'#e0e0e0'}}/>
+                    <div style={{display:'flex', flexDirection:'row', width:'100%', alignItems: 'center'}}>
+                      <div style={{padding:'10px', backgroundColor:'#f1f1f1', flex: '0 0 150px', textAlign: 'center'}}>
+                      <Typography sx={{fontSize:"13px",  color: '#1f1f26', fontWeight:'bold' }}>
+                            키오스크 상태
                         </Typography>
-                        
                       </div>
+                      <div style={{display:'flex', flexDirection:'row', padding:'15px', backgroundColor:'white', flex: '1'}}>
+                        <FormControl component="fieldset">
+                            <RadioGroup row aria-label="sell-status" name="sell-status" value={infoSellStatus} onChange={(e) => {
+                                const selectedValue = e.target.value;
 
-                  </div>
-                </div>
-                <div style={{width:'100%', height:'1px', backgroundColor:'#edccd4'}}/>
-                <div style={{display:'flex', flexDirection:'row', width:'100%', }}>
-                  <div style={{padding:'10px', backgroundColor:'#f1f1f1', alignItems:'center', alignContent:'center', justifyContent:'center'}}>
-                    <Typography sx={{fontSize:"13px",  color: '#1f1f26', padding:'0px', paddingRight:'37px', paddingLeft:'25px', marginLeft:"0px", fontWeight:'bold' }}>
-                        소유자ID
-                    </Typography>
-                  </div>
-                  <div style={{display:'flex', flexDirection:'row', padding:'15px', paddingRight:'60px', paddingLeft:'25px', paddingBottom:'15px',  backgroundColor:'white'}}>
- 
-                      <FormControl sx={{minWidth: '330px' }} variant="outlined">
-                        <OutlinedInput
-                          id="keywordInfoField"
-                          sx={{
-                            height: "33px",
-                            backgroundColor: 'white',
-                            borderColor: '#edccd4',
-                            fontSize: '14px'
-
-                          }}
-                          type='text'
-                          value={infoOwnerID}
-                          onChange={(text) => {
-
-                            setInfoOwnerID(text.target.value);
-
-                            if(text.target.value.length == 0){
-
-                              setFilterInfoOwnerList([]); // 선택 후 목록 비우기
-                              return;
-                              
-                            }
-
-                            setFilterInfoOwnerList(infoOwnerList.filter((item) => item.mb_email.includes(text.target.value)));
-                          
-                          }}
-                          onFocus={() => {
-
-                            console.log('editDialogOpen : ' + editDialogOpen);
-                            if (!editDialogOpen) {
-
-                              setFilterInfoOwnerList([]); // 목록 비우기
-                            
-                            } else {
-
-                              if(infoOwnerID.length == 0){
-
-                                return;
-
+                                if(selectedValue === '운영지원금'){
+                                  setInfoSellStatus('3');
+                                } else {
+                                  setInfoSellStatus('2');
+                                }
+                            }}>
+                                <FormControlLabel 
+                                    value="운영지원금" 
+                                    checked={infoSellStatus == '3'} 
+                                    control={<Radio size="small" />} 
+                                    label="판매완료(운영지원금)"
+                                    sx={{
+                                        '& .MuiFormControlLabel-label': {
+                                            fontSize: '14px'
+                                        },
+                                        '& .MuiRadio-root': {
+                                            padding: '4px'
+                                        }
+                                    }}
+                                />
+                                <FormControlLabel 
+                                    value="직접채굴" 
+                                    checked={infoSellStatus == '2'} 
+                                    control={<Radio size="small" />} 
+                                    label="판매완료(직접채굴)"
+                                    sx={{
+                                        '& .MuiFormControlLabel-label': {
+                                            fontSize: '14px'
+                                        },
+                                        '& .MuiRadio-root': {
+                                            padding: '4px'
+                                        }
+                                    }}
+                                />
+                            </RadioGroup>
+                        </FormControl>
+                      </div>
+                    </div>
+                    </div>
+                    <div style={{width:'100%', height:'1px', backgroundColor:'#e0e0e0'}}/>
+                    <div style={{display:'flex', flexDirection:'row', width:'100%', alignItems: 'center'}}>
+                      <div style={{padding:'10px', backgroundColor:'#f1f1f1', flex: '0 0 150px', textAlign: 'center'}}>
+                        <Typography sx={{fontSize:"13px",  color: '#1f1f26', fontWeight:'bold' }}>
+                            관리자ID
+                        </Typography>
+                      </div>
+                      <div style={{display:'flex', flexDirection:'row', padding:'15px', backgroundColor:'white', flex: '1'}}>
+                          <div style={{flex:1, borderRadius:'5px', borderWidth:'1px', borderColor:'#e0e0e0', backgroundColor:"#e9ecef", padding:'10px'}}>
+                            <Typography sx={{fontSize:"13px", color: '#1f1f26', fontWeight:'bold' }}>
+                                {infoManagerID}
+                            </Typography>
+                          </div>
+                      </div>
+                    </div>
+                    <div style={{width:'100%', height:'1px', backgroundColor:'#e0e0e0'}}/>
+                    <div style={{display:'flex', flexDirection:'row', width:'100%', alignItems: 'center'}}>
+                      <div style={{padding:'10px', backgroundColor:'#f1f1f1', flex: '0 0 150px', textAlign: 'center'}}>
+                        <Typography sx={{fontSize:"13px",  color: '#1f1f26', fontWeight:'bold' }}>
+                            소유자ID
+                        </Typography>
+                      </div>
+                      <div style={{display:'flex', flexDirection:'row', padding:'15px', backgroundColor:'white', flex: '1'}}>
+                          <FormControl sx={{minWidth: '330px' }} variant="outlined">
+                            <OutlinedInput
+                              id="keywordInfoField"
+                              sx={{
+                                height: "33px",
+                                backgroundColor: 'white',
+                                borderColor: '#e0e0e0',
+                                fontSize: '14px'
+                              }}
+                              type='text'
+                              value={infoOwnerID}
+                              onChange={(text) => {
+                                setInfoOwnerID(text.target.value);
+                                if(text.target.value.length == 0){
+                                  setFilterInfoOwnerList([]); // 선택 후 목록 비우기
+                                  return;
+                                }
+                                setFilterInfoOwnerList(infoOwnerList.filter((item) => item.mb_email.includes(text.target.value)));
+                              }}
+                              onFocus={() => {
+                                if (!editDialogOpen) {
+                                  setFilterInfoOwnerList([]); // 목록 비우기
+                                } else {
+                                  if(infoOwnerID.length == 0){
+                                    return;
+                                  }
+                                  setFilterInfoOwnerList(infoOwnerList.filter((item) => item.mb_email.includes(infoOwnerID)));
+                                }
+                              }}
+                              endAdornment={
+                                <InputAdornment position="end">
+                                  <ClearIcon
+                                    onClick={() => { setInfoOwnerID(''); }}
+                                  />
+                                </InputAdornment>
                               }
-
-                              setFilterInfoOwnerList(infoOwnerList.filter((item) => item.mb_email.includes(infoOwnerID)));
-
-                            }
-                          }}
-                          endAdornment={
-                            <InputAdornment position="end">
-                              <ClearIcon
-                                onClick={() => { setInfoOwnerID(''); }}
-                              />
-                            </InputAdornment>
-                          }
-                        />
-                      </FormControl>
-                      {/* 자동완성 목록 */}
-                      {filterInfoOwnerList.length > 0 && (
-                          <Box sx={{ position: 'absolute', zIndex: 1, backgroundColor: 'white', border: '1px solid #edccd4', width: '273px', marginTop: '35px', maxHeight: '150px', overflowY: 'auto' }} onClick={() => {
-                              setFilterInfoOwnerList([]); // 목록 비우기
-                          }}>
-                              {filterInfoOwnerList.map((item) => (
-                                  <MenuItem key={item.id} onClick={() => {
-
-                                      setInfoOwnerID(item.mb_email);
-                                      setFinalInfoAddress(item.wallet_address);
-                                      setFinalInfoAddressIdx(item.wallet_idx);
-                                      setFilterInfoOwnerList([]); // 선택 후 목록 비우기
-                                  }}>
-                                      {item.mb_email}
-                                  </MenuItem>
-                              ))}
-                          </Box>
-                      )}
-                  </div>
-                </div>
-                <div style={{width:'100%', height:'1px', backgroundColor:'#edccd4'}}/>
-                <div style={{display:'flex', flexDirection:'row', width:'100%', }}>
-                  <div style={{padding:'10px', backgroundColor:'#f1f1f1', alignItems:'center', alignContent:'center', justifyContent:'center'}}>
-                    <Typography sx={{fontSize:"13px",  color: '#1f1f26', padding:'10px', paddingRight:'39px', paddingLeft:'25px', marginLeft:"0px", fontWeight:'bold' }}>
-                        매칭주소
-                    </Typography>
-                  </div>
-                  <div style={{display:'flex', flexDirection:'row', padding:'15px', paddingRight:'35px', paddingLeft:'35px', backgroundColor:'white'}}>
- 
-                      <div style={{flex:1, width:'100%', marginLeft:'-10px', borderRadius:'5px', borderWidth:'1px', borderColor:'#edccd4', backgroundColor:"#e9ecef", padding:'10px', }}>
-
-                        <Typography sx={{fontSize:"13px", width:'250px',  color: '#1f1f26', marginLeft:"0px", fontWeight:'bold', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                            {finalInfoAddress}
-                        </Typography>
-                        
+                            />
+                          </FormControl>
+                          {/* 자동완성 목록 */}
+                          {filterInfoOwnerList.length > 0 && (
+                              <Box sx={{ position: 'absolute', zIndex: 1, backgroundColor: 'white', border: '1px solid #e0e0e0', width: '273px', marginTop: '35px', maxHeight: '150px', overflowY: 'auto' }} onClick={() => {
+                                  setFilterInfoOwnerList([]); // 목록 비우기
+                              }}>
+                                  {filterInfoOwnerList.map((item) => (
+                                      <MenuItem key={item.id} onClick={() => {
+                                          setInfoOwnerID(item.mb_email);
+                                          setFinalInfoAddress(item.wallet_address);
+                                          setFinalInfoAddressIdx(item.wallet_idx);
+                                          setFilterInfoOwnerList([]); // 선택 후 목록 비우기
+                                      }}>
+                                          {item.mb_email}
+                                      </MenuItem>
+                                  ))}
+                              </Box>
+                          )}
                       </div>
-
-                  </div>
-                </div>
-                <div style={{width:'100%', height:'1px', backgroundColor:'#edccd4'}}/>
-
-                <div style={{display:'flex', flexDirection:'column',  width:'100%', backgroundColor:'#f6f6f6', padding:'20px', borderRadius:'10px', marginTop:'20px' }}>
-                  <Typography sx={{fontSize:"13px",  color: '#1f1f26', padding:'0px',  paddingLeft:'0px', fontWeight:'bold' }}>
-                      [유의사항]
-                  </Typography>
-                  <Typography sx={{fontSize:"13px",  color: '#1f1f26', marginTop:'10px' }}>
-                  1. 노드구매사이트에 가입한 회원만 소유자를 등록할 수 있습니다.
-                  </Typography>
-                  <Typography sx={{fontSize:"13px",  color: '#1f1f26', marginTop:'0px' }}>
-                  2. 채굴시간 중에는 소유자 등록이 불가합니다.
-                  </Typography>
-                </div>
-              </div>
+                    </div>
+                    <div style={{width:'100%', height:'1px', backgroundColor:'#e0e0e0'}}/>
+                    <div style={{display:'flex', flexDirection:'row', width:'100%', alignItems: 'center'}}>
+                      <div style={{padding:'10px', backgroundColor:'#f1f1f1', flex: '0 0 150px', textAlign: 'center'}}>
+                        <Typography sx={{fontSize:"13px",  color: '#1f1f26', fontWeight:'bold' }}>
+                            매칭주소
+                        </Typography>
+                      </div>
+                      <div style={{display:'flex', padding:'15px', backgroundColor:'white', flex: '1'}}>
+                          <div style={{
+                              flex: 1, 
+                              borderRadius: '5px', 
+                              borderWidth: '1px', 
+                              borderColor: '#e0e0e0', 
+                              backgroundColor: "#e9ecef", 
+                              padding: '10px',
+                              overflow: 'hidden'
+                          }}>
+                            <Typography sx={{
+                                fontSize:"13px", 
+                                color: '#1f1f26', 
+                                fontWeight:'bold', 
+                                overflow: 'hidden', 
+                                textOverflow: 'ellipsis', 
+                                whiteSpace: 'nowrap',
+                                maxWidth: '40ch' // 최대 40자까지만 표시
+                            }}>
+                                {finalInfoAddress}
+                            </Typography>
+                          </div>
+                      </div>
+                    </div>
+                    <div style={{width:'100%', height:'1px', backgroundColor:'#e0e0e0'}}/>
+                    <div style={{display:'flex', flexDirection:'column', width:'100%', backgroundColor:'#f6f6f6', padding:'20px', borderRadius:'10px', marginTop:'20px' }}>
+                      <Typography sx={{fontSize:"13px",  color: '#1f1f26', fontWeight:'bold' }}>
+                          [유의사항]
+                      </Typography>
+                      <Typography sx={{fontSize:"13px",  color: '#1f1f26', marginTop:'10px' }}>
+                      1. 노드구매사이트에 가입한 회원만 소유자를 등록할 수 있습니다.
+                      </Typography>
+                      <Typography sx={{fontSize:"13px",  color: '#1f1f26', marginTop:'0px' }}>
+                      2. 채굴시간 중에는 소유자 등록이 불가합니다.
+                      </Typography>
+                    </div>
+                </Box>
             </DialogContent>
-            <DialogActions>
-                <Button onClick={() => {
-
-                  // 수정 다이얼로그 적용 로직
-                  setEditDialogOpen(false);
-                  setInfoOwnerID(''); // 값 초기화
-                  setInfoOwnerIdx(-1);
-                  setFinalInfoAddress('');
-                  setFinalInfoAddressIdx(-1);
-                  setTargetKioskID(-1);
-                  setFilterInfoOwnerList([]); // 목록 비우기
-                  
-                }} color="primary">닫기</Button>
-                <Button onClick={handleEditApply} color="primary">적용</Button>
+            <DialogActions 
+                sx={{ 
+                    p: 2,
+                    backgroundColor: '#f8f9fa',
+                    borderTop: '1px solid #eaeaea',
+                    gap: 1,
+                    display: 'flex',
+                    justifyContent: 'space-between'
+                }}
+            >
+                <Button 
+                    onClick={() => {
+                        setEditDialogOpen(false);
+                        setInfoOwnerID(''); // 값 초기화
+                        setInfoOwnerIdx(-1);
+                        setFinalInfoAddress('');
+                        setFinalInfoAddressIdx(-1);
+                        setTargetKioskID(-1);
+                        setFilterInfoOwnerList([]); // 목록 비우기
+                    }} 
+                    variant="outlined" 
+                    startIcon={<CancelIcon sx={{ fontSize: 18 }} />}
+                    sx={{
+                        fontSize: '13px',
+                        height: '32px',
+                        padding: '0 16px',
+                        color: '#666',
+                        borderColor: '#ccc',
+                        '&:hover': {
+                            borderColor: '#999',
+                            backgroundColor: '#f5f5f5'
+                        }
+                    }}
+                >
+                    닫기
+                </Button>
+                <Button 
+                    onClick={handleEditApply} 
+                    variant="contained" 
+                    startIcon={<EditIcon sx={{ fontSize: 18 }} />}
+                    sx={{ 
+                        fontSize: '13px',
+                        height: '32px',
+                        padding: '0 16px',
+                        backgroundColor: '#1976d2',
+                        '&:hover': {
+                            backgroundColor: '#1565c0'
+                        }
+                    }}
+                >
+                    적용
+                </Button>
             </DialogActions>
         </Dialog>
 

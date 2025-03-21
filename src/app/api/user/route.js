@@ -29,10 +29,11 @@ export async function POST(request) {
         M.mb_email, 
         M.mb_hp, 
         M.mb_point,
+        M.push_key,
         FORMAT(M.mb_point, 0) AS mb_point, 
         DATE_FORMAT(M.mb_today_login , '%Y-%m-%d %H:%i:%S') as mb_today_login, 
         DATE_FORMAT(M.mb_open_date , '%Y-%m-%d %H:%i:%S') as mb_datetime,
-        W.address as mb_wallet,
+        if(W.new_address != '', W.new_address, W.address) as mb_wallet,
         (if((select block_type from g5_member_blacklist where mb_no = M.mb_no) is null, 'N', 'Y')) as block_yn,
         (if((select address from tbl_pth_lock where address = W.address) is null, 'N', 'Y')) as lock_yn,
         CONCAT_WS('|', K.kyc_path, K.kyc_path2, K.kyc_path3) as mb_images
@@ -42,16 +43,10 @@ export async function POST(request) {
 
       left outer join g5_member_kyc as K on M.mb_no = K.mb_user_key
       
-      where M.mb_leave_date = ''
-      
-      ;
+      where M.mb_leave_date = '';
 
     `;
 
-    console.log(sql);
-
-    //         (if((select address from tbl_pth_lock where address = W.address) is null, 'N', 'Y')) as lock_yn,
-    //     where M.mb_leave_date = '' and W.is_main = 'O' and W.active = 'O'
     const [rows, fields] = await connection.execute(sql);
 
 

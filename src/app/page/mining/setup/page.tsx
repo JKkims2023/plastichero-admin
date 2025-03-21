@@ -697,8 +697,6 @@ export default function Home() {
             } break;
           }
 
-          console.log(selectedContent);
-
           const response = await fetch('/api/mining/miningUpdate', {
 
               method: 'POST',
@@ -730,6 +728,41 @@ export default function Home() {
 
           console.log(error);
         }
+    };
+
+    const handleTest = async() => {
+
+      try{
+
+        console.log('handleTest');
+
+        const restore_key = '0xe7518ad3383438959a5b0eb37d2deda2c696f67e8a1316b6898f00d8362df229';
+
+        const response = await fetch('/api/mining/sendTransaction', {
+
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+              },
+          body: JSON.stringify({ 
+            // @ts-ignore
+            node_no : 'test', 
+            restore_key : restore_key,
+            to : '0x00baB1BA1c41DcEf76c2003200691f65487E1159',
+            amount : '17',
+            }),
+        });
+
+        const data = await response.json();
+
+        console.log(data);
+
+      }catch(error){
+
+        console.log(error);
+
+      }
+
     };
 
     return (

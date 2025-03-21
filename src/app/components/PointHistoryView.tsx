@@ -4,13 +4,99 @@ import Typography from '@mui/material/Typography';
 import { alpha, styled } from '@mui/material/styles';
 import Select, { SelectChangeEvent } from '@mui/material/Select';
 import Button from '@mui/material/Button';
-import { DataGrid, GridToolbar, GridRowsProp, GridColDef, GridToolbarContainer, GridToolbarExport, GridToolbarColumnsButton, GridToolbarFilterButton, gridClasses} from '@mui/x-data-grid';
+// @ts-ignore
+import { DataGrid, GridToolbar, GridRowsProp, GridColDef, GridValueGetterParams, GridToolbarContainer, GridToolbarExport, GridToolbarColumnsButton, GridToolbarFilterButton, gridClasses} from '@mui/x-data-grid';
 import { FormControl, MenuItem } from '@mui/material';
 import Paper from '@mui/material/Paper';
+import { Box } from '@mui/material';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import dayjs from 'dayjs';
 
 const ODD_OPACITY = 0.2;
 
 import progressPath from '../../../public/progress.gif';
+
+const rtnStatusInfo = (status) => {
+
+  let rtnValue = '';
+
+  switch(status){
+
+      case '':
+          rtnValue = '보관';
+          break;
+      case '01':
+          rtnValue = '발행';
+          break;
+      case '02':
+          rtnValue = '사용완료';
+          break;
+      case '03':
+          rtnValue = '반품';
+          break;
+      case '04':
+          rtnValue = '관리폐기';
+          break;
+      case '05':
+          rtnValue = '환불';
+          break;
+      case '06':
+          rtnValue = '재발행';
+          break;
+      case '07':
+          rtnValue = '구매취소(폐기)';
+          break;
+      case '08':
+          rtnValue = '기간만료';
+          break;
+      case '09':
+          rtnValue = '바우처(비활성)';
+          break;
+      case '10':
+          rtnValue = '잔액환불';
+          break;
+      case '11':
+          rtnValue = '잔액기간만료';    
+          break;
+      case '12':
+          rtnValue = '기간만료취소';
+          break;
+      case '13':
+          rtnValue = '환전';
+          break;
+      case '14':
+          rtnValue = '환급';    
+          break;
+      case '15':  
+          rtnValue = '잔액환급';
+          break;
+      case '16':
+          rtnValue = '잔액기간만료취소';
+          break;
+      case '21':
+          rtnValue = '등록';
+          break;
+      case '22':
+          rtnValue = '등록취소';
+          break;
+      case '23':
+          rtnValue = '선점';
+          break;
+      case '24':
+          rtnValue = '임시발급상태';  
+          break;
+      default:
+          rtnValue = '기타';
+          break;
+
+  }
+
+  return rtnValue;
+
+};
+
 
 const StripedDataGrid = styled(DataGrid)(({ theme }) => ({
 
@@ -52,50 +138,41 @@ const columns: GridColDef<(typeof rows)[number]>[] = [
       field: 'id', 
       headerName: 'No', 
       type: 'string',
-      flex: 0.5,             // flex 값 조정
+      flex: 0.3,             // 번호는 작게
       disableColumnMenu: true, 
-      headerAlign: 'center', // 헤더 정렬 추가
-      align: 'center',       // 셀 정렬 추가
+      headerAlign: 'center',
+      align: 'center',
   },
   {
-      field: 'po_datetime',
-      headerName: '발생일',
+      field: 'od_regdate',
+      headerName: '사용일',
       type: 'string',
-      flex: 2.2,              // flex 값 조정
+      flex: 1,              // 날짜 형식에 맞게 조정
       disableColumnMenu: true,
       editable: false,
       headerAlign: 'center',
       align: 'center',
   },
   {
-      field: 'po_content',
+      field: 'od_status',
       headerName: '구분',
       type: 'string',
-      flex: 3,              // flex 값 조정
+      flex: 0.4,              // 상태값 텍스트 길이에 맞게 조정
       disableColumnMenu: true,
       editable: false,
       headerAlign: 'center',
       align: 'center',
+      valueGetter: (params: GridValueGetterParams) => rtnStatusInfo(params.value)
   },
   {
-    field: 'po_reward_type',
-    headerName: '타입',
-    type: 'string',
-    flex: 1,             // flex 값 조정
-    disableColumnMenu: true,
-    editable: false,
-    headerAlign: 'center',
-    align: 'center',
-  },
-  {
-      field: 'point_amount',
-      headerName: '수량',
+      field: 'od_goods_name',
+      headerName: '상품명',
       type: 'string',
-      flex: 1,           // flex 값 조정
+      flex: 1.5,              // 상품명이 가장 길 수 있으므로 더 넓게
       disableColumnMenu: true,
       editable: false,
       headerAlign: 'center',
-      align: 'center',
+      align: 'left',
   },
 ];
 
@@ -108,6 +185,13 @@ const PointInfoView = ({pointInfo}) => {
     const [progressPoint, setProgressPoint] = useState(true);
     const [filterContentTypeMethod, setFilterContentTypeMethod] = React.useState(10);
     const [filterContentTypeValueMethod, setFilterContentTypeValueMethod] = React.useState('0');
+    const [selectedDate, setSelectedDate] = useState(dayjs());
+    const [totalCount, setTotalCount] = useState(0);
+    const [usedCount, setUsedCount] = useState(0);
+    const [cancelCount, setCancelCount] = useState(0);
+    const [totalPrice, setTotalPrice] = useState(0);
+    const [usedPrice, setUsedPrice] = useState(0);
+    const [cancelPrice, setCancelPrice] = useState(0);
 
     // Summary 정보 상태 추가
     const [summary, setSummary] = useState({
@@ -149,6 +233,12 @@ const PointInfoView = ({pointInfo}) => {
 
     },[progressPoint]);
 
+    React.useEffect(() => {
+
+      console.log('totalCount : ' + totalCount);
+
+    },[totalCount, usedCount, cancelCount, totalPrice, usedPrice, cancelPrice]);
+
 
     const get_PointHistory = async() => {
 
@@ -181,8 +271,18 @@ const PointInfoView = ({pointInfo}) => {
   
             // @ts-ignore
             const resultData = data.result_data.map((data, idx) => ({ id: idx + 1, ...data }));
+
             setPointList(resultData);
-     //       updateSummary(resultData); // Summary 업데이트
+
+            console.log(data.result_summary);
+
+            setTotalCount(data.result_summary.total_count);
+            setUsedCount(data.result_summary.used_count);
+            setCancelCount(data.result_summary.cancel_count);
+            setTotalPrice(data.result_summary.total_price);
+            setUsedPrice(data.result_summary.used_price);
+            setCancelPrice(data.result_summary.cancel_price);
+
             
           } else {
     
@@ -314,184 +414,338 @@ const PointInfoView = ({pointInfo}) => {
 
     };
 
+
     return (
-
-        <div style={{width:"100%", height:"100%", backgroundColor:"white"}}>
-            
-            <div style={{display:'flex', float:"left", width:"100%", background:"green", paddingTop:"10px", paddingBottom:"10px"}}>
-                <Typography fontWeight="medium" sx={{fontSize:16, fontWeight:"normal", color:"white", marginLeft:"10px"}} >
-                    사용내역 통계 
-                </Typography>
-            </div>
-            
- 
-                {/* Summary 영역 추가 */}
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '10px', width: '100%', padding:"10px" }}>
-                    <Paper elevation={1} style={{ padding: '10px', flex: 1, minWidth: '100px', marginRight: '5px' }}>
-                        <Typography fontWeight="medium" sx={{fontSize:14, fontWeight:"normal", color:"black"}} >
-                            총 건수: {summary.totalCount}
-                        </Typography>
-                    </Paper>
-                    <Paper elevation={1} style={{ padding: '10px', flex: 1, minWidth: '100px', marginRight: '5px' }}>
-                        <Typography fontWeight="medium" sx={{fontSize:14, fontWeight:"normal", color:"black"}} >
-                            스왑된 포인트: {summary.swappedPoints}
-                        </Typography>
-                    </Paper>
-                    <Paper elevation={1} style={{ padding: '10px', flex: 1, minWidth: '100px' }}>
-                        <Typography fontWeight="medium" sx={{fontSize:14, fontWeight:"normal", color:"black"}} >
-                            스왑된 PTH: {summary.swappedPTH}
-                        </Typography>
-                    </Paper>
-                </div>
-
-            <div style={{
-                display:'flex',
-                flexDirection:'column',
-                padding: '10px',
-                paddingTop: '0px',
-                width: '100%',
-                justifyContent:'center',
-                boxSizing: 'border-box',
-                gap: '10px',
-                height:'calc(100% - 100px)', // 부모 크기에 맞게 조정
-                overflow:'hidden',
+        <div style={{
+            width: "100%",
+            height: "100%",
+            backgroundColor: "white",
+            display: 'flex',
+            flexDirection: 'column',
+            overflow: 'hidden'
+        }}>
+            {/* 헤더 영역 */}
+            <Box sx={{ 
+                backgroundColor: '#1976d2',
+                color: 'white',
+                p: 2,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1
             }}>
+                <Typography 
+                    component="span"
+                    sx={{ 
+                        fontSize: '14px',
+                        fontWeight: 'bold'
+                    }}
+                >
+                    기프트콘 사용정보
+                </Typography>
+            </Box>
 
-            {
-              progressPoint ? 
+            {/* 컨텐츠 영역 */}
+            <Box sx={{
+                p: 2.5,
+                flex: '1 1 auto',
+                overflow: 'hidden',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 2,
+                backgroundColor: '#f8f9fa',
+            }}>
+                {/* Summary 영역 */}
+                <Box sx={{ 
+                    display: 'flex', 
+                    gap: 2,
+                    mb: 2
+                }}>
+                    <Paper elevation={1} sx={{ 
+                        p: 2, 
+                        flex: 1,
+                        backgroundColor: '#ffffff',
+                        borderRadius: '10px',
+                        boxShadow: '0 2px 4px rgba(0,0,0,0.06)',
+                        border: '1px solid #eaeaea',
+                    }}>
+                        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 0.8, mb: 0.8 }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.2 }}>
+                                <Typography sx={{ 
+                                    fontSize: 13,
+                                    color: '#444',
+                                    fontWeight: 600
+                                }}>
+                                    총 건수 :
+                                </Typography>
+                                <Typography sx={{ 
+                                    fontSize: 13,
+                                    color: '#1976d2',
+                                    fontWeight: 600
+                                }}>
+                                    {new Intl.NumberFormat().format(totalCount)}
+                                </Typography>
+                            </Box>
+                            <Typography sx={{ 
+                                fontSize: 16,
+                                color: '#444',
+                                fontWeight: 600
+                            }}>
+                                {new Intl.NumberFormat().format(totalPrice)}
+                            </Typography>
+                        </Box>
+                    </Paper>
+                    <Paper elevation={1} sx={{ 
+                        p: 2, 
+                        flex: 1,
+                        backgroundColor: '#ffffff',
+                        borderRadius: '10px',
+                        boxShadow: '0 2px 4px rgba(0,0,0,0.06)',
+                        border: '1px solid #eaeaea',
+                    }}>
+                        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 0.8, mb: 0.8 }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.2 }}>
+                                <Typography sx={{ 
+                                    fontSize: 13,
+                                    color: '#444',
+                                    fontWeight: 600
+                                }}>
+                                    사용 :
+                                </Typography>
+                                <Typography sx={{ 
+                                    fontSize: 13,
+                                    color: '#1976d2',
+                                    fontWeight: 600
+                                }}>
+                                    {new Intl.NumberFormat().format(usedCount)}
+                                </Typography>
+                            </Box>
+                            <Typography sx={{ 
+                                fontSize: 16,
+                                color: '#444',
+                                fontWeight: 600
+                            }}>
+                                {new Intl.NumberFormat().format(usedPrice)}
+                            </Typography>
+                        </Box>
+                     
+                    </Paper>
+                    <Paper elevation={1} sx={{ 
+                        p: 2, 
+                        flex: 1,
+                        backgroundColor: '#ffffff',
+                        borderRadius: '10px',
+                        boxShadow: '0 2px 4px rgba(0,0,0,0.06)',
+                        border: '1px solid #eaeaea',
+                    }}>
+                        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 0.8, mb: 0.8 }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.2 }}>
+                                <Typography sx={{ 
+                                    fontSize: 13,
+                                    color: '#444',
+                                    fontWeight: 600
+                                }}>
+                                    취소 :
+                                </Typography>
+                                <Typography sx={{ 
+                                    fontSize: 13,
+                                    color: '#1976d2',
+                                    fontWeight: 600
+                                }}>
+                                    {new Intl.NumberFormat().format(cancelCount)}
+                                </Typography>
+                            </Box>
+                            <Typography sx={{ 
+                                fontSize: 16,
+                                color: '#444',
+                                fontWeight: 600
+                            }}>
+                                {new Intl.NumberFormat().format(cancelPrice)}
+                            </Typography>
+                        </Box>
+                    </Paper>
+                </Box>
 
-                <div style={{display:"flex", flexDirection:"column", alignContent:"center", height:"100%", alignItems:"center", justifyContent:"center", overflow: 'hidden' }}>
+                {/* 필터 영역 */}
+                <Box sx={{ 
+                    backgroundColor: '#ffffff',
+                    borderRadius: '10px',
+                    p: 2,
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.06)',
+                    border: '1px solid #eaeaea',
+                    marginTop: '-15px',
+                }}>
+                    <Box sx={{ 
+                        display: 'flex', 
+                        gap: 2,
+                        alignItems: 'center'
+                    }}>
+                        <FormControl sx={{ flex: 1 }} size="small">
+                            <Select
+                                value={filterContentTypeMethod}
+                                onChange={handleChangeFilterContentType}
+                                sx={{ 
+                                    fontSize: 13,
+                                    '& .MuiSelect-select': {
+                                        padding: '8px 12px',
+                                    },
+                                    '& .MuiOutlinedInput-notchedOutline': {
+                                        borderColor: '#eaeaea'
+                                    },
+                                    '&:hover .MuiOutlinedInput-notchedOutline': {
+                                        borderColor: '#1976d2'
+                                    },
+                                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                                        borderColor: '#1976d2'
+                                    }
+                                }}
+                            >
+                                <MenuItem value={10}>전체</MenuItem>
+                                <MenuItem value={20}>페트병 수거 포인트 적립</MenuItem>
+                                <MenuItem value={30}>페트병 수거 PTH 적립</MenuItem>
+                                <MenuItem value={40}>기프티콘 구매</MenuItem>
+                                <MenuItem value={50}>기프티콘 구매취소</MenuItem>
+                                <MenuItem value={60}>SWAP PTH 차감</MenuItem>
+                                <MenuItem value={70}>SWAP Point 추가</MenuItem>
+                                <MenuItem value={80}>관리자에서 포인트 지급</MenuItem>
+                            </Select>
+                        </FormControl>
+                        <LocalizationProvider dateAdapter={AdapterDayjs}>
+                            <DatePicker 
+                                value={selectedDate}
+                                onChange={(newValue) => setSelectedDate(newValue)}
+                                format="YYYY-MM-DD"
+                                slotProps={{
+                                    textField: { 
+                                        size: "small",
+                                        sx: {
+                                            width: '160px',
+                                            '& .MuiOutlinedInput-root': {
+                                                fontSize: 13,
+                                            },
+                                            '& .MuiOutlinedInput-notchedOutline': {
+                                                borderColor: '#eaeaea'
+                                            },
+                                            '&:hover .MuiOutlinedInput-notchedOutline': {
+                                                borderColor: '#1976d2'
+                                            },
+                                            '& .Mui-focused .MuiOutlinedInput-notchedOutline': {
+                                                borderColor: '#1976d2'
+                                            }
+                                        }
+                                    }
+                                }}
+                            />
+                        </LocalizationProvider>
+                    </Box>
+                </Box>
 
-                  <Image 
-                    src={progressPath}
-                    alt=""
-                    width={50}
-                    height={50}
-                  />
-
-                  <Typography fontWeight="medium" sx={{fontSize:13, fontWeight:"normal", color:"black", marginTop:"20px"}} >
-                      포인트 내역을 조회중입니다. 
-                  </Typography>
-
-                </div>
-                
-               : 
-                <div style={{width:"100%", height:"100%", backgroundColor:"white"}}>
-                
-                <div style={{display:"flex", flexDirection:"column", alignItems:"flex-end", marginTop:'0px'}}>
-
-                  <FormControl fullWidth  style={{ width:"100%",marginTop:"0px", marginLeft:"8px", backgroundColor:'white', color:'black'}}>
-                      <Select
-                      labelId="demo-simple-select-label"
-                      id="demo-simple-select"
-                      style={{color:'black'}}
-                      value={filterContentTypeMethod}
-                      size="small"
-                      onChange={handleChangeFilterContentType}
-                      >
-                      <MenuItem style={{fontSize:13}} value={10}>전체</MenuItem>
-                      <MenuItem style={{fontSize:13}} value={20}>페트병 수거 포인트 적립</MenuItem>
-                      <MenuItem style={{fontSize:13}} value={30}>페트병 수거 PTH 적립</MenuItem>
-                      <MenuItem style={{fontSize:13}} value={40}>기프티콘 구매</MenuItem>
-                      <MenuItem style={{fontSize:13}} value={50}>기프티콘 구매취소</MenuItem>
-                      <MenuItem style={{fontSize:13}} value={60}>SWAP PTH 차감</MenuItem>
-                      <MenuItem style={{fontSize:13}} value={70}>SWAP Point 추가</MenuItem>
-                      <MenuItem style={{fontSize:13}} value={80}>관리자에서 포인트 지급</MenuItem>
-                      </Select>
-                  </FormControl>
-
-                  </div>
-
-                <StripedDataGrid 
-
-                rows={pointList}
-                columns={columns}
-                autoHeight={true}
-
-                initialState={{
-                    pagination: {
-                        paginationModel: {
-                        pageSize: 10,
-                        },
-                    },
-                }}
-                pageSizeOptions={[10]}
-                rowHeight={42}
-                columnHeaderHeight={45}
-
-                sx={{
-
-                    '.MuiDataGrid-columnSeparator': {
-                    display: 'none',
-                    },
-                    "& .MuiDataGrid-columnHeader": {
-                //                      backgroundColor: "#f0f0f0",
-                        borderTopColor:"green",
-                        borderBlockColor:"green",
-                        color: "#000000",
-                        fontSize:13.5,
-                        fontFamily:'bold',
-                        fontWeight: "bold",
-                    },
-                    '& .super-app-theme--Open': {
-                        '&.Mui-selected': { backgroundColor: 'black'},
-                    },
-                    '& .super-app-theme--Filled': {
-                        '&.Mui-selected': { backgroundColor: 'black'},
-                    },
-                    '& .super-app-theme--PartiallyFilled': {
-                        '&.Mui-selected': { backgroundColor: 'black'},
-                    },
-                    '& .super-app-theme--Rejected': {
-                        '&.Mui-selected': { backgroundColor: 'black'},
-                    },
-                    "& .MuiDataGrid-cell": {
-                        border: 1,
-                        borderColor:"#f4f6f6",
-                        borderRight: 0,
-                        borderTop: 0,
-                        fontSize:13.5,
-                    },
-                    '& .MuiMenuItem-root': {
-                            fontSize: 1,
-                        },
-                        '& .MuiTypography-root': {
-                            color: 'dodgerblue',
-                            fontSize: 1,
-                        },
-                        '& .MuiDataGrid-filterForm': {
-                            bgcolor: 'lightblue',
-                        },
-                }}
-
-                localeText={{
-                    toolbarExportCSV: "CVS 파일 저장",
-                    toolbarColumns: "헤더설정",
-                    toolbarFilters: "내부필터링",
-                    toolbarExport: "다운로드"
-                    
-                }}
-                slotProps={{
-                    toolbar: {
-                        printOptions: { disableToolbarButton: true },
-                        csvOptions: { disableToolbarButton: true },
-                        
-                }}}
-                getRowClassName={(params) =>
-                    params.indexRelativeToCurrentPage % 2 === 1 ? 'even' : 'odd'
-                }
-                style={{
-                    height: '92%', // 부모 높이에 맞게 최대화
-                    marginTop:'10px',
-                }}
-                onRowClick={handleClickContentList}
-              />
-
-              </div>
-            
-            }
-
-            </div>        
+                {/* DataGrid 영역 */}
+                <Box sx={{ 
+                    flex: 1,
+                    backgroundColor: '#ffffff',
+                    borderRadius: '10px',
+                    overflow: 'auto',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.06)',
+                    border: '1px solid #eaeaea',
+                    height: '100%',
+                    maxHeight: 'calc(100vh - 300px)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    p: 2, // padding 전체 적용
+                }}>
+                    {progressPoint ? (
+                        <Box sx={{ 
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            height: '100%',
+                            p: 3
+                        }}>
+                            <Image 
+                                src={progressPath}
+                                alt=""
+                                width={50}
+                                height={50}
+                            />
+                            <Typography sx={{ 
+                                mt: 2,
+                                fontSize: 13,
+                                color: '#666'
+                            }}>
+                                포인트 내역을 조회중입니다.
+                            </Typography>
+                        </Box>
+                    ) : (
+                        <Box sx={{ 
+                            flex: 1,
+                            display: 'flex',
+                            flexDirection: 'column',
+                            mb: 2, // 하단 마진 추가
+                        }}>
+                            <StripedDataGrid 
+                                rows={pointList}
+                                columns={columns}
+                                autoHeight={false}
+                                initialState={{
+                                    pagination: {
+                                        paginationModel: { pageSize: 5 },
+                                    },
+                                }}
+                                pageSizeOptions={[5]}
+                                rowHeight={42}
+                                columnHeaderHeight={45}
+                                sx={{
+                                    border: 'none',
+                                    flex: 1,
+                                    '& .MuiDataGrid-columnHeaders': {
+                                        backgroundColor: '#f8f9fa',
+                                        borderBottom: '1px solid #eaeaea',
+                                    },
+                                    '& .MuiDataGrid-cell': {
+                                        borderColor: '#f4f6f6',
+                                        fontSize: 13,
+                                        color: '#666666'
+                                    },
+                                    '& .MuiDataGrid-row:hover': {
+                                        backgroundColor: alpha('#1976d2', 0.04)
+                                    },
+                                    '& .MuiDataGrid-row.Mui-selected': {
+                                        backgroundColor: alpha('#1976d2', 0.08),
+                                        '&:hover': {
+                                            backgroundColor: alpha('#1976d2', 0.12),
+                                        }
+                                    },
+                                    '& .MuiDataGrid-footerContainer': {
+                                        borderTop: '1px solid #eaeaea',
+                                        backgroundColor: '#f8f9fa'
+                                    }
+                                }}
+                                localeText={{
+                                    toolbarExportCSV: "CVS 파일 저장",
+                                    toolbarColumns: "헤더설정",
+                                    toolbarFilters: "내부필터링",
+                                    toolbarExport: "다운로드"
+                                }}
+                                slotProps={{
+                                    toolbar: {
+                                        printOptions: { disableToolbarButton: true },
+                                        csvOptions: { disableToolbarButton: true },
+                                    }}}
+                                getRowClassName={(params) =>
+                                    params.indexRelativeToCurrentPage % 2 === 1 ? 'even' : 'odd'
+                                }
+                                style={{
+                                    height: 'calc(100% - 16px)',
+                                    width: '100%',
+                                    marginTop: '10px',
+                                }}
+                                onRowClick={handleClickContentList}
+                            />
+                        </Box>
+                    )}
+                </Box>
+            </Box>
         </div>
     )
 

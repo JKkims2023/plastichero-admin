@@ -5,44 +5,38 @@ import { alpha, styled } from '@mui/material/styles';
 import Select, { SelectChangeEvent } from '@mui/material/Select';
 import Button from '@mui/material/Button';
 import { DataGrid, GridToolbar, GridRowsProp, GridColDef, GridToolbarContainer, GridToolbarExport, GridToolbarColumnsButton, GridToolbarFilterButton, gridClasses} from '@mui/x-data-grid';
-import { FormControl, MenuItem } from '@mui/material';
+import { ERROR_CODE, walletLib } from '../../utils/wallet';
+import { Box } from '@mui/material';
+import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
 
 const ODD_OPACITY = 0.2;
 
 import progressPath from '../../../public/progress.gif';
 import { get } from "http";
+import { isUint16Array } from "util/types";
 
 const StripedDataGrid = styled(DataGrid)(({ theme }) => ({
-
     [`& .${gridClasses.row}.even`]: {
-      backgroundColor: theme.palette.grey[50],
+      backgroundColor: alpha(theme.palette.grey[100], 0.5),
       '&:hover': {
-        backgroundColor: alpha(theme.palette.primary.main, ODD_OPACITY),
-        '@media (hover: none)': {
-          backgroundColor: 'transparent',
-        },
+        backgroundColor: alpha(theme.palette.primary.main, 0.1),
       },
-      '&.Mui-selected': {
-        backgroundColor: alpha(
-          theme.palette.primary.main,
-          ODD_OPACITY + theme.palette.action.selectedOpacity,
-        ),
-        '&:hover': {
-          backgroundColor: alpha(
-            theme.palette.primary.main,
-            ODD_OPACITY +
-              theme.palette.action.selectedOpacity +
-              theme.palette.action.hoverOpacity,
-          ),
-          // Reset on touch devices, it doesn't add specificity
-          '@media (hover: none)': {
-            backgroundColor: alpha(
-              theme.palette.primary.main,
-              ODD_OPACITY + theme.palette.action.selectedOpacity,
-            ),
-          },
-        },
+    },
+    [`& .${gridClasses.row}.odd`]: {
+      backgroundColor: theme.palette.background.paper,
+      '&:hover': {
+        backgroundColor: alpha(theme.palette.primary.main, 0.1),
       },
+    },
+    '& .MuiDataGrid-cell': {
+      borderBottom: `1px solid ${theme.palette.grey[200]}`,
+    },
+    '& .MuiDataGrid-columnHeaders': {
+      backgroundColor: theme.palette.grey[100],
+      borderBottom: `2px solid ${theme.palette.grey[200]}`,
+    },
+    '& .MuiDataGrid-footerContainer': {
+      borderTop: `2px solid ${theme.palette.grey[200]}`,
     },
 }));
 
@@ -150,14 +144,14 @@ const WalletInfoView = ({walletInfo}) => {
 
       try{
 
-        console.log(walletList);
 
-        let md_idx = walletList[ref_TargetWallet_Idx.current].idx;
         let wallet_address = walletList[ref_TargetWallet_Idx.current].address;
         
-        setSubProgressPoint(true)
+        setSubProgressPoint(true);
 
-        const response = await fetch('/api/user/walletInfo/detailWalletInfo', {
+
+
+        const response = await fetch('/api/user/walletInfo/detailTransaction', {
 
           method: 'POST',
           headers: {
@@ -166,18 +160,18 @@ const WalletInfoView = ({walletInfo}) => {
           
           },
           
-          body: JSON.stringify({md_idx, wallet_address}),
-        
+          body: JSON.stringify({ wallet_address: '0xC7969aEa781B76a3C64FE37b89Cd5bE03B52E788'}),
+
         });
-  
+
         const data = await response.json(); 
   
+
         if (response.ok) {
-  
-          console.log('response success');
 
-
+          console.log('data : ', data.result_historydata);
           setWalletHistroyList(data.result_historydata.map((data, idx) => ({ id: idx + 1, ...data })));
+
           
         } else {
   
@@ -252,17 +246,6 @@ const WalletInfoView = ({walletInfo}) => {
           align: 'left',
           
       },
-      
-      {
-          field: 'email',
-          headerName: '매칭이메일',
-          type: 'string',
-          flex: 1.8,              // flex 값 조정
-          disableColumnMenu: true,
-          editable: false,
-          headerAlign: 'center',
-          align: 'left',
-      },
       {
         field: 'detail',
         headerName: '거래내역',
@@ -279,8 +262,6 @@ const WalletInfoView = ({walletInfo}) => {
                     
 
                     ref_TargetWallet_Idx.current = parseInt(params.row.id) - 1;
-
-                    setDetailAddress(' : ' + walletList[ref_TargetWallet_Idx.current].address);
         
                     get_WalletDetailHistory();
         
@@ -299,36 +280,36 @@ const WalletInfoView = ({walletInfo}) => {
           field: 'id', 
           headerName: 'No', 
           type: 'string',
-          flex: 0.5,             // flex 값 조정
+          flex: 0.2,             // flex 값 조정
           disableColumnMenu: true, 
           headerAlign: 'center', // 헤더 정렬 추가
           align: 'center',       // 셀 정렬 추가
       },
       {
-          field: 'update_date',
+          field: 'timeStamp',
           headerName: '거래일자',
           type: 'string',
-          flex: 1.2,              // flex 값 조정
+          flex: 1.1,              // flex 값 조정
           disableColumnMenu: true,
           editable: false,
           headerAlign: 'center',
           align: 'left',
       },
       {
-        field: 'type_name',
-        headerName: '거래구분',
+        field: 'tr_type',
+        headerName: '구분',
         type: 'string',
-        flex: 1.5,              // flex 값 조정
+        flex: 0.3,              // flex 값 조정
         disableColumnMenu: true,
         editable: false,
         headerAlign: 'center',
         align: 'left',
       },
       {
-        field: 'amount',
+        field: 'value',
         headerName: '수량',
         type: 'string',
-        flex: 1,              // flex 값 조정
+        flex: 0.5,              // flex 값 조정
         disableColumnMenu: true,
         editable: false,
         headerAlign: 'center',
@@ -342,7 +323,7 @@ const WalletInfoView = ({walletInfo}) => {
         },
       },
       {
-        field: 'tx_id',
+        field: 'hash',
         headerName: 'TxID',
         type: 'string',
         flex: 3,              // flex 값 조정
@@ -355,259 +336,267 @@ const WalletInfoView = ({walletInfo}) => {
 
 
     return (
-
-        <div style={{width:"100%", height:"100%", backgroundColor:"white"}}>
-            <div style={{display:'flex', float:"left", width:"100%", background:"green", paddingTop:"10px", paddingBottom:"10px"}}>
-                <Typography fontWeight="medium" sx={{fontSize:16, fontWeight:"normal", color:"white", marginLeft:"10px"}} >
-                    지갑 보유수 : {walletCnt} 
-                </Typography>
-            </div>
-
-            <div style={{
-                display:'flex',
-                flexDirection:'column',
-                padding: '10px',
-                paddingTop: '0px',
-                width: '100%',
-                justifyContent:'center',
-                boxSizing: 'border-box',
-                gap: '10px',
-                height:'93%',
-                overflow:'hidden',
-
+        <div style={{
+            width: "100%",
+            height: "100%",
+            backgroundColor: "white",
+            display: 'flex',
+            flexDirection: 'column',
+            overflow: 'hidden'
+        }}>
+            <Box sx={{ 
+                backgroundColor: '#1976d2',
+                p: 2,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1,
+                flexShrink: 0
             }}>
+                <AccountBalanceWalletIcon sx={{ color: 'white', fontSize: 20 }} />
+                <Typography sx={{ 
+                    color: 'white',
+                    fontSize: '14px',
+                    fontWeight: 'bold'
+                }}>
+                    지갑 보유수: {walletCnt}
+                </Typography>
+            </Box>
 
-            {
-              progressPoint ? 
+            <Box sx={{
+                p: 2.5,
+                flex: '1 1 auto',
+                overflow: 'hidden',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 2,
+                backgroundColor: '#f8f9fa',
+            }}>
+                {progressPoint ? 
+                    <Box sx={{
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        height: "100%"
+                    }}>
+                        <Image 
+                            src={progressPath}
+                            alt=""
+                            width={50}
+                            height={50}
+                        />
+                        <Typography sx={{
+                            fontSize: 13,
+                            color: "black",
+                            mt: 2
+                        }}>
+                            보유 지갑정보를 조회중입니다.
+                        </Typography>
+                    </Box>
+                    :
+                    <Box sx={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: 2.5,
+                        overflow: 'auto',
+                        minHeight: 0
+                    }}>
+                        <Box sx={{
+                            backgroundColor: '#ffffff',
+                            p: 2,
+                            boxShadow: '0 2px 4px rgba(0,0,0,0.06)',
+                            border: '1px solid #eaeaea',
+                            borderRadius: '10px',
+                        }}>
+                            <StripedDataGrid 
+                                rows={walletList}
+                                columns={columns}
+                                autoHeight={false}
 
-                <div style={{display:"flex", flexDirection:"column", alignContent:"center", height:"100%", alignItems:"center", justifyContent:"center", overflow: 'hidden' }}>
+                                initialState={{
+                                    pagination: {
+                                        paginationModel: {
+                                        pageSize: 3,
+                                        },
+                                    },
+                                }}
+                                pageSizeOptions={[3]}
+                                rowHeight={42}
+                                columnHeaderHeight={45}
 
-                  <Image 
-                    src={progressPath}
-                    alt=""
-                    width={50}
-                    height={50}
-                  />
+                                sx={{
+                                    border: 'none',
+                                    '& .MuiDataGrid-columnHeaders': {
+                                        backgroundColor: '#f8f9fa',
+                                        borderBottom: '1px solid #eaeaea',
+                                    },
+                                    '& .MuiDataGrid-cell': {
+                                        borderColor: '#f4f6f6',
+                                        fontSize: 13,
+                                        color: '#666666'
+                                    },
+                                    '& .MuiDataGrid-row:hover': {
+                                        backgroundColor: alpha('#1976d2', 0.04)
+                                    },
+                                    '& .MuiDataGrid-row.Mui-selected': {
+                                        backgroundColor: alpha('#1976d2', 0.08),
+                                        '&:hover': {
+                                            backgroundColor: alpha('#1976d2', 0.12),
+                                        }
+                                    }
+                                }}
 
-                  <Typography fontWeight="medium" sx={{fontSize:13, fontWeight:"normal", color:"black", marginTop:"20px"}} >
-                      보유 지갑정보를 조회중입니다. 
-                  </Typography>
+                                localeText={{
+                                    toolbarExportCSV: "CVS 파일 저장",
+                                    toolbarColumns: "헤더설정",
+                                    toolbarFilters: "내부필터링",
+                                    toolbarExport: "다운로드"
+                                    
+                                }}
+                                slotProps={{
+                                    toolbar: {
+                                        printOptions: { disableToolbarButton: true },
+                                        csvOptions: { disableToolbarButton: true },
+                                        
+                                }}}
+                                getRowClassName={(params) =>
+                                    params.indexRelativeToCurrentPage % 2 === 1 ? 'even' : 'odd'
+                                }
+                                style={{
+                                    height: '200px',
+                                    marginTop: '10px'
+                                }}
 
-                </div>
-                
-               : 
-                <div style={{width:"100%", height:"100%", backgroundColor:"white"}}>
-                  
-                  
-                  <StripedDataGrid 
+                            />
+                        </Box>
 
-                    rows={walletList}
-                    columns={columns}
-                    autoHeight={true}
+                        <Box sx={{
+                            backgroundColor: '#ffffff',
+                            p: 2,
+                            boxShadow: '0 2px 4px rgba(0,0,0,0.06)',
+                            border: '1px solid #eaeaea',
+                            borderRadius: '10px',
+                            flex: 1,
+                            minHeight: 0
+                        }}>
+                            <Typography sx={{
+                                fontSize: 14,
+                                fontWeight: 'bold',
+                                color: '#444',
+                                mb: 2,
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'center'
+                            }}>
+                                <span>지갑 거래내역</span>
+                                {walletList[ref_TargetWallet_Idx.current].address && (
+                                    <Button 
+                                        variant="outlined" 
+                                        size="small"
+                                        onClick={() => {
+                                            const url = `https://test-explorer.plasticherokorea.com/search-results?q=${walletList[ref_TargetWallet_Idx.current].address}`;
+                                            window.open(url, '_blank');
+                                        }}
+                                        sx={{ 
+                                            fontSize: '12px',
+                                            ml: 2
+                                        }}
+                                    >
+                                        Explore 바로가기
+                                    </Button>
+                                )}
+                            </Typography>
 
-                    initialState={{
-                        pagination: {
-                            paginationModel: {
-                            pageSize: 3,
-                            },
-                        },
-                    }}
-                    pageSizeOptions={[3]}
-                    rowHeight={42}
-                    columnHeaderHeight={45}
+                            {!subProgressPoint ? 
+                                <StripedDataGrid 
+                                    rows={walletHistoryList}
+                                    columns={columns_history}
+                                    autoHeight={false}
 
-                    sx={{
+                                    initialState={{
+                                        pagination: {
+                                            paginationModel: {
+                                            pageSize: 10,
+                                            },
+                                        },
+                                    }}
+                                    pageSizeOptions={[10]}
+                                    rowHeight={42}
+                                    columnHeaderHeight={45}
 
-                        '.MuiDataGrid-columnSeparator': {
-                        display: 'none',
-                        },
-                        "& .MuiDataGrid-columnHeader": {
-                    //                      backgroundColor: "#f0f0f0",
-                            borderTopColor:"green",
-                            borderBlockColor:"green",
-                            color: "#000000",
-                            fontSize:13.5,
-                            fontFamily:'bold',
-                            fontWeight: "bold",
-                        },
-                        '& .super-app-theme--Open': {
-                            '&.Mui-selected': { backgroundColor: 'black'},
-                        },
-                        '& .super-app-theme--Filled': {
-                            '&.Mui-selected': { backgroundColor: 'black'},
-                        },
-                        '& .super-app-theme--PartiallyFilled': {
-                            '&.Mui-selected': { backgroundColor: 'black'},
-                        },
-                        '& .super-app-theme--Rejected': {
-                            '&.Mui-selected': { backgroundColor: 'black'},
-                        },
-                        "& .MuiDataGrid-cell": {
-                            border: 1,
-                            borderColor:"#f4f6f6",
-                            borderRight: 0,
-                            borderTop: 0,
-                            fontSize:13.5,
-                        },
-                        '& .MuiMenuItem-root': {
-                                fontSize: 1,
-                            },
-                            '& .MuiTypography-root': {
-                                color: 'dodgerblue',
-                                fontSize: 1,
-                            },
-                            '& .MuiDataGrid-filterForm': {
-                                bgcolor: 'lightblue',
-                            },
-                    }}
+                                    sx={{
+                                        border: 'none',
+                                        '& .MuiDataGrid-columnHeaders': {
+                                            backgroundColor: '#f8f9fa',
+                                            borderBottom: '1px solid #eaeaea',
+                                        },
+                                        '& .MuiDataGrid-cell': {
+                                            borderColor: '#f4f6f6',
+                                            fontSize: 13,
+                                            color: '#666666'
+                                        },
+                                        '& .MuiDataGrid-row:hover': {
+                                            backgroundColor: alpha('#1976d2', 0.04)
+                                        },
+                                        '& .MuiDataGrid-row.Mui-selected': {
+                                            backgroundColor: alpha('#1976d2', 0.08),
+                                            '&:hover': {
+                                                backgroundColor: alpha('#1976d2', 0.12),
+                                            }
+                                        }
+                                    }}
 
-                    localeText={{
-                        toolbarExportCSV: "CVS 파일 저장",
-                        toolbarColumns: "헤더설정",
-                        toolbarFilters: "내부필터링",
-                        toolbarExport: "다운로드"
-                        
-                    }}
-                    slotProps={{
-                        toolbar: {
-                            printOptions: { disableToolbarButton: true },
-                            csvOptions: { disableToolbarButton: true },
-                            
-                    }}}
-                    getRowClassName={(params) =>
-                        params.indexRelativeToCurrentPage % 2 === 1 ? 'even' : 'odd'
-                    }
-                    style={{
-
-                      marginTop:'10px',
-                      height:'230px'
-
-                    }}
-
-                  />
-
-                  <Typography fontWeight="medium" sx={{fontSize:14, fontWeight:"bold", color:"black", marginTop:"20px", marginLeft:"5px"}} >
-                      지갑 거래내역 {detailAddress}
-                  </Typography>
-
-                  <div>
-                    {!subProgressPoint ? 
-                      
-                      <StripedDataGrid 
-                        rows={walletHistoryList}
-                        columns={columns_history}
-                        autoHeight={true}
-
-                        initialState={{
-                            pagination: {
-                                paginationModel: {
-                                pageSize: 10,
-                                },
-                            },
-                        }}
-                        pageSizeOptions={[10]}
-                        rowHeight={42}
-                        columnHeaderHeight={45}
-
-                        sx={{
-
-                            '.MuiDataGrid-columnSeparator': {
-                            display: 'none',
-                            },
-                            "& .MuiDataGrid-columnHeader": {
-                        //                      backgroundColor: "#f0f0f0",
-                                borderTopColor:"green",
-                                borderBlockColor:"green",
-                                color: "#000000",
-                                fontSize:13.5,
-                                fontFamily:'bold',
-                                fontWeight: "bold",
-                            },
-                            '& .super-app-theme--Open': {
-                                '&.Mui-selected': { backgroundColor: 'black'},
-                            },
-                            '& .super-app-theme--Filled': {
-                                '&.Mui-selected': { backgroundColor: 'black'},
-                            },
-                            '& .super-app-theme--PartiallyFilled': {
-                                '&.Mui-selected': { backgroundColor: 'black'},
-                            },
-                            '& .super-app-theme--Rejected': {
-                                '&.Mui-selected': { backgroundColor: 'black'},
-                            },
-                            "& .MuiDataGrid-cell": {
-                                border: 1,
-                                borderColor:"#f4f6f6",
-                                borderRight: 0,
-                                borderTop: 0,
-                                fontSize:13.5,
-                            },
-                            '& .MuiMenuItem-root': {
-                                    fontSize: 1,
-                                },
-                                '& .MuiTypography-root': {
-                                    color: 'dodgerblue',
-                                    fontSize: 1,
-                                },
-                                '& .MuiDataGrid-filterForm': {
-                                    bgcolor: 'lightblue',
-                                },
-                        }}
-
-                        localeText={{
-                            toolbarExportCSV: "CVS 파일 저장",
-                            toolbarColumns: "헤더설정",
-                            toolbarFilters: "내부필터링",
-                            toolbarExport: "다운로드"
-                            
-                        }}
-                        slotProps={{
-                            toolbar: {
-                                printOptions: { disableToolbarButton: true },
-                                csvOptions: { disableToolbarButton: true },
-                                
-                        }}}
-                        getRowClassName={(params) =>
-                            params.indexRelativeToCurrentPage % 2 === 1 ? 'even' : 'odd'
-                        }
-                        style={{
-
-                          marginTop:'10px',
-
-                          height:'390px'
-
-                        }}
-                        onRowClick={handleDetailClickContentList}
-                      />
-                      
-                      :
-
-                      <div style={{display:"flex", flexDirection:"column", flex:1, alignContent:"center", height:"100%", alignItems:"center", justifyContent:"center",   marginTop:'100px' }}>
-
-                      <Image 
-                        src={progressPath}
-                        alt=""
-                        width={50}
-                        height={50}
-                      />
-
-                      <Typography fontWeight="medium" sx={{fontSize:13, fontWeight:"normal", color:"black", marginTop:"20px"}} >
-                          지갑 거래내역을 조회 중입니다. 
-                      </Typography>
-
-                      </div>
-                    }
-                  </div>
-
-                </div>
-            
-            }
-
-            </div>        
+                                    localeText={{
+                                        toolbarExportCSV: "CVS 파일 저장",
+                                        toolbarColumns: "헤더설정",
+                                        toolbarFilters: "내부필터링",
+                                        toolbarExport: "다운로드"
+                                        
+                                    }}
+                                    slotProps={{
+                                        toolbar: {
+                                            printOptions: { disableToolbarButton: true },
+                                            csvOptions: { disableToolbarButton: true },
+                                            
+                                    }}}
+                                    getRowClassName={(params) =>
+                                        params.indexRelativeToCurrentPage % 2 === 1 ? 'even' : 'odd'
+                                    }
+                                    style={{
+                                        height: '300px',
+                                        marginTop: '10px'
+                                    }}
+                                    onRowClick={handleDetailClickContentList}
+                                />
+                                :
+                                <Box sx={{
+                                    display: "flex",
+                                    flexDirection: "column",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    py: 4
+                                }}>
+                                    <Image 
+                                        src={progressPath}
+                                        alt=""
+                                        width={50}
+                                        height={50}
+                                    />
+                                    <Typography sx={{
+                                        fontSize: 13,
+                                        color: "black",
+                                        mt: 2
+                                    }}>
+                                        지갑 거래내역을 조회 중입니다.
+                                    </Typography>
+                                </Box>
+                            }
+                        </Box>
+                    </Box>
+                }
+            </Box>
         </div>
-    )
-
-
+    );
 };
 
 export default WalletInfoView;

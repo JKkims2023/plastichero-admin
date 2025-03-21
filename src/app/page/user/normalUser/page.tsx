@@ -44,6 +44,7 @@ import { get } from "http";
 import CircularProgress from '@mui/material/CircularProgress';
 import Backdrop from "@mui/material/Backdrop";
 
+
 type Anchor = 'bottom';
 
 const ODD_OPACITY = 0.2;
@@ -336,6 +337,7 @@ export default function Home() {
 
         try{
 
+
           setFilterContentTypeMethod(Number(event.target.value)); 
 
           switch(event.target.value){
@@ -398,19 +400,19 @@ export default function Home() {
       
           switch(filterContentTypeValueMethod){
             case 'id':{
-              filteredUserList = userList.filter((user) => user.mb_id.includes(filterInfo))
+              filteredUserList = userList.filter((user) => user?.mb_id?.includes(filterInfo))
                 .map((user, idx) => ({ ...user, id: idx + 1 }));
             }break;
             case 'name':{
-              filteredUserList = userList.filter((user) => user.mb_name.includes(filterInfo))
+              filteredUserList = userList.filter((user) => user?.mb_name?.includes(filterInfo))
                 .map((user, idx) => ({ ...user, id: idx + 1 }));
             }break;
             case 'email':{
-              filteredUserList = userList.filter((user) => user.mb_email.includes(filterInfo))
+              filteredUserList = userList.filter((user) => user?.mb_email?.includes(filterInfo))
                 .map((user, idx) => ({ ...user, id: idx + 1 }));
             }break;
             case 'wallet':{
-              filteredUserList = userList.filter((user) => user.mb_wallet.includes(filterInfo))
+              filteredUserList = userList.filter((user) => user?.mb_wallet && user.mb_wallet.includes(filterInfo))
                 .map((user, idx) => ({ ...user, id: idx + 1 }));
             }break;
             default:{

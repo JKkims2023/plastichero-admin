@@ -68,7 +68,7 @@ export async function POST(request) {
         C.user_key,  
         C.node_name,
         C.mining_amount,
-        W.address
+        W.new_address as address
 
       FROM g5_node_company_list as C inner join tbl_pth_wallet_info as W on C.wallet_idx = W.idx
       WHERE node_company_no = 4
@@ -112,9 +112,6 @@ export async function POST(request) {
     // 업데이트 성공 시 실제 노드 적용
     if(rows.affectedRows == 1){
 
-          
-      for(let i = 0; i < 4; i++){
-
         const sql_node = `
 
           INSERT INTO g5_node_list
@@ -131,20 +128,16 @@ export async function POST(request) {
           ${infoTarget}, 
           ${infoAddressIdx}, 
           ${infoOwnerIdx}, 
-          'KIOSK-${infoTarget}-${i}', 
-          150, 
+          'KIOSK-${infoTarget}', 
+          1080, 
           '1', 
           'N', 
           CURRENT_TIMESTAMP, 
           CURRENT_TIMESTAMP);
         `;
 
-        
-        console.log('sql roof before execute : ' + i);
-
         const [rows_node, fields_node] = await connection.execute(sql_node);
 
-        console.log('sql roof after execute : ' + i);
 
         if(rows_node.affectedRows != 1){
           
@@ -171,20 +164,15 @@ export async function POST(request) {
               ${infoTarget}, 
               ${company_wallet_idx}, 
               ${company_owner_idx}, 
-              'WITH-COMPANY-${infoTarget}-${i}', 
-              150, 
+              'WITH-COMPANY-${infoTarget}', 
+              540, 
               '0', 
               'N', 
               CURRENT_TIMESTAMP, 
               CURRENT_TIMESTAMP);
             `;
 
-            
-            console.log('sql comapny roof before execute : ' + i);
-
             const [rows_company_node, fields_company_node] = await connection.execute(sql_company_node);
-
-            console.log('sql comapany roof after execute : ' + i);
 
             if(rows_company_node.affectedRows != 1){
               
@@ -195,64 +183,22 @@ export async function POST(request) {
             
             }
 
-        }
-
-        /*
-        const sql_company_node = `
-
-            INSERT INTO g5_node_list
-            (kc_kiosk_id, 
-            wallet_idx, 
-            mb_no, 
-            node_name, 
-            miningAmount, 
-            node_type, 
-            stop_yn, 
-            buy_date, 
-            reg_date)
-            VALUES(
-            ${infoTarget}, 
-            ${company_wallet_idx}, 
-            0, 
-            'COMPANY-KIOSK-${infoTarget}-${i}', 
-            135, 
-            '0', 
-            'N', 
-            CURRENT_TIMESTAMP, 
-            CURRENT_TIMESTAMP);
-        `;
-
-        console.log('sql roof before execute : ' + i);
-
-        const [rows_company_node, fields_company_node] = await connection.execute(sql_company_node);
-
-        console.log('sql roof after execute : ' + i);
-
-        if(rows_company_node.affectedRows != 1){
-          
-          await connection.rollback(); // 롤백 처리
-          connection.release(); // 연결 반환
-
-          return NextResponse.json({ message: '회사 노드 정보 생성중 문제가 발생하였습니다.' }, { status: 401 });
         
+
         }
-        */
-      
-      }
 
+        await connection.commit(); // 커밋 처리
 
-      await connection.commit(); // 커밋 처리
-
-      const response = NextResponse.json({ 
-      
-        result: 'success',
-        result_data : [],
-      
-      });
-  
-      connection.release(); // 연결 반환
-      
-      return response;
+        const response = NextResponse.json({ 
+        
+          result: 'success',
+          result_data : [],
+        
+        });
+    
+        connection.release(); // 연결 반환
+        
+        return response;
 
     }else{
 

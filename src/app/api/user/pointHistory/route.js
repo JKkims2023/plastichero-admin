@@ -12,69 +12,78 @@ export async function POST(request) {
 
     const connection = await getConnection();
 
-    let date_filter = 'PARTITION(p20250216,p20250217)';
-
-    let sql_filter = '';
-
-    if(filterInfo == '0'){
-
-    }else{
-
-      switch(filterInfo){
-
-        case '1':
-          sql_filter = 'and point_type = 1';
-          break;
-        case '2':
-          sql_filter = 'and point_type = 2';
-          break;
-        case '3':
-          sql_filter = 'and point_type = 3';
-          break;
-        case '4':
-          sql_filter = 'and point_type = 4';
-          break;
-        case '5':
-          sql_filter = 'and point_type = 5';
-          break;
-        case '6':
-          sql_filter = 'and point_type = 6';
-          break;
-        case '7':
-          sql_filter = 'and point_type = 7';
-          break;
-        case '8':
-          sql_filter = 'and point_type = 8';
-          break;
-        default:
-          break;
-      } 
-    }
-
     const sql = `
-    
+             
       SELECT 
+
+      G.od_id, 
+      G.od_mbid, 
+      G.od_price, 
+      G.od_goods_name, 
+      G.od_goods_code, 
+      G.od_mms_msg, 
+      G.od_mms_title, 
+      G.od_callback, 
+      G.od_phone, 
+      G.od_tr_id, 
+      G.od_user_id, 
+      G.od_orderNo, 
+      G.od_response_code, 
+      G.od_response_message, 
+      G.od_status, 
+      DATE_FORMAT(G.od_regdate , '%Y-%m-%d %H:%i:%S') as od_regdate, 
+      G.od_resend, 
+      G.od_goodsimg, 
+      G.delete_flag
+
+      FROM g5_giftshow_order as G 
+      WHERE G.delete_flag = 'N'
+      and G.od_mbid = '${mb_id}' order by G.od_regdate desc;
+
+      `;
+ 
+    const [rows, fields] = await connection.execute(sql);
+
+    const sql_summary = `
       
-        po_id, 
-        po_content, 
-        po_point, 
-        po_use_point,
-        DATE_FORMAT(po_datetime , '%Y-%m-%d %H:%i:%S') as po_datetime,  
-        if(po_reward_type = '0', 'Point', 'PTH') as po_reward_type,
-        if(po_reward_type = '0', po_point, po_pth) as point_amount
-        
-      from g5_point_backup_20250220 ${date_filter} where mb_id = '${mb_id}' ${sql_filter} order by po_datetime desc;
+    SELECT 
+
+        (select count(od_id) from g5_giftshow_order
+        WHERE delete_flag = 'N' and (od_status = '02' or od_status = '01' or od_status = '07' or od_status = '08' or od_status = '11')
+        and od_mbid = '${mb_id}') as total_count,
+
+        (select COALESCE(sum(od_price), 0) from g5_giftshow_order
+        WHERE delete_flag = 'N' and (od_status = '02' or od_status = '01' or od_status = '07' or od_status = '08' or od_status = '11')
+        and od_mbid = '${mb_id}') as total_price,
+
+        (select count(od_id) from g5_giftshow_order
+        WHERE delete_flag = 'N' and (od_status = '02' or od_status = '01' or od_status = '08' or od_status = '11')
+        and od_mbid = '${mb_id}') as used_count,
+
+        (select COALESCE(sum(od_price), 0) from g5_giftshow_order
+        WHERE delete_flag = 'N' and (od_status = '02' or od_status = '01' or od_status = '08' or od_status = '11')
+        and od_mbid = '${mb_id}') as used_price,
+
+        (select count(od_id) from g5_giftshow_order
+        WHERE delete_flag = 'N' and od_status = '07'
+        and od_mbid = '${mb_id}') as cancel_count,
+
+        (select COALESCE(sum(od_price), 0) from g5_giftshow_order
+        WHERE delete_flag = 'N' and od_status = '07'
+        and od_mbid = '${mb_id}') as cancel_price
+
 
     `;
 
-    console.log(sql);
-    
-    const [rows, fields] = await connection.execute(sql);
+    const [summary, fields_summary] = await connection.execute(sql_summary);
+
+    console.log(summary);
 
     const response = NextResponse.json({ 
         
         result: 'success',
         result_data : rows,
+        result_summary : summary[0]
 
       });
 
