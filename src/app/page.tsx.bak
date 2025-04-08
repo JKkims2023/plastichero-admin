@@ -62,13 +62,6 @@ export default function Home() {
 
   }, []);
 
-  // selectedDate가 변경될 때마다 데이터를 갱신
-  React.useEffect(() => {
-    if (selectedDate) {
-      getIntroInfo();
-    }
-  }, [selectedDate]);
-
   React.useEffect(() => {
     const totalValue = circleValues.reduce((acc, value) => acc + value.node_count, 0);
     setTotalValue(totalValue);
@@ -158,9 +151,7 @@ export default function Home() {
             <div style={{ marginLeft: 'auto' }}>
               <DatePicker 
                 value={selectedDate} 
-                onChange={(newValue) => {
-                  setSelectedDate(newValue);
-                }} 
+                onChange={(newValue) => setSelectedDate(newValue)} 
                 format="YYYY/MM/DD" 
                 maxDate={dayjs().subtract(1, 'day')}
                 sx={{ 

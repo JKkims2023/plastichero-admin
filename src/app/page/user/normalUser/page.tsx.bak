@@ -44,79 +44,6 @@ import { get } from "http";
 import CircularProgress from '@mui/material/CircularProgress';
 import Backdrop from "@mui/material/Backdrop";
 
-// 디바운스 훅 추가
-function useDebounce(value, delay) {
-  const [debouncedValue, setDebouncedValue] = React.useState(value);
-  
-  React.useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedValue(value);
-    }, delay);
-    
-    return () => {
-      clearTimeout(handler);
-    };
-  }, [value, delay]);
-  
-  return debouncedValue;
-}
-
-// 필터링 유틸리티 함수
-const filterUsers = (users, { userType, searchField, keyword }) => {
-  // 빈 배열 체크 - 방어적 프로그래밍
-  if (!users || users.length === 0) return [];
-  
-  let filtered = [...users];
-  
-  // 1. 회원 유형 필터링
-  if (userType !== 10) { // 10이 아니면 필터링 적용
-    filtered = filtered.filter(user => {
-      switch(userType) {
-        case 20: // 정상 이용자
-          return user.block_yn === 'N' && user.lock_yn === 'N';
-        case 30: // 블랙 이용자
-          return user.block_yn === 'Y';
-        case 40: // Lock 적용 이용자
-          return user.lock_yn === 'Y';
-        default:
-          return true;
-      }
-    });
-  }
-  
-  // 2. 키워드 필터링 (대소문자 구분 없이)
-  if (keyword && keyword.trim().length > 0) {
-    const normalizedKeyword = keyword.trim().toLowerCase();
-    
-    if (searchField === 'all') {
-      filtered = filtered.filter(user => 
-        (user.mb_id && user.mb_id.toLowerCase().includes(normalizedKeyword)) ||
-        (user.mb_name && user.mb_name.toLowerCase().includes(normalizedKeyword)) ||
-        (user.mb_email && user.mb_email.toLowerCase().includes(normalizedKeyword)) ||
-        (user.mb_wallet && user.mb_wallet.toLowerCase().includes(normalizedKeyword))
-      );
-    } else if (searchField === 'id') {
-      filtered = filtered.filter(user => 
-        user.mb_id && user.mb_id.toLowerCase().includes(normalizedKeyword)
-      );
-    } else if (searchField === 'name') {
-      filtered = filtered.filter(user => 
-        user.mb_name && user.mb_name.toLowerCase().includes(normalizedKeyword)
-      );
-    } else if (searchField === 'email') {
-      filtered = filtered.filter(user => 
-        user.mb_email && user.mb_email.toLowerCase().includes(normalizedKeyword)
-      );
-    } else if (searchField === 'wallet') {
-      filtered = filtered.filter(user => 
-        user.mb_wallet && user.mb_wallet.toLowerCase().includes(normalizedKeyword)
-      );
-    }
-  }
-  
-  // ID 재할당
-  return filtered.map((user, idx) => ({ ...user, id: idx + 1 }));
-};
 
 type Anchor = 'bottom';
 
@@ -179,15 +106,10 @@ export default function Home() {
     const [filterContentTypeValueMethod, setFilterContentTypeValueMethod] = React.useState('all');
     const [stateBottom, setStateBottom] = React.useState(false);
     const [isLoading, setIsLoading] = React.useState(false);
-    const [isFiltering, setIsFiltering] = React.useState(false);
     const [totalUserCount, setTotalUserCount] = React.useState(0);
     const [leaveUserCount, setLeaveUserCount] = React.useState(0);
     const [blackUserCount, setBlackUserCount] = React.useState(0);
     const [lockUserCount, setLockUserCount] = React.useState(0);
-    const [filteredCount, setFilteredCount] = React.useState(0);
-
-    // 디바운스된 검색어 생성
-    const debouncedFilterInfo = useDebounce(filterInfo, 300);
 
     const page_info = 'Home > 회원관리 > 일반 회원리스트';
 
@@ -327,34 +249,13 @@ export default function Home() {
 
     },[]);
 
-    // 필터링 적용 함수
-    const handleFilterApply = () => {
-      try {
-        setIsFiltering(true);
-        
-        const filteredData = filterUsers(userList, {
-          userType: filterUserTypeMethod,
-          searchField: filterContentTypeValueMethod,
-          keyword: debouncedFilterInfo
-        });
-        
-        setFilterUserList(filteredData);
-        setFilteredCount(filteredData.length);
-      } catch (error) {
-        console.error('필터링 중 오류 발생:', error);
-        // 오류 시 원본 데이터 사용
-        setFilterUserList(userList);
-      } finally {
-        setIsFiltering(false);
-      }
-    };
+    React.useEffect(()=>{
 
-    // 디바운스된 검색어가 변경될 때마다 필터링 적용
-    React.useEffect(() => {
-      if (userList.length > 0) {
-        handleFilterApply();
-      }
-    }, [debouncedFilterInfo, filterUserTypeMethod, filterContentTypeValueMethod]);
+    },[userList]);
+
+    React.useEffect(()=>{
+
+    },[filterUserList]);
 
     const get_UserInfo = async() => {
 
@@ -386,10 +287,9 @@ export default function Home() {
           setBlackUserCount(data.black_count);
           setLockUserCount(data.result_data.filter((data) => data.lock_yn === 'Y').length);
 
-          const mappedData = data.result_data.map((data, idx) => ({ id: idx + 1, ...data }));
-          setUserList(mappedData);
-          setFilterUserList(mappedData);
-          setFilteredCount(mappedData.length);
+          setUserList(data.result_data.map((data, idx) => ({ id: idx + 1, ...data })));
+
+          setFilterUserList(data.result_data.map((data, idx) => ({ id: idx + 1, ...data })));
           
         } else {
   
@@ -490,22 +390,87 @@ export default function Home() {
 
     };
 
-    // 검색 버튼 클릭 핸들러 단순화
     const handleClickSearch = () => {
-    //  handleFilterApply();
 
-      handleResetFilters();
+      try {
 
-      get_UserInfo();
+        let filteredUserList = [];
+      
+        if(filterInfo.length > 0){
+      
+          switch(filterContentTypeValueMethod){
+            case 'id':{
+              filteredUserList = userList.filter((user) => user?.mb_id?.includes(filterInfo))
+                .map((user, idx) => ({ ...user, id: idx + 1 }));
+            }break;
+            case 'name':{
+              filteredUserList = userList.filter((user) => user?.mb_name?.includes(filterInfo))
+                .map((user, idx) => ({ ...user, id: idx + 1 }));
+            }break;
+            case 'email':{
+              filteredUserList = userList.filter((user) => user?.mb_email?.includes(filterInfo))
+                .map((user, idx) => ({ ...user, id: idx + 1 }));
+            }break;
+            case 'wallet':{
+              filteredUserList = userList.filter((user) => user?.mb_wallet && user.mb_wallet.includes(filterInfo))
+                .map((user, idx) => ({ ...user, id: idx + 1 }));
+            }break;
+            default:{
+              filteredUserList = userList.map((user, idx) => ({ ...user, id: idx + 1 }));
+            }break;
+          
+          }
+
+          switch(filterUserTypeMethod){
+            case 10:{
+
+            }break;
+            case 20:{
+              filteredUserList = filteredUserList.filter((user) => user.block_yn === 'N' && user.lock_yn === 'N').map((data, idx) => ({ ...data, id: idx + 1 }));;
+            }break;
+            case 30:{
+              filteredUserList = filteredUserList.filter((user) => user.block_yn === 'Y').map((data, idx) => ({ ...data, id: idx + 1 }));
+            }break;
+            case 40:{
+              filteredUserList = filteredUserList.filter((user) => user.lock_yn === 'Y').map((data, idx) => ({ ...data, id: idx + 1 }));
+            }break;
+            default:{
+
+            }break;
+          }
+
+          setFilterUserList(filteredUserList);
+
+
+        }else{
+          
+
+          switch(filterUserTypeMethod){
+            case 10:{
+              filteredUserList = userList.map((user, idx) => ({ ...user, id: idx + 1 }));
+            }break;
+            case 20:{
+              filteredUserList = userList.filter((user) => user.block_yn === 'N' && user.lock_yn === 'N').map((data, idx) => ({ ...data, id: idx + 1 }));;
+            }break;
+            case 30:{
+              filteredUserList = userList.filter((user) => user.block_yn === 'Y').map((data, idx) => ({ ...data, id: idx + 1 }));
+            }break;
+            case 40:{
+              filteredUserList = userList.filter((user) => user.lock_yn === 'Y').map((data, idx) => ({ ...data, id: idx + 1 }));
+            }break;
+            default:{
+              filteredUserList = userList.map((user, idx) => ({ ...user, id: idx + 1 }));
+            }break;
+          }
+
+          setFilterUserList(filteredUserList);  
+
+        } 
+
+      }catch(error){
+        console.log(error);
+      }
     
-    };
-
-    // 필터 초기화 함수
-    const handleResetFilters = () => {
-      setFilterInfo('');
-      setFilterUserTypeMethod(10);
-      setFilterContentTypeMethod(10);
-      setFilterContentTypeValueMethod('all');
     };
 
     // Custom Pagination Component
@@ -779,42 +744,6 @@ export default function Home() {
 
       </div>
 
-      {/* 필터링 결과 상태 표시 */}
-      {filterUserList.length !== userList.length && (
-        <Box sx={{ 
-          mt: 1, 
-          display: 'flex', 
-          alignItems: 'center',
-          justifyContent: 'space-between'
-        }}>
-          <Typography 
-            variant="body2" 
-            sx={{ 
-              color: '#64748b', 
-              fontSize: '14px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 1
-            }}
-          >
-            <span style={{ fontWeight: 'bold' }}>검색 결과:</span> 
-            전체 {userList.length}명 중 {filterUserList.length}명 표시됨
-          </Typography>
-          
-          <Button 
-            size="small" 
-            variant="outlined" 
-            onClick={handleResetFilters}
-            sx={{ 
-              fontSize: '12px',
-              visibility: (filterInfo !== '' || filterUserTypeMethod !== 10 || filterContentTypeMethod !== 10) ? 'visible' : 'hidden'
-            }}
-          >
-            필터 초기화
-          </Button>
-        </Box>
-      )}
-
       <div ref={ref_Div} style={{flex:1, height:'100%', marginTop:'0px', paddingLeft:"0px",}}>
 
         <StripedDataGrid 
@@ -982,8 +911,9 @@ export default function Home() {
       
       </React.Fragment>
 
-      {/* 로딩 및 필터링 상태 표시 개선 */}
+      {/* 로딩 Backdrop 추가 */}
       <Backdrop
+
         sx={{ 
           color: '#fff', 
           zIndex: (theme) => theme.zIndex.drawer + 1,
@@ -991,12 +921,11 @@ export default function Home() {
           flexDirection: 'column',
           gap: 2
         }}
-        open={isLoading || isFiltering}
+        open={isLoading}
       >
-        <CircularProgress color="inherit" size={60} />
-        <Typography variant="h6" color="inherit">
-          {isFiltering ? '검색 결과를 필터링하는 중...' : '사용자 정보를 불러오는 중...'}
-        </Typography>
+        <CircularProgress color="inherit" />
+        <Typography variant="h6" color="inherit">일반 사용자 정보를 불러오는 중입니다</Typography>
+    
       </Backdrop>
 
     </div>
