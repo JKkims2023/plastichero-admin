@@ -17,12 +17,6 @@
 /.next/
 /out/
 
-public/uploads
-public/uploads/images
-public/uploads/videos
-public/uploads/images/*
-public/uploads/videos/* 
-
 
 
 # production

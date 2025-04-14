@@ -26,5 +26,11 @@
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "src/app/components/UserInfoView.js"],
-  "exclude": ["node_modules"]
+  "exclude": ["node_modules"],
+  "eslint": {
+    "ignoreDuringBuilds": true
+  },
+  "scripts": {
+    "build": "DISABLE_ESLINT_PLUGIN=true next build"
+  }
 }

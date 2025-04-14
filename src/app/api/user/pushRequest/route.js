@@ -43,6 +43,7 @@ export async function POST(request) {
 
 //    const [rows, fields] = await connection.execute(sql);
 
+
     const result = await axios.post(process.env.NEXT_PUSH_URL + 'api/push/send', {
       token: token,
       title: title,
@@ -50,6 +51,25 @@ export async function POST(request) {
       data: data,
 
     });
+
+
+
+/*
+const result = await axios.post(process.env.NEXT_PUSH_URL + 'api/push/result-send', {
+  token: token,
+  amount: 59,
+  result_key: 'test_key'
+
+});
+*/
+/*
+const result = await axios.post('https://port-0-plastichero-batch-m90know96390d9a9.sel4.cloudtype.app/' + 'api/push/result-send', {
+  token: token,
+  amount: 59,
+  result_key: 'test_key'
+
+});
+*/
 
 
     if(result.data.result == 'success'){

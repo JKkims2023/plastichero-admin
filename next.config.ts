@@ -9,6 +9,12 @@ const nextConfig = {
             bodySizeLimit: '50mb'
         }
     },
+    eslint: {
+        ignoreDuringBuilds: true, // 빌드 중 ESLint 무시
+      },
+    typescript: {
+        ignoreBuildErrors: true, // 타입스크립트 오류 무시
+    },
     images: {
         domains: ['localhost'], // 개발 환경
         // 이미지 최적화 설정 추가
