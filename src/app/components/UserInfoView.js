@@ -118,8 +118,8 @@ const UserInfoView = ({userInfo}) => {
       
                     token: userInfo.push_key,
                     title: 'KYC 인증 요청',
-                    body: 'KYC 인증 요청 테스트입니다.',
-                    data: '1234567890',
+                    body: '내페이지 메뉴를 클릭하여, KYC 인증 절차를 수행해주세요',
+                    data: 'PlasticHero',
       
                 }),
               

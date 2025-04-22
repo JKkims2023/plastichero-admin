@@ -94,6 +94,7 @@ export default function Sidebar() {
                 { href: '/page/mining/monitoring', label: '• 모니터링 / 재처리', show_yn: 'show', checked: true },
             ],
         },
+        /*
         {
             label: '포인트관리',
             show_yn: 'show',
@@ -104,18 +105,20 @@ export default function Sidebar() {
                 { href: '/page/point/pointSwapInfo', label: '• 포인트 전환내역', show_yn: 'show', checked: true },
             ],
         },
+        */
         {
             label: '운영관리',
             show_yn: 'show',
             checked: true,
             children: [
                 { href: '/page/manage/noticeInfo', label: '• 공지 관리', show_yn: 'show', checked: true },
-                { href: '/page/manage/mailInfo', label: '• 메일 인증내역', show_yn: 'show', checked: true },
-                { href: '/page/manage/mailInfo', label: '• 메일 발송관리', show_yn: 'show', checked: true },
-                { href: '/page/manage/smsInfo', label: '• SMS 인증내역', show_yn: 'show', checked: true },
+//                { href: '/page/manage/mailInfo', label: '• 메일 인증내역', show_yn: 'show', checked: true },
+//                { href: '/page/manage/mailInfo', label: '• 메일 발송관리', show_yn: 'show', checked: true },
+//                { href: '/page/manage/smsInfo', label: '• SMS 인증내역', show_yn: 'show', checked: true },
                 { href: '/page/manage/lockInfo', label: '• Lock 설정', show_yn: 'show', checked: true },
-                { href: '/page/user/blackList', label: '• 블랙리스트 관리', show_yn: 'show', checked: true },
-                { href: '/page/manage/appInfo', label: '• 앱 관리', show_yn: 'show', checked: true },
+//                { href: '/page/user/blackList', label: '• 블랙리스트 관리', show_yn: 'show', checked: true },
+                { href: '/page/manage/supportInfo', label: '• 고객지원 관리', show_yn: 'show', checked: true },
+//                { href: '/page/manage/appInfo', label: '• 앱 관리', show_yn: 'show', checked: true },
             ],
         },
         {
@@ -124,7 +127,7 @@ export default function Sidebar() {
             checked: true,
             children: [
                 { href: '/page/kiosk/ownerInfo', label: '• 소유자 관리', show_yn: 'show', checked: true },
-                { href: '/page/kiosk/petDepositInfo', label: '• 플라스틱 수거현황', show_yn: 'show', checked: true },
+            //    { href: '/page/kiosk/petDepositInfo', label: '• 플라스틱 수거현황', show_yn: 'show', checked: true },
             ],
         },
         {
