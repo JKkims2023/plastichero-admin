@@ -135,6 +135,9 @@ export default function Home() {
     const [selectedOwnerInfo, setSelectedOwnerInfo] = React.useState(null);
     const [selectedWalletIdx, setSelectedWalletIdx] = React.useState(-1);
 
+    const [filterLoading, setFilterLoading] = useState(false);
+    const [searchLoading, setSearchLoading] = useState(false);
+
     const page_info = 'Home > 키오스크 관리 > 소유자 관리';
 
     // @ts-ignore
@@ -318,7 +321,7 @@ export default function Home() {
             if (response.ok) {
                 setKioskList(data.result_data.map((data, idx) => ({ id: idx + 1, ...data })));
                 setFilterKioskList(data.result_data.map((data, idx) => ({ id: idx + 1, ...data })));
-                setInfoOwnerList(data.result_node_member_data.map((data, idx) => ({ id: idx + 1, ...data })));
+         //       setInfoOwnerList(data.result_node_member_data.map((data, idx) => ({ id: idx + 1, ...data })));
             } else {
                 alert(data.message);
             }
@@ -358,11 +361,12 @@ export default function Home() {
         }
     };
 
-    // 소유자 정보 필터링 함수
+    // 지갑 정보 조회 함수
     const get_FilterTargetInfo = async(keyword) => {
         try {
 
-          console.log('keyword : ' + keyword);
+          setInfoOwnerList([]);
+
             const response = await fetch('/api/kiosk/filterList', {
                 method: 'POST',
                 headers: {
@@ -374,17 +378,17 @@ export default function Home() {
             const data = await response.json();
 
             if (response.ok) {
-
-              setFilterInfoOwnerList(data.result_node_member_data.map((data, idx) => ({ id: idx + 1, ...data })));
-
+              
+              setInfoOwnerList(data.result_node_member_data);
+                
             } else {
 
-              setFilterInfoOwnerList([]);
-
+              setInfoOwnerList([]);
             }
+
         } catch (error) {
             console.log(error);
-            alert('지갑 정보 조회 중 오류가 발생했습니다.');
+            alert('소유자 대상정보 조회 중 오류가 발생했습니다.');
         }
     };
 
@@ -447,115 +451,142 @@ export default function Home() {
         }
     };
 
-    // 검색어 삭제 핸들러 - 디바운싱 적용
+    // 필터 실행을 비동기 함수로 분리
+    const runFilter = useCallback(async (text: string) => {
+        try {
+            setFilterLoading(true);
+            
+            // 비동기 처리로 UI 블록 방지
+            return new Promise<void>((resolve) => {
+                // 타임아웃을 사용하여 다음 이벤트 루프에서 실행
+                setTimeout(() => {
+                    const filteredItems = infoOwnerList.filter((item) => 
+                        item.mb_email?.toLowerCase().includes(text.toLowerCase())
+                    );
+                    setFilterInfoOwnerList(filteredItems);
+                    setFilterLoading(false);
+                    resolve();
+                }, 0);
+            });
+        } catch (error) {
+            console.error('Filter error:', error);
+            setFilterLoading(false);
+        }
+    }, [infoOwnerList]);
+
+    // 검색 실행을 비동기 함수로 분리
+    const runSearch = useCallback(async () => {
+        try {
+            setSearchLoading(true);
+            
+            // 비동기 처리로 UI 블록 방지
+            return new Promise<void>((resolve) => {
+                setTimeout(() => {
+                    let filteredList = [...kioskList];
+                    
+                    if(filterSellStatusValueMethod === 'all') {
+                        if(filterInfo.length > 0) {
+                            switch(filterContentTypeValueMethod) {
+                                case 'id': {
+                                    filteredList = filteredList.filter((user) => 
+                                        user.kc_kiosk_id?.includes(filterInfo))
+                                        .map((user, idx) => ({ ...user, id: idx + 1 }));
+                                } break;
+                                case 'location': {
+                                    filteredList = filteredList.filter((user) => 
+                                        user.kc_addr?.includes(filterInfo))
+                                        .map((user, idx) => ({ ...user, id: idx + 1 }));
+                                } break;
+                                case 'owner': {
+                                    filteredList = filteredList.filter((user) => 
+                                        user.owner_id?.includes(filterInfo))
+                                        .map((user, idx) => ({ ...user, id: idx + 1 }));
+                                } break;
+                                case 'name': {
+                                    filteredList = filteredList.filter((user) => 
+                                        user.mb_name?.includes(filterInfo))
+                                        .map((user, idx) => ({ ...user, id: idx + 1 }));
+                                } break;
+                                default: {
+                                    filteredList = filteredList.map((user, idx) => ({ ...user, id: idx + 1 }));
+                                } break;
+                            }
+                        }
+                    } else {
+                        // sell_status 비교 전에 공백 제거
+                        const normalizedStatus = filterSellStatusValueMethod.trim();
+                        
+                        if(filterInfo.length > 0) {
+                            switch(filterContentTypeValueMethod) {
+                                case 'id': {
+                                    filteredList = filteredList.filter((user) => 
+                                        user.kc_kiosk_id?.includes(filterInfo) && 
+                                        user.sell_status?.toString() == normalizedStatus.toString())
+                                        .map((user, idx) => ({ ...user, id: idx + 1 }));
+                                } break;
+                                case 'location': {
+                                    filteredList = filteredList.filter((user) => 
+                                        user.kc_addr?.includes(filterInfo) && 
+                                        user.sell_status?.toString() == normalizedStatus.toString())
+                                        .map((user, idx) => ({ ...user, id: idx + 1 }));
+                                } break;
+                                case 'owner': {
+                                    filteredList = filteredList.filter((user) => 
+                                        user.owner_id?.includes(filterInfo) && 
+                                        user.sell_status?.toString() == normalizedStatus.toString())
+                                        .map((user, idx) => ({ ...user, id: idx + 1 }));
+                                } break;
+                                case 'name': {
+                                    filteredList = filteredList.filter((user) => 
+                                        user.mb_name?.includes(filterInfo) && 
+                                        user.sell_status?.toString() == normalizedStatus.toString())
+                                        .map((user, idx) => ({ ...user, id: idx + 1 }));
+                                } break;
+                                default: {
+                                    filteredList = filteredList.map((user, idx) => ({ ...user, id: idx + 1 }));
+                                } break;
+                            }
+                        } else {
+                            filteredList = filteredList.filter((user) => 
+                                user.sell_status?.toString() == normalizedStatus.toString())
+                                .map((user, idx) => ({ ...user, id: idx + 1 }));
+                        }
+                    }
+                    
+                    setFilterKioskList(filteredList);
+                    setSearchLoading(false);
+                    resolve();
+                }, 0);
+            });
+        } catch (error) {
+            console.error('Search error:', error);
+            setSearchLoading(false);
+        }
+    }, [kioskList, filterSellStatusValueMethod, filterContentTypeValueMethod, filterInfo]);
+
+    // 검색어 삭제 핸들러 - 개선된 버전
     const handleClickDeleteKeyword = useCallback(() => {
         setFilterInfo('');
-        // 삭제 후 바로 검색 실행
-        debounce(() => {
-            let filteredList = [...kioskList];
-            // 빈 필터로 검색 실행
-            if(filterSellStatusValueMethod !== 'all') {
-                const normalizedStatus = filterSellStatusValueMethod.trim();
-                filteredList = filteredList.filter((user) => 
-                    user.sell_status?.toString() == normalizedStatus.toString())
-                    .map((user, idx) => ({ ...user, id: idx + 1 }));
-            }
-            setFilterKioskList(filteredList);
-        }, 150);
-    }, [kioskList, filterSellStatusValueMethod, debounce]);
+        // 검색 실행
+        debounce(async () => {
+            await runSearch();
+        }, 100);
+    }, [runSearch, debounce]);
 
     // 필터 정보 변경 핸들러 - 직접 상태 업데이트
     const handleFilterInfoChange = useCallback((value: string) => {
         setFilterInfo(value);
     }, []);
 
-    // 검색 버튼 클릭 핸들러 - 디바운싱 적용
+    // 검색 버튼 클릭 핸들러 - 개선된 버전
     const handleClickSearch = useCallback(() => {
-        try {
-            debounce(() => {
-                let filteredList = [...kioskList];
+        debounce(async () => {
+            await runSearch();
+        }, 100);
+    }, [runSearch, debounce]);
 
-                if(filterSellStatusValueMethod === 'all') {
-                    if(filterInfo.length > 0) {
-                        switch(filterContentTypeValueMethod) {
-                            case 'id': {
-                                filteredList = filteredList.filter((user) => 
-                                    user.kc_kiosk_id?.includes(filterInfo))
-                                    .map((user, idx) => ({ ...user, id: idx + 1 }));
-                            } break;
-                            case 'location': {
-                                filteredList = filteredList.filter((user) => 
-                                    user.kc_addr?.includes(filterInfo))
-                                    .map((user, idx) => ({ ...user, id: idx + 1 }));
-                            } break;
-                            case 'owner': {
-                                filteredList = filteredList.filter((user) => 
-                                    user.owner_id?.includes(filterInfo))
-                                    .map((user, idx) => ({ ...user, id: idx + 1 }));
-                            } break;
-                            case 'name': {
-                                filteredList = filteredList.filter((user) => 
-                                    user.mb_name?.includes(filterInfo))
-                                    .map((user, idx) => ({ ...user, id: idx + 1 }));
-                            } break;
-                            default: {
-                                filteredList = filteredList.map((user, idx) => ({ ...user, id: idx + 1 }));
-                            } break;
-                        }
-                    }
-                } else {
-                    // sell_status 비교 전에 공백 제거
-                    const normalizedStatus = filterSellStatusValueMethod.trim();
-
-                    console.log('normalizedStatus : ' + normalizedStatus);
-                    
-                    if(filterInfo.length > 0) {
-                        switch(filterContentTypeValueMethod) {
-                            case 'id': {
-                                filteredList = filteredList.filter((user) => 
-                                    user.kc_kiosk_id?.includes(filterInfo) && 
-                                    user.sell_status?.toString() == normalizedStatus.toString())
-                                    .map((user, idx) => ({ ...user, id: idx + 1 }));
-                            } break;
-                            case 'location': {
-                                filteredList = filteredList.filter((user) => 
-                                    user.kc_addr?.includes(filterInfo) && 
-                                    user.sell_status?.toString() == normalizedStatus.toString())
-                                    .map((user, idx) => ({ ...user, id: idx + 1 }));
-                            } break;
-                            case 'owner': {
-                                filteredList = filteredList.filter((user) => 
-                                    user.owner_id?.includes(filterInfo) && 
-                                    user.sell_status?.toString() == normalizedStatus.toString())
-                                    .map((user, idx) => ({ ...user, id: idx + 1 }));
-                            } break;
-                            case 'name': {
-                                filteredList = filteredList.filter((user) => 
-                                    user.mb_name?.includes(filterInfo) && 
-                                    user.sell_status?.toString() == normalizedStatus.toString())
-                                    .map((user, idx) => ({ ...user, id: idx + 1 }));
-                            } break;
-                            default: {
-                                filteredList = filteredList.map((user, idx) => ({ ...user, id: idx + 1 }));
-                            } break;
-                        }
-                    } else {
-                        filteredList = filteredList.filter((user) => 
-                            user.sell_status?.toString() == normalizedStatus.toString())
-                            .map((user, idx) => ({ ...user, id: idx + 1 }));
-                    }
-                }
-
-                setFilterKioskList(filteredList);
-            }, 150); // 검색은 더 짧은 디바운스 시간 적용
-        } catch(error) {
-            console.log(error);
-        }
-    }, [kioskList, filterSellStatusValueMethod, filterContentTypeValueMethod, filterInfo, debounce]);
-
-    // 소유자 ID 필터링 함수 - 디바운싱 적용
+    // 소유자 ID 필터링 함수 - 개선된 버전
     const debouncedFilter = useCallback((text: string) => {
-       
         setInfoOwnerID(text);
         
         if(text.length === 0) {
@@ -563,12 +594,10 @@ export default function Home() {
             return;
         }
         
-        debounce(() => {
-
-          get_FilterTargetInfo(text);
-
+        debounce(async () => {
+            await runFilter(text);
         }, 300);
-    }, [debounce]);
+    }, [runFilter, debounce]);
 
     // 페이지네이션 컴포넌트
     function CustomPagination() {
@@ -1170,6 +1199,9 @@ export default function Home() {
                       }}
                       endAdornment={
                           <InputAdornment position="end">
+                              {searchLoading ? (
+                                  <CircularProgress size={16} sx={{ mr: 1 }} />
+                              ) : null}
                               <ClearIcon onClick={handleClickDeleteKeyword} />
                           </InputAdornment>
                       }
@@ -1186,11 +1218,15 @@ export default function Home() {
                 borderColor:"#CBCBCB",
                 height:"33px",
                 marginRight:"5px",
-                fontSize: '14px'
+                fontSize: '14px',
+                position: 'relative'
               }}  
               onClick={handleClickSearch}
+              disabled={searchLoading}
             >
-              검색
+              {searchLoading ? (
+                  <CircularProgress size={20} sx={{ color: 'white', position: 'absolute' }} />
+              ) : '검색'}
             </Button>
 
         </div>
@@ -1480,7 +1516,7 @@ export default function Home() {
                     <div style={{display:'flex', flexDirection:'row', width:'100%', alignItems: 'center'}}>
                       <div style={{padding:'10px', backgroundColor:'#f1f1f1', flex: '0 0 150px', textAlign: 'center'}}>
                         <Typography sx={{fontSize:"13px",  color: '#1f1f26', fontWeight:'bold' }}>
-                            소유자 ID
+                            소유자ID
                         </Typography>
                       </div>
                       <div style={{display:'flex', flexDirection:'row', padding:'15px', backgroundColor:'white', flex: '1'}}>
@@ -1496,58 +1532,53 @@ export default function Home() {
                               type='text'
                               value={infoOwnerID}
                               onChange={(text) => {
-
-                                if(text.target.value.length > 0){
-
-                                  debouncedFilter(text.target.value);
-                                
-                                } else {
-                                
-                                  setInfoOwnerID('');
-                                  setFilterInfoOwnerList([]);
-                                
-                                }
-                                
+                                debouncedFilter(text.target.value);
                               }}
                               onFocus={() => {
-                                /*
                                 if (!editDialogOpen) {
                                   setFilterInfoOwnerList([]); // 목록 비우기
                                 } else {
                                   if(infoOwnerID.length === 0){
                                     return;
                                   }
-                                  // 포커스 시에도 디바운스 적용
-                                  debounce(() => {
-                                    console.log('infoOwnerID : ' + infoOwnerID);
-                                    setFilterInfoOwnerList(infoOwnerList.filter((item) => item.mb_id.includes(infoOwnerID)));
+                                  // 포커스 시에도 비동기 필터링 적용
+                                  debounce(async () => {
+                                    await runFilter(infoOwnerID);
                                   }, 300);
                                 }
-                                */
                               }}
                               endAdornment={
                                 <InputAdornment position="end">
+                                  {filterLoading ? (
+                                      <CircularProgress size={16} sx={{ mr: 1 }} />
+                                  ) : null}
                                   <ClearIcon
-                                    onClick={() => { setInfoOwnerID(''); setFilterInfoOwnerList([]); }}
+                                    onClick={() => { 
+                                        setInfoOwnerID(''); 
+                                        setFilterInfoOwnerList([]); 
+                                    }}
                                   />
                                 </InputAdornment>
                               }
                             />
                           </FormControl>
-                          {/* 자동완성 목록 */}
-                          {filterInfoOwnerList.length > 0 && (
-                              <Box sx={{ position: 'absolute', zIndex: 1, backgroundColor: 'white', border: '1px solid #e0e0e0', width: '273px', marginTop: '35px', maxHeight: '150px', overflowY: 'auto' }} onClick={(e) => {
-                                  e.stopPropagation(); // 상위 이벤트 중지
-                                  setFilterInfoOwnerList([]); // 목록 비우기
-                              }}>
-                                  {filterInfoOwnerList.map((item) => (
-                                      <MenuItem key={item.id} onClick={(e) => {
-                                          e.stopPropagation(); // 상위 이벤트 중지
-                                          handleOwnerSelect(item);
-                                      }}>
-                                          {item.mb_id}
-                                      </MenuItem>
-                                  ))}
+                          {/* 자동완성 목록 - 로딩 인디케이터 추가 */}
+                          {(filterInfoOwnerList.length > 0 || filterLoading) && infoOwnerID.length > 0 && (
+                              <Box sx={{ position: 'absolute', zIndex: 1, backgroundColor: 'white', border: '1px solid #e0e0e0', width: '273px', marginTop: '35px', maxHeight: '150px', overflowY: 'auto' }}>
+                                  {filterLoading ? (
+                                      <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
+                                          <CircularProgress size={20} />
+                                      </Box>
+                                  ) : (
+                                      filterInfoOwnerList.map((item) => (
+                                          <MenuItem key={item.id} onClick={(e) => {
+                                              e.stopPropagation(); // 상위 이벤트 중지
+                                              handleOwnerSelect(item);
+                                          }}>
+                                              {item.mb_email}
+                                          </MenuItem>
+                                      ))
+                                  )}
                               </Box>
                           )}
                       </div>

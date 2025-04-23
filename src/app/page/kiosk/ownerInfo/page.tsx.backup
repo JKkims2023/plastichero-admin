@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState, useCallback, useRef } from "react";
+import React from "react";
 // Import 추가
 import FirstPageIcon from '@mui/icons-material/FirstPage';
 import LastPageIcon from '@mui/icons-material/LastPage';
@@ -54,11 +54,6 @@ import Radio from '@mui/material/Radio';
 import Paper from '@mui/material/Paper';
 import CancelIcon from '@mui/icons-material/Cancel';
 import EditIcon from '@mui/icons-material/Edit';
-import List from '@mui/material/List';
-import ListItem from '@mui/material/ListItem';
-import ListItemText from '@mui/material/ListItemText';
-import ListItemSecondaryAction from '@mui/material/ListItemSecondaryAction';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 
 type Anchor = 'bottom';
 
@@ -104,7 +99,6 @@ export default function Home() {
 
     const ref_Div = React.useRef<HTMLDivElement>(null);
     const ref_Grid = React.useRef(0);
-    const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
     const [pagingIdx, setPaginIdx] = React.useState('0');
     const [filterInfo, setFilterInfo] = React.useState('');
@@ -130,10 +124,6 @@ export default function Home() {
     const [infoMatchAddress, setInfoMatchAddress] = React.useState('');
     const [filterInfoOwnerList, setFilterInfoOwnerList] = React.useState([]);
     const [openType, setOpenType] = React.useState('register');
-    const [walletList, setWalletList] = React.useState([]);
-    const [walletDialogOpen, setWalletDialogOpen] = React.useState(false);
-    const [selectedOwnerInfo, setSelectedOwnerInfo] = React.useState(null);
-    const [selectedWalletIdx, setSelectedWalletIdx] = React.useState(-1);
 
     const page_info = 'Home > 키오스크 관리 > 소유자 관리';
 
@@ -259,52 +249,50 @@ export default function Home() {
       },
     ];
 
-    // 디바운스 함수 - 모든 디바운싱에 사용
-    const debounce = useCallback((callback: Function, delay: number = 300) => {
-        if (debounceTimerRef.current) {
-            clearTimeout(debounceTimerRef.current);
-        }
-        
-        debounceTimerRef.current = setTimeout(() => {
-            callback();
-        }, delay);
-    }, []);
+    React.useEffect(()=>{
+  
+      try{
 
-    // useEffect 훅들
-    useEffect(() => {
-        try {
-            if (ref_Div.current) {
-                const offsetHeight = ref_Div.current.offsetHeight;
-                const offsetWidth = ref_Div.current.offsetWidth;
-                
-                console.log('Height:', offsetHeight, 'Width:', offsetWidth);
+          if (ref_Div.current) {
 
-                ref_Grid.current = offsetHeight - 0;
+            const offsetHeight = ref_Div.current.offsetHeight;
+            const offsetWidth = ref_Div.current.offsetWidth;
+            
+            console.log('Height:', offsetHeight, 'Width:', offsetWidth);
 
-                get_UserInfo();
-            }
-        } catch(error) {
-            console.error('Error getting dimensions:', error);
-        }
-    }, []);
+            ref_Grid.current = offsetHeight - 0;
 
-    useEffect(() => {
-        // kioskList useEffect
-    }, [kioskList]);
+            get_UserInfo();
 
-    useEffect(() => {
-        // filterKioskList useEffect
-    }, [filterKioskList]);
+          }
 
-    useEffect(() => {
-        console.log('infoSellStatus : ' + infoSellStatus);
-    }, [infoSellStatus]);
+      }catch(error){
 
-    // API 호출 함수
+        console.error('Error getting dimensions:', error);
+
+      }
+
+    },[]);
+
+    React.useEffect(()=>{
+
+    },[kioskList]);
+
+    React.useEffect(()=>{
+
+    },[filterKioskList]);
+
+    React.useEffect(()=>{
+
+      console.log('infoSellStatus : ' + infoSellStatus);
+    },[infoSellStatus]);
+
     const get_UserInfo = async() => {
+
         setLoading(true);
 
         try {
+
             const response = await fetch('/api/kiosk/ownerInfo', {
                 method: 'POST',
                 headers: {
@@ -316,9 +304,12 @@ export default function Home() {
             const data = await response.json();
 
             if (response.ok) {
+
+              console.log(data.result_node_member_data);
                 setKioskList(data.result_data.map((data, idx) => ({ id: idx + 1, ...data })));
                 setFilterKioskList(data.result_data.map((data, idx) => ({ id: idx + 1, ...data })));
                 setInfoOwnerList(data.result_node_member_data.map((data, idx) => ({ id: idx + 1, ...data })));
+
             } else {
                 alert(data.message);
             }
@@ -328,249 +319,188 @@ export default function Home() {
             setLoading(false);
         }
     };
-
-    // 지갑 정보 조회 함수
-    const get_WalletInfo = async(user_idx) => {
-        try {
-            const response = await fetch('/api/kiosk/walletInfo', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ user_idx }),
-            });
-
-            const data = await response.json();
-
-            if (response.ok) {
-                setWalletList(data.result_data);
-                if (data.result_data && data.result_data.length > 0) {
-                    setWalletDialogOpen(true);
-                } else {
-                    alert('해당 사용자의 지갑 정보가 존재하지 않습니다.');
-                }
-            } else {
-                alert(data.message);
-            }
-        } catch (error) {
-            console.log(error);
-            alert('지갑 정보 조회 중 오류가 발생했습니다.');
-        }
-    };
-
-    // 소유자 정보 필터링 함수
-    const get_FilterTargetInfo = async(keyword) => {
-        try {
-
-          console.log('keyword : ' + keyword);
-            const response = await fetch('/api/kiosk/filterList', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ filterInfo: keyword }),
-            });
-
-            const data = await response.json();
-
-            if (response.ok) {
-
-              setFilterInfoOwnerList(data.result_node_member_data.map((data, idx) => ({ id: idx + 1, ...data })));
-
-            } else {
-
-              setFilterInfoOwnerList([]);
-
-            }
-        } catch (error) {
-            console.log(error);
-            alert('지갑 정보 조회 중 오류가 발생했습니다.');
-        }
-    };
-
-    // 필터 변경 핸들러
+    
     const handleChangeFilterContentType = (event: SelectChangeEvent<number>) => {
-        try {
-            setFilterContentTypeMethod(Number(event.target.value)); 
 
-            switch(event.target.value) {
-                case 10: {
-                    setFilterContentTypeValueMethod('all');
-                } break;
-                case 20: {
-                    setFilterContentTypeValueMethod('id');
-                } break;
-                case 30: {
-                    setFilterContentTypeValueMethod('location');
-                } break;
-                case 40: {
-                    setFilterContentTypeValueMethod('owner');
-                } break;
-                case 50: {
-                    setFilterContentTypeValueMethod('name');
-                } break;
-                default: { 
-                    setFilterContentTypeValueMethod('all');
-                } break;
-            }
-        } catch(error) {
+        try{
+
+          setFilterContentTypeMethod(Number(event.target.value)); 
+
+          switch(event.target.value){
+
+            case 10:{
+
+              setFilterContentTypeValueMethod('all');
+            }break;
+            case 20:{
+
+              setFilterContentTypeValueMethod('id');
+            }break;
+            case 30:{
+
+              setFilterContentTypeValueMethod('location');
+            }break;
+            case 40:{
+
+              setFilterContentTypeValueMethod('owner');
+            }break;
+            case 50:{
+
+              setFilterContentTypeValueMethod('name');
+            }break;
+            default:{ 
+
+              setFilterContentTypeValueMethod('all');
+            }break;  
+
+          }
+
+        }catch(error){
+
             console.log(error);
+
         }
     };
 
     const handleChangeFilterSellStatus = (event: SelectChangeEvent<number>) => {
-        try {
-            setFilterSellStatusMethod(Number(event.target.value));
 
-            switch(event.target.value) {
-                case 10: {
-                    setFilterSellStatusValueMethod('all');
-                } break;
-                case 20: {
-                    setFilterSellStatusValueMethod('0 ');
-                } break;
-                case 30: {
-                    setFilterSellStatusValueMethod('1');
-                } break;
-                case 40: {
-                    setFilterSellStatusValueMethod('2');
-                } break;
-                case 50: {
-                    setFilterSellStatusValueMethod('3');
-                } break;
-                default: {
-                    setFilterSellStatusValueMethod('all');
-                } break;
-            }
-        } catch(error) {
-            console.log(error);
+      try{
+
+        setFilterSellStatusMethod(Number(event.target.value));
+
+        switch(event.target.value){
+
+          case 10:{
+            setFilterSellStatusValueMethod('all');
+          }break;
+          case 20:{
+            setFilterSellStatusValueMethod('0 ');
+          }break;
+          case 30:{
+            setFilterSellStatusValueMethod('1');
+          }break;
+          case 40:{
+            setFilterSellStatusValueMethod('2');
+          }break;
+          case 50:{
+            setFilterSellStatusValueMethod('3');
+          }break;
+          default:{
+            setFilterSellStatusValueMethod('all');
+          }break;
+
         }
+
+      }catch(error){  
+
+        console.log(error);
+
+      } 
+
+    };  
+
+    const handleClickDeleteKeyword = () => {
+
+      try{
+
+        setFilterInfo('');
+
+      }catch(error){
+
+        console.log(error);
+
+      }
+
     };
 
-    // 검색어 삭제 핸들러 - 디바운싱 적용
-    const handleClickDeleteKeyword = useCallback(() => {
-        setFilterInfo('');
-        // 삭제 후 바로 검색 실행
-        debounce(() => {
-            let filteredList = [...kioskList];
-            // 빈 필터로 검색 실행
-            if(filterSellStatusValueMethod !== 'all') {
-                const normalizedStatus = filterSellStatusValueMethod.trim();
+    const handleClickSearch = async() => {
+
+      try{
+
+        let filteredList = [...kioskList];
+
+        if(filterSellStatusValueMethod === 'all') {
+          if(filterInfo.length > 0) {
+            switch(filterContentTypeValueMethod) {
+              case 'id': {
                 filteredList = filteredList.filter((user) => 
-                    user.sell_status?.toString() == normalizedStatus.toString())
-                    .map((user, idx) => ({ ...user, id: idx + 1 }));
+                  user.kc_kiosk_id?.includes(filterInfo))
+                  .map((user, idx) => ({ ...user, id: idx + 1 }));
+              } break;
+              case 'location': {
+                filteredList = filteredList.filter((user) => 
+                  user.kc_addr?.includes(filterInfo))
+                  .map((user, idx) => ({ ...user, id: idx + 1 }));
+              } break;
+              case 'owner': {
+                filteredList = filteredList.filter((user) => 
+                  user.owner_id?.includes(filterInfo))
+                  .map((user, idx) => ({ ...user, id: idx + 1 }));
+              } break;
+              case 'name': {
+                filteredList = filteredList.filter((user) => 
+                  user.mb_name?.includes(filterInfo))
+                  .map((user, idx) => ({ ...user, id: idx + 1 }));
+              } break;
+              default: {
+                filteredList = filteredList.map((user, idx) => ({ ...user, id: idx + 1 }));
+              } break;
             }
-            setFilterKioskList(filteredList);
-        }, 150);
-    }, [kioskList, filterSellStatusValueMethod, debounce]);
+          }
+        } else {
+          // sell_status 비교 전에 공백 제거
+          const normalizedStatus = filterSellStatusValueMethod.trim();
 
-    // 필터 정보 변경 핸들러 - 직접 상태 업데이트
-    const handleFilterInfoChange = useCallback((value: string) => {
-        setFilterInfo(value);
-    }, []);
-
-    // 검색 버튼 클릭 핸들러 - 디바운싱 적용
-    const handleClickSearch = useCallback(() => {
-        try {
-            debounce(() => {
-                let filteredList = [...kioskList];
-
-                if(filterSellStatusValueMethod === 'all') {
-                    if(filterInfo.length > 0) {
-                        switch(filterContentTypeValueMethod) {
-                            case 'id': {
-                                filteredList = filteredList.filter((user) => 
-                                    user.kc_kiosk_id?.includes(filterInfo))
-                                    .map((user, idx) => ({ ...user, id: idx + 1 }));
-                            } break;
-                            case 'location': {
-                                filteredList = filteredList.filter((user) => 
-                                    user.kc_addr?.includes(filterInfo))
-                                    .map((user, idx) => ({ ...user, id: idx + 1 }));
-                            } break;
-                            case 'owner': {
-                                filteredList = filteredList.filter((user) => 
-                                    user.owner_id?.includes(filterInfo))
-                                    .map((user, idx) => ({ ...user, id: idx + 1 }));
-                            } break;
-                            case 'name': {
-                                filteredList = filteredList.filter((user) => 
-                                    user.mb_name?.includes(filterInfo))
-                                    .map((user, idx) => ({ ...user, id: idx + 1 }));
-                            } break;
-                            default: {
-                                filteredList = filteredList.map((user, idx) => ({ ...user, id: idx + 1 }));
-                            } break;
-                        }
-                    }
-                } else {
-                    // sell_status 비교 전에 공백 제거
-                    const normalizedStatus = filterSellStatusValueMethod.trim();
-
-                    console.log('normalizedStatus : ' + normalizedStatus);
-                    
-                    if(filterInfo.length > 0) {
-                        switch(filterContentTypeValueMethod) {
-                            case 'id': {
-                                filteredList = filteredList.filter((user) => 
-                                    user.kc_kiosk_id?.includes(filterInfo) && 
-                                    user.sell_status?.toString() == normalizedStatus.toString())
-                                    .map((user, idx) => ({ ...user, id: idx + 1 }));
-                            } break;
-                            case 'location': {
-                                filteredList = filteredList.filter((user) => 
-                                    user.kc_addr?.includes(filterInfo) && 
-                                    user.sell_status?.toString() == normalizedStatus.toString())
-                                    .map((user, idx) => ({ ...user, id: idx + 1 }));
-                            } break;
-                            case 'owner': {
-                                filteredList = filteredList.filter((user) => 
-                                    user.owner_id?.includes(filterInfo) && 
-                                    user.sell_status?.toString() == normalizedStatus.toString())
-                                    .map((user, idx) => ({ ...user, id: idx + 1 }));
-                            } break;
-                            case 'name': {
-                                filteredList = filteredList.filter((user) => 
-                                    user.mb_name?.includes(filterInfo) && 
-                                    user.sell_status?.toString() == normalizedStatus.toString())
-                                    .map((user, idx) => ({ ...user, id: idx + 1 }));
-                            } break;
-                            default: {
-                                filteredList = filteredList.map((user, idx) => ({ ...user, id: idx + 1 }));
-                            } break;
-                        }
-                    } else {
-                        filteredList = filteredList.filter((user) => 
-                            user.sell_status?.toString() == normalizedStatus.toString())
-                            .map((user, idx) => ({ ...user, id: idx + 1 }));
-                    }
-                }
-
-                setFilterKioskList(filteredList);
-            }, 150); // 검색은 더 짧은 디바운스 시간 적용
-        } catch(error) {
-            console.log(error);
+          console.log('normalizedStatus : ' + normalizedStatus);
+          
+          if(filterInfo.length > 0) {
+            switch(filterContentTypeValueMethod) {
+              case 'id': {
+                filteredList = filteredList.filter((user) => 
+                  user.kc_kiosk_id?.includes(filterInfo) && 
+                  user.sell_status?.toString() == normalizedStatus.toString())
+                  .map((user, idx) => ({ ...user, id: idx + 1 }));
+              } break;
+              case 'location': {
+                filteredList = filteredList.filter((user) => 
+                  user.kc_addr?.includes(filterInfo) && 
+                  user.sell_status?.toString() == normalizedStatus.toString())
+                  .map((user, idx) => ({ ...user, id: idx + 1 }));
+              } break;
+              case 'owner': {
+                filteredList = filteredList.filter((user) => 
+                  user.owner_id?.includes(filterInfo) && 
+                  user.sell_status?.toString() == normalizedStatus.toString())
+                  .map((user, idx) => ({ ...user, id: idx + 1 }));
+              } break;
+              case 'name': {
+                filteredList = filteredList.filter((user) => 
+                  user.mb_name?.includes(filterInfo) && 
+                  user.sell_status?.toString() == normalizedStatus.toString())
+                  .map((user, idx) => ({ ...user, id: idx + 1 }));
+              } break;
+              default: {
+                filteredList = filteredList.map((user, idx) => ({ ...user, id: idx + 1 }));
+              } break;
+            }
+          } else {
+            filteredList = filteredList.filter((user) => 
+              user.sell_status?.toString() == normalizedStatus.toString())
+              .map((user, idx) => ({ ...user, id: idx + 1 }));
+          }
         }
-    }, [kioskList, filterSellStatusValueMethod, filterContentTypeValueMethod, filterInfo, debounce]);
 
-    // 소유자 ID 필터링 함수 - 디바운싱 적용
-    const debouncedFilter = useCallback((text: string) => {
-       
-        setInfoOwnerID(text);
-        
-        if(text.length === 0) {
-            setFilterInfoOwnerList([]);
-            return;
-        }
-        
-        debounce(() => {
+        setFilterKioskList(filteredList);
+          
+      }catch(error){
 
-          get_FilterTargetInfo(text);
+        console.log(error);
 
-        }, 300);
-    }, [debounce]);
+      }
 
-    // 페이지네이션 컴포넌트
+    };
+
+    // Custom Pagination Component
     function CustomPagination() {
       
       const apiRef = useGridApiContext();
@@ -620,7 +550,7 @@ export default function Home() {
             const infoEmail = infoOwnerID.trim();
             const infoTarget = targetKioskID;
 
-/*
+
             console.log('infoAddress : ' + infoAddress);
             console.log('infoEmail : ' + infoEmail);
             console.log('infoTarget : ' + infoTarget);
@@ -643,7 +573,6 @@ export default function Home() {
               return;
             
             }
-*/
 
             const response = await fetch('/api/kiosk/addOwnerInfo', {
               
@@ -681,7 +610,7 @@ export default function Home() {
           const infoEmail = infoOwnerID.trim();
           const infoTarget = targetKioskID;
 
-/*
+
           console.log('infoAddress : ' + infoAddress);
           console.log('infoEmail : ' + infoEmail);
           console.log('infoTarget : ' + infoTarget);
@@ -706,7 +635,7 @@ export default function Home() {
           
           }
 
-*/
+
           const response = await fetch('/api/kiosk/changeOwnerInfo', {
             
               method: 'POST',
@@ -744,64 +673,6 @@ export default function Home() {
         console.log(error);
 
       }
-    };
-
-    const handleChangeMiningInfo = async() => {
-
-      try{
-        
-
-        console.log('infoOwnerID : ' + infoOwnerID);
-        console.log('finalInfoAddress : ' + finalInfoAddress);
-        console.log('finalInfoAddressIdx : ' + finalInfoAddressIdx);
-        console.log('infoOwnerIdx : ' + infoOwnerIdx);
-        console.log('selectedWalletIdx : ' + selectedWalletIdx);
-
-        return;
-
-
-        const infoAddress = finalInfoAddress;
-        const infoAddressIdx = finalInfoAddressIdx;
-        const infoEmail = infoOwnerID.trim();
-        const infoTarget = targetKioskID;
-
-        const response = await fetch('/api/kiosk/changeOwnerInfo', {
-              
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ infoAddress, infoAddressIdx, infoOwnerIdx, infoEmail, infoTarget, infoSellStatus }),
-        });
-
-        const data = await response.json();
-
-        if (response.ok) {
-
-          setEditDialogOpen(false);
-          setInfoOwnerID(''); 
-          setInfoSellStatus('0');
-          setFinalInfoAddress('');
-          setFinalInfoAddressIdx(-1);
-          setTargetKioskID(-1);
-          setFilterInfoOwnerList([]); 
-
-          get_UserInfo();
-
-
-        } else {
-
-            alert(data.message);
-        
-        }
-
-      }catch(error){
-
-        console.log(error);
-        alert(error);
-
-      }
-
     };
 
     const handleAutoSetOwnerInfo = async() => {
@@ -978,23 +849,6 @@ export default function Home() {
 
     };
 
-    // 지갑 선택 핸들러
-    const handleWalletSelect = (wallet) => {
-        setInfoOwnerID(selectedOwnerInfo.mb_id);
-        setFinalInfoAddress(wallet.new_address);
-        setFinalInfoAddressIdx(wallet.idx);
-        setInfoOwnerIdx(selectedOwnerInfo.user_idx);
-        setSelectedWalletIdx(wallet.idx);
-        setWalletDialogOpen(false);
-        setFilterInfoOwnerList([]);
-    };
-
-    // 자동완성 항목 클릭 핸들러 수정
-    const handleOwnerSelect = (owner) => {
-        setSelectedOwnerInfo(owner);
-        get_WalletInfo(owner.user_idx);
-    };
-
     return (
 
       <div style={{display:'flex', flexDirection:'column',  width:'100%', height:'100vh',  paddingLeft:'20px', paddingRight:'20px',}}>
@@ -1166,7 +1020,7 @@ export default function Home() {
                       type='text'
                       value={filterInfo}
                       onChange={(text)=>{ 
-                          handleFilterInfoChange(text.target.value);
+                          setFilterInfo(text.target.value);
                       }}
                       endAdornment={
                           <InputAdornment position="end">
@@ -1480,7 +1334,7 @@ export default function Home() {
                     <div style={{display:'flex', flexDirection:'row', width:'100%', alignItems: 'center'}}>
                       <div style={{padding:'10px', backgroundColor:'#f1f1f1', flex: '0 0 150px', textAlign: 'center'}}>
                         <Typography sx={{fontSize:"13px",  color: '#1f1f26', fontWeight:'bold' }}>
-                            소유자 ID
+                            소유자ID
                         </Typography>
                       </div>
                       <div style={{display:'flex', flexDirection:'row', padding:'15px', backgroundColor:'white', flex: '1'}}>
@@ -1496,39 +1350,27 @@ export default function Home() {
                               type='text'
                               value={infoOwnerID}
                               onChange={(text) => {
-
-                                if(text.target.value.length > 0){
-
-                                  debouncedFilter(text.target.value);
-                                
-                                } else {
-                                
-                                  setInfoOwnerID('');
-                                  setFilterInfoOwnerList([]);
-                                
+                                setInfoOwnerID(text.target.value);
+                                if(text.target.value.length == 0){
+                                  setFilterInfoOwnerList([]); // 선택 후 목록 비우기
+                                  return;
                                 }
-                                
+                                setFilterInfoOwnerList(infoOwnerList.filter((item) => item.mb_email.includes(text.target.value)));
                               }}
                               onFocus={() => {
-                                /*
                                 if (!editDialogOpen) {
                                   setFilterInfoOwnerList([]); // 목록 비우기
                                 } else {
-                                  if(infoOwnerID.length === 0){
+                                  if(infoOwnerID.length == 0){
                                     return;
                                   }
-                                  // 포커스 시에도 디바운스 적용
-                                  debounce(() => {
-                                    console.log('infoOwnerID : ' + infoOwnerID);
-                                    setFilterInfoOwnerList(infoOwnerList.filter((item) => item.mb_id.includes(infoOwnerID)));
-                                  }, 300);
+                                  setFilterInfoOwnerList(infoOwnerList.filter((item) => item.mb_email.includes(infoOwnerID)));
                                 }
-                                */
                               }}
                               endAdornment={
                                 <InputAdornment position="end">
                                   <ClearIcon
-                                    onClick={() => { setInfoOwnerID(''); setFilterInfoOwnerList([]); }}
+                                    onClick={() => { setInfoOwnerID(''); }}
                                   />
                                 </InputAdornment>
                               }
@@ -1536,16 +1378,17 @@ export default function Home() {
                           </FormControl>
                           {/* 자동완성 목록 */}
                           {filterInfoOwnerList.length > 0 && (
-                              <Box sx={{ position: 'absolute', zIndex: 1, backgroundColor: 'white', border: '1px solid #e0e0e0', width: '273px', marginTop: '35px', maxHeight: '150px', overflowY: 'auto' }} onClick={(e) => {
-                                  e.stopPropagation(); // 상위 이벤트 중지
+                              <Box sx={{ position: 'absolute', zIndex: 1, backgroundColor: 'white', border: '1px solid #e0e0e0', width: '273px', marginTop: '35px', maxHeight: '150px', overflowY: 'auto' }} onClick={() => {
                                   setFilterInfoOwnerList([]); // 목록 비우기
                               }}>
                                   {filterInfoOwnerList.map((item) => (
-                                      <MenuItem key={item.id} onClick={(e) => {
-                                          e.stopPropagation(); // 상위 이벤트 중지
-                                          handleOwnerSelect(item);
+                                      <MenuItem key={item.id} onClick={() => {
+                                          setInfoOwnerID(item.mb_email);
+                                          setFinalInfoAddress(item.wallet_address);
+                                          setFinalInfoAddressIdx(item.wallet_idx);
+                                          setFilterInfoOwnerList([]); // 선택 후 목록 비우기
                                       }}>
-                                          {item.mb_id}
+                                          {item.mb_email}
                                       </MenuItem>
                                   ))}
                               </Box>
@@ -1556,7 +1399,7 @@ export default function Home() {
                     <div style={{display:'flex', flexDirection:'row', width:'100%', alignItems: 'center'}}>
                       <div style={{padding:'10px', backgroundColor:'#f1f1f1', flex: '0 0 150px', textAlign: 'center'}}>
                         <Typography sx={{fontSize:"13px",  color: '#1f1f26', fontWeight:'bold' }}>
-                            채굴지갑주소
+                            매칭주소
                         </Typography>
                       </div>
                       <div style={{display:'flex', padding:'15px', backgroundColor:'white', flex: '1'}}>
@@ -1634,7 +1477,7 @@ export default function Home() {
                     닫기
                 </Button>
                 <Button 
-                    onClick={handleChangeMiningInfo} 
+                    onClick={handleEditApply} 
                     variant="contained" 
                     startIcon={<EditIcon sx={{ fontSize: 18 }} />}
                     sx={{ 
@@ -1648,151 +1491,6 @@ export default function Home() {
                     }}
                 >
                     적용
-                </Button>
-            </DialogActions>
-        </Dialog>
-
-        {/* 지갑 선택 다이얼로그 추가 - 완전히 새로 작성 */}
-        <Dialog 
-            open={walletDialogOpen} 
-            onClose={() => {
-                setWalletDialogOpen(false);
-            }}
-            maxWidth="sm" 
-            fullWidth
-            PaperProps={{
-                sx: {
-                    maxHeight: '90vh',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-                    borderRadius: '8px',
-                }
-            }}
-        >
-            <DialogTitle 
-                sx={{ 
-                    backgroundColor: '#1976d2',
-                    color: 'white',
-                    p: 2,
-                    flex: '0 0 auto',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between'
-                }}
-            >
-                <Box sx={{ 
-                    display: 'flex', 
-                    alignItems: 'center',
-                    gap: 1 
-                }}>
-                    <Typography 
-                        component="span"
-                        sx={{ 
-                            fontSize: '16px',
-                            fontWeight: 'bold'
-                        }}
-                    >
-                        지갑 선택
-                    </Typography>
-                </Box>
-            </DialogTitle>
-            <DialogContent 
-                sx={{
-                    p: 3,
-                    flex: '1 1 auto',
-                    overflowY: 'auto',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: 2,
-                    backgroundColor: '#f9f9f9',
-                }}
-            >
-                <Box sx={{ 
-                    backgroundColor: '#ffffff',
-                    borderRadius: '10px',
-                    p: 2.5,
-                    boxShadow: '0 2px 4px rgba(0,0,0,0.06)',
-                    border: '1px solid #eaeaea',
-                    marginTop:'20px'
-                }}>
-                    <Typography sx={{fontSize:"15px", color: '#1f1f26', fontWeight:'bold', mb: 2 }}>
-                        {selectedOwnerInfo?.mb_id} 님의 지갑 목록
-                    </Typography>
-                    
-                    {/* 목록을 일반 div로 변경하여 ListItem 대신 사용 */}
-                    <Box sx={{ width: '100%', bgcolor: 'background.paper' }}>
-                        {walletList.map((wallet) => (
-                            <Box 
-                                key={wallet.idx}
-                                onClick={() => handleWalletSelect(wallet)}
-                                sx={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'space-between',
-                                    borderBottom: '1px solid #f0f0f0',
-                                    padding: '8px 4px',
-                                    '&:hover': {
-                                        backgroundColor: '#f5f5f5',
-                                        cursor: 'pointer'
-                                    },
-                                    backgroundColor: selectedWalletIdx === wallet.idx ? '#e3f2fd' : 'inherit'
-                                }}
-                            >
-                                <Box sx={{ flex: 1, pr: 2 }}>
-                                    <Typography sx={{ fontSize: '14px', fontWeight: wallet.is_main === 'Y' ? 'bold' : 'normal' }}>
-                                        {wallet.name || '이름 없음'} {wallet.is_main === 'Y' && '(메인 지갑)'}
-                                    </Typography>
-                                    <Typography 
-                                        sx={{ 
-                                            fontSize: '12px', 
-                                            color: 'text.secondary',
-                                            whiteSpace: 'nowrap',
-                                            overflow: 'hidden',
-                                            textOverflow: 'ellipsis',
-                                            maxWidth: '400px'
-                                        }}
-                                    >
-                                        {wallet.new_address}
-                                    </Typography>
-                                </Box>
-                                {selectedWalletIdx === wallet.idx && (
-                                    <CheckCircleIcon sx={{ color: '#4caf50' }} />
-                                )}
-                            </Box>
-                        ))}
-                    </Box>
-                </Box>
-            </DialogContent>
-            <DialogActions 
-                sx={{ 
-                    p: 2,
-                    backgroundColor: '#f8f9fa',
-                    borderTop: '1px solid #eaeaea',
-                    gap: 1,
-                    display: 'flex',
-                    justifyContent: 'space-between'
-                }}
-            >
-                <Button 
-                    onClick={() => {
-                        setWalletDialogOpen(false);
-                    }} 
-                    variant="outlined" 
-                    startIcon={<CancelIcon sx={{ fontSize: 18 }} />}
-                    sx={{
-                        fontSize: '13px',
-                        height: '32px',
-                        padding: '0 16px',
-                        color: '#666',
-                        borderColor: '#ccc',
-                        '&:hover': {
-                            borderColor: '#999',
-                            backgroundColor: '#f5f5f5'
-                        }
-                    }}
-                >
-                    닫기
                 </Button>
             </DialogActions>
         </Dialog>

@@ -358,36 +358,6 @@ export default function Home() {
         }
     };
 
-    // 소유자 정보 필터링 함수
-    const get_FilterTargetInfo = async(keyword) => {
-        try {
-
-          console.log('keyword : ' + keyword);
-            const response = await fetch('/api/kiosk/filterList', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ filterInfo: keyword }),
-            });
-
-            const data = await response.json();
-
-            if (response.ok) {
-
-              setFilterInfoOwnerList(data.result_node_member_data.map((data, idx) => ({ id: idx + 1, ...data })));
-
-            } else {
-
-              setFilterInfoOwnerList([]);
-
-            }
-        } catch (error) {
-            console.log(error);
-            alert('지갑 정보 조회 중 오류가 발생했습니다.');
-        }
-    };
-
     // 필터 변경 핸들러
     const handleChangeFilterContentType = (event: SelectChangeEvent<number>) => {
         try {
@@ -555,7 +525,6 @@ export default function Home() {
 
     // 소유자 ID 필터링 함수 - 디바운싱 적용
     const debouncedFilter = useCallback((text: string) => {
-       
         setInfoOwnerID(text);
         
         if(text.length === 0) {
@@ -564,11 +533,9 @@ export default function Home() {
         }
         
         debounce(() => {
-
-          get_FilterTargetInfo(text);
-
+            setFilterInfoOwnerList(infoOwnerList.filter((item) => item.mb_id?.includes(text)));
         }, 300);
-    }, [debounce]);
+    }, [infoOwnerList, debounce]);
 
     // 페이지네이션 컴포넌트
     function CustomPagination() {
@@ -1480,7 +1447,7 @@ export default function Home() {
                     <div style={{display:'flex', flexDirection:'row', width:'100%', alignItems: 'center'}}>
                       <div style={{padding:'10px', backgroundColor:'#f1f1f1', flex: '0 0 150px', textAlign: 'center'}}>
                         <Typography sx={{fontSize:"13px",  color: '#1f1f26', fontWeight:'bold' }}>
-                            소유자 ID
+                            소유자ID
                         </Typography>
                       </div>
                       <div style={{display:'flex', flexDirection:'row', padding:'15px', backgroundColor:'white', flex: '1'}}>
@@ -1496,18 +1463,7 @@ export default function Home() {
                               type='text'
                               value={infoOwnerID}
                               onChange={(text) => {
-
-                                if(text.target.value.length > 0){
-
-                                  debouncedFilter(text.target.value);
-                                
-                                } else {
-                                
-                                  setInfoOwnerID('');
-                                  setFilterInfoOwnerList([]);
-                                
-                                }
-                                
+                                debouncedFilter(text.target.value);
                               }}
                               onFocus={() => {
                                 /*

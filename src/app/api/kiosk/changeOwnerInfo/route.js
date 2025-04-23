@@ -21,6 +21,7 @@ export async function POST(request) {
     console.log('infoTarget : ' + infoTarget);
     console.log('infoSellStatus : ' + infoSellStatus);
 
+    /*
 
     if(infoAddress == '' || infoAddress == null || infoAddress == 'undefined'){
     
@@ -45,6 +46,7 @@ export async function POST(request) {
       return NextResponse.json({ message: '소유자 지갑주소 인덱스 정보를 수신하지 못했습니다.' }, { status: 401 });
     
     }
+    */
 
     const sql = `
       
@@ -61,11 +63,9 @@ export async function POST(request) {
 
     `;
 
-
-
     const [rows, fields] = await connection.execute(sql);
 
-
+/*
     // 업데이트 성공 시 실제 노드 적용
     if(rows.affectedRows == 1){
 
@@ -92,6 +92,7 @@ export async function POST(request) {
       
       });
   
+
       connection.release(); // 연결 반환
       
       return response;
@@ -105,10 +106,32 @@ export async function POST(request) {
       return NextResponse.json({ message: '정보 수정 중 문제가 발생하였습니다.' }, { status: 401 });
   
     }
+    */
+
+    const response = NextResponse.json({ 
+      
+      result: 'success',
+      result_data : [],
+    
+    });
+
+    connection.release(); // 연결 반환
+
+    return response;
     
   }catch(error){
   
-    return NextResponse.json({ message: error.message }, { status: 401 });
+
+    const response = NextResponse.json({ 
+      
+      result: 'fail',
+      result_data : [],
+    
+    });
+
+    return response;
+
+  //  return NextResponse.json({ message: error.message }, { status: 401 });
  
   }
 

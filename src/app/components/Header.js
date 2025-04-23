@@ -64,7 +64,7 @@ export default function Sidebar() {
 
     return (
     
-        <div style={{width:'100%', backgroundColor:'#1f1f26', padding:'20px', display: isLoggedIn ? 'block' : 'none'}}>
+        <div style={{width:'100%', backgroundColor:'#1f1f26', padding:'20px', display: isLoggedIn ? 'none' : 'none'}}>
 
             <div style={{display:'flex', float:'left', width:'100%'}}>
 

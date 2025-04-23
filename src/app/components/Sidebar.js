@@ -234,9 +234,12 @@ export default function Sidebar() {
     <aside className={styles.sidebar} style={{display:isShow ? 'block' : 'none'}}>
       <div style={{width:'100%', height:'1px', backgroundColor:'gray', marginTop:'0px'}}/>
       
+      <Image src={logoPath} alt='' height='100px' width='100px' style={{alignSelf:'center', margin:'auto', marginLeft:'20px', marginTop:'30px', marginBottom:'30px'}}/> 
+            
+
       <UserInfo />
 
-      <ul style={{marginTop:'10px'}}>
+      <ul style={{marginTop:'30px'}}>
         {sidebarData.map((item, index) => (
           <li key={index} style={{width:'100%'}}>
             {item.href || item.label == 'Overview' ? (
