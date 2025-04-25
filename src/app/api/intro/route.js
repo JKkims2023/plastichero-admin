@@ -11,54 +11,18 @@ export async function POST(request) {
 
     const connection = await getConnection();
 
-    /*
-    const sql = `
-    
-      SELECT 
-
-        count(node_no) as node_count, 
-        node_type,
-        if(node_type = '0', '그룹 노드', if(node_type = '1', '키오스크 노드','개별 노드')) as node_type_name
-
-      FROM g5_node_list where delete_flag = 'N' group by node_type;
-        
-    `;
-
-    const [rows, fields] = await connection.execute(sql);
-
-    const sql_summary = `
-    
-      SELECT 
-
-        sum(node_no) as node_count, 
-        node_type,
-        if(node_type = '0', '그룹 노드', if(node_type = '1', '키오스크 노드','개별 노드')) as node_type_name
-
-      FROM g5_node_list where delete_flag = 'N' group by node_type;
-      
-  `;
-
-    const [rows_summary, fields_summary] = await connection.execute(sql_summary);
-*/
     const sql_mining = `
       
       SELECT 
 
         (select count(kc_no) from g5_kiosk) as node_count, 
         (select count(kc_no) from g5_kiosk where wallet_idx <> -1) as run_count,
-        (select count(kc_no) from g5_kiosk where wallet_idx = -1) as stop_count
+        (select count(kc_no) from g5_kiosk where wallet_idx = -1) as stop_count,
+        IF((select sum(mining_amount) from g5_mining_history where mainnet_request_status = 'S' and done_yn = 'Y') is null, 0, (select sum(mining_amount) from g5_mining_history where mainnet_request_status = 'S' and done_yn = 'Y')) as mining_amount,
+        IF((select count(node_no) from g5_mining_history where mainnet_request_status = 'S' and done_yn = 'Y') is null, 0, (select count(node_no) from g5_mining_history where mainnet_request_status = 'S' and done_yn = 'Y')) as mining_count
 
     `;
 
-    /*
-        (select count(kc_no) from g5_kiosk) as node_count, 
-        (select count(kc_no) from g5_kiosk where wallet_idx <> -1) as run_count,
-        (select count(kc_no) from g5_kiosk where wallet_idx = -1) as stop_count,
-        (select sum(mining_amount) from g5_node_list where delete_flag = 'N' and stop_yn = 'N') as mining_amount,
-        (select sum(mining_amount) from g5_node_company_list where delete_flag = 'N' and stop_yn = 'N') as company_mining_amount,
-        if((select sum(mining_amount) from g5_mining_history where tx_hash is not null and mainnet_request_status = 'S') is null, 0, (select sum(mining_amount) from g5_mining_history where tx_hash is not null and mainnet_request_status = 'S')) as total_mining_amount,
-        if((select count(node_no) from g5_mining_history where tx_hash is not null and mainnet_request_status = 'S') is null, 0, (select count(node_no) from g5_mining_history where tx_hash is not null and mainnet_request_status = 'S')) as total_mining_count    
-    */
 
     const [rows_mining, fields_mining] = await connection.execute(sql_mining);
 
@@ -129,7 +93,6 @@ export async function POST(request) {
 
     if(rows_done_schedule.length > 0){
 
-      console.log('jk please');
       result_done_schedule = {
 
         schedule_no : rows_done_schedule[0].schedule_no,
@@ -168,8 +131,6 @@ export async function POST(request) {
 
     const [rows_done_spread, fields_done_spread] = await connection.execute(sql_done_spread);
 
-    console.log(rows_done_spread);
-    console.log('jk why?');
 
     if(rows_done_spread.length > 0){
 
@@ -182,6 +143,8 @@ export async function POST(request) {
       };
 
     }
+
+    console.log(rows_mining[0]);
 
     const response = NextResponse.json({ 
         

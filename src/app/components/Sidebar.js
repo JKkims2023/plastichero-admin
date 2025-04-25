@@ -89,7 +89,7 @@ export default function Sidebar() {
             show_yn: 'show',
             checked: true,
             children: [
-                { href: '/page/mining/setup', label: '• 채굴설정', show_yn: 'show', checked: true },
+            //    { href: '/page/mining/setup', label: '• 채굴설정', show_yn: 'show', checked: true },
                 { href: '/page/mining/history', label: '• 채굴내역', show_yn: 'show', checked: true },
                 { href: '/page/mining/monitoring', label: '• 모니터링 / 재처리', show_yn: 'show', checked: true },
             ],

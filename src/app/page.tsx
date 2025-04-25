@@ -22,10 +22,9 @@ export default function Home() {
     node_count : 0,
     run_count : 0,
     stop_count : 0,
-    mining_amount : 0,
     company_mining_amount : 0,
-    total_mining_amount : 0,
-    total_mining_count : 0,
+    mining_amount : 0,
+    mining_count : 0,
 
   });
   const [roundSummary, setRoundSummary] = React.useState({
@@ -68,14 +67,14 @@ export default function Home() {
 
   }, []);
 
-  /*
+  
   // selectedDate가 변경될 때마다 데이터를 갱신
   React.useEffect(() => {
     if (selectedDate) {
       getIntroInfo();
     }
   }, [selectedDate]);
-  */
+  
 
   /*
   React.useEffect(() => {
@@ -178,7 +177,7 @@ export default function Home() {
                   setSelectedDate(newValue);
                 }} 
                 format="YYYY/MM/DD" 
-                maxDate={dayjs().subtract(1, 'day')}
+                maxDate={dayjs().subtract(0, 'day')}
                 sx={{ 
                   '.MuiInputBase-root': { 
                     backgroundColor: 'white',
@@ -386,13 +385,13 @@ export default function Home() {
                 <div>
                   <Typography sx={{ fontSize: '14px', color: '#64748b' }}>채굴건수</Typography>
                   <Typography sx={{ fontSize: '20px', color: '#10b981', fontWeight: '600' }}>
-                    {nodeSummary?.total_mining_count?.toLocaleString()} 건
+                    {nodeSummary?.mining_count?.toLocaleString()} 건
                   </Typography>
                 </div>
                 <div style={{ marginLeft: '200px' }}>
                   <Typography sx={{ fontSize: '14px', color: '#64748b' }}>채굴량</Typography>
                   <Typography sx={{ fontSize: '20px', color: '#10b981', fontWeight: '600' }}>
-                    {nodeSummary?.total_mining_amount?.toLocaleString()} PTH
+                    {(nodeSummary?.mining_amount * 2).toLocaleString()} PTH
                   </Typography>
                 </div>
               </div>

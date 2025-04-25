@@ -12,7 +12,7 @@ export async function POST(request) {
 
   try{
 
-    const { pagingIdx, fromDate } = await request.json();
+    const { fromDate } = await request.json();
 
 
     const connection = await getConnection();
@@ -34,25 +34,69 @@ export async function POST(request) {
         H.update_date,
         H.done_yn,
         if(H.mainnet_request_status = 'S','채굴완료',if(H.mainnet_request_status = 'F','채굴실패','채굴중')) as done_status,
-        K.kc_kiosk_id,
-        W.address,
-        N.node_name
+        N.kc_kiosk_id as node_name,
+        N.kc_kiosk_id,
+        W.address
 
 
-      from g5_mining_history as H inner join g5_node_list as N ON H.node_no = N.node_no and N.delete_flag = 'N'
-      inner join tbl_pth_wallet_info as W ON N.wallet_idx = W.idx left outer join g5_kiosk as K ON N.kc_kiosk_id = K.kc_no 
+      from g5_mining_history as H inner join g5_kiosk as N ON H.node_no = N.kc_no
+      inner join tbl_pth_wallet_info as W ON N.wallet_idx = W.idx  
       where H.round_date = '${fromDate}'
-      order by N.kc_kiosk_id, N.node_name
+      order by N.kc_kiosk_id
 
     `;
 
-    console.log(sql);
     const [rows, fields] = await connection.execute(sql);
+
+
+    const sql_company_list = `
+    
+      SELECT 
+        
+        node_company_no,
+        node_name,
+        mining_amount
+        
+      FROM g5_node_company_list 
+      
+      WHERE 
+        
+      delete_flag = 'N' order by order_idx
+    
+    `;
+
+    const [rows_company_list, fields_company_list] = await connection.execute(sql_company_list);
+
+    const sql_schedule_info = `
+    
+      SELECT 
+
+      schedule_no,
+      round_date,
+      successCount,
+      failCount,
+      orderCount,
+      orderAmount,
+      scheduled_yn,
+      spreaded_yn
+
+      FROM g5_mining_batch_schedule
+
+      where round_date = '${fromDate}'
+      
+    
+    `;
+
+    const [rows_schedule_info, fields_schedule_info] = await connection.execute(sql_schedule_info);
+
+    console.log(rows_schedule_info);
 
     const response = NextResponse.json({ 
         
         result: 'success',
         result_data : rows,
+        result_company_list : rows_company_list,
+        result_schedule_info : rows_schedule_info,
 
       });
 

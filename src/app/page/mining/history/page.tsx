@@ -132,6 +132,11 @@ export default function Home() {
     const [detailMessage, setDetailMessage] = React.useState('');
     const [detailBugTrackKey, setDetailBugTrackKey] = React.useState('');
     const [detailBugTrackMessage, setDetailBugTrackMessage] = React.useState('');
+    const [passDialogOpen, setPassDialogOpen] = React.useState(false);
+    const [password, setPassword] = React.useState('');
+    const [companyList, setCompanyList] = React.useState([]);
+    const [scheduleStatus, setScheduleStatus] = React.useState(false);
+    const [spreadStatus, setSpreadStatus] = React.useState(false);
 
     const page_info = 'Home > 채굴(노드)관리 > 채굴내역';
 
@@ -152,6 +157,7 @@ export default function Home() {
           disableColumnMenu: true,
           editable: false,
       },
+      /*
       {
           field: 'node_name',
           headerName: '노드명',
@@ -160,6 +166,7 @@ export default function Home() {
           disableColumnMenu: true,
           editable: false,
       },
+      */
       {
           field: 'address',
           headerName: '지갑주소',
@@ -175,23 +182,6 @@ export default function Home() {
           flex: 0.07,
           disableColumnMenu: true,
           editable: false,
-      },
-      {
-          field: 'done_status_dummy',
-          headerName: '처리결과',
-          type: 'string',
-          flex: 0.07,
-          disableColumnMenu: true,
-          editable: false,
-          renderCell: (params) => {
-            if (params.row.tx_hash !== null && params.row.mainnet_request_status === 'S') {
-                return '완료';
-            } else if (params.row.tx_hash === null && params.row.mainnet_request_status === 'S') {
-                return '채굴중';
-            } else {
-                return '실패';
-            }
-        }
       },
       {
           field: 'mainnet_request_status',
@@ -217,14 +207,31 @@ export default function Home() {
             }
       },
       {
-          field: 'send_status',
-          headerName: '전송요청',
+            field: 'done_status_dummy',
+            headerName: '채굴결과',
+            type: 'string',
+            flex: 0.07,
+            disableColumnMenu: true,
+            editable: false,
+            renderCell: (params) => {
+            if (params.row.tx_hash !== null && params.row.mainnet_request_status === 'S') {
+                return '완료';
+            } else if (params.row.tx_hash === null && params.row.mainnet_request_status === 'S') {
+                return '채굴중';
+            } else {
+                return '실패';
+            }
+        }
+      },
+      {
+          field: 'done_yn',
+          headerName: '분배상태',
           type: 'string',
           flex: 0.07,
           disableColumnMenu: true,
           editable: false,
           renderCell: (params) => {
-              const status = params.row.tx_hash != null ? '완료' : '요청전';
+              const status = params.row.done_yn == 'Y' ? '완료' : '미완료';
               return (
                   <div style={{ 
                       width: '100%',
@@ -251,10 +258,12 @@ export default function Home() {
           disableColumnMenu: true,
           editable: false,
       },
+      /*
       {
         field: 'detail',
         headerName: '상세정보',
         flex: 0.08,
+        hideable:true,
         disableColumnMenu: true,
         renderCell: (params) => {
             const getButtonColor = () => {
@@ -318,6 +327,7 @@ export default function Home() {
             );
         },
       },
+      */
     ];
 
     const detailColumns: GridColDef[] = [
@@ -421,6 +431,9 @@ export default function Home() {
           const fromDate = startDate.format('YYYY-MM-DD').replace(/-/g, '');
 
           setNodeList([]);
+          setCompanyList([]);
+          setScheduleStatus(false);
+          setSpreadStatus(false);
 
           const response = await fetch('/api/mining/miningList', {
                 method: 'POST',
@@ -432,12 +445,25 @@ export default function Home() {
 
             const data = await response.json();
 
-            console.log(data);
 
             if (response.ok) {
               
                 setNodeList(data.result_data.map((data, idx) => ({ id: idx + 1, ...data })));
                 setFilterNodeList(data.result_data.map((data, idx) => ({ id: idx + 1, ...data })));
+
+                setCompanyList(data.result_company_list);
+
+                if(data.result_schedule_info.length > 0){
+
+                  setScheduleStatus(data.result_schedule_info[0].scheduled_yn == 'Y');
+                  setSpreadStatus(data.result_schedule_info[0].spreaded_yn == 'Y');
+
+                }else{
+
+                  setScheduleStatus(false);
+                  setSpreadStatus(false);
+
+                }
             
             } else {
             
@@ -855,6 +881,106 @@ export default function Home() {
         }
     };
 
+    const handlePassFunc = async() => {
+
+        if(!scheduleStatus){
+
+          alert('채굴 완료 이후 분배가 가능합니다.');
+          return;
+
+        }
+
+        if(spreadStatus){
+
+          alert('분배완료 상태입니다.');
+          return;
+
+        }
+        
+        setPassDialogOpen(true);
+    };
+
+    const handleAuthSpreadCheck = async() => {
+
+
+        if(password.length == 0){
+
+          alert('화면잠금 비밀번호를 입력해주세요');
+          return;
+
+        }
+
+        setLoading(true);
+
+        try {
+
+          const response = await fetch('/api/mining/authSpreadCheck', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ password }),
+            });
+
+            const data = await response.json();
+
+            console.log(data);
+
+            if (data.result == 'success') {
+        
+                setPassDialogOpen(false);
+                setPassword('');
+
+                handleSpreadFunc();
+             
+            } else {
+            
+                alert(data.info);
+            
+            }
+
+        } catch (error) {
+            console.log(error);
+        } finally {
+            setLoading(false);
+        }
+
+    };
+
+    const handleSpreadFunc = async() => {
+        
+        try {
+
+            console.log(process.env.BATCH_LIVE_URL);
+
+//            const response = await axios.post(process.env.BATCH_LIVE_URL + '/api/mining/spread', {
+            const response = await axios.post('http://localhost:3004/api/mining/spread', {
+
+                round_date: startDate.format('YYYY-MM-DD').replace(/-/g, ''),
+
+            }, {
+
+            
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (response.data.result == 'success') {
+
+                get_NodeList();
+
+                alert('분배완료');
+
+            }else{
+                alert('분배실패');
+            }
+
+        } catch (error) {
+            console.log(error);
+        }
+    };
+
 
     return (
 
@@ -874,36 +1000,48 @@ export default function Home() {
 
         <div style={{ marginTop: '5px', display: 'flex', justifyContent: 'space-between', width: '100%' }}>
             <Paper style={{ padding: '10px', flex: 1, marginRight: '10px', display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-                <Typography style={{ fontSize: '14x', color: "#1f1f26"  }}>총 채굴횟수</Typography>
+                <Typography style={{ fontSize: '14x', color: "#1f1f26"  }}>요청된 채굴횟수</Typography>
                 <Typography style={{ fontSize: "24px", fontWeight: "bold", color: "#1f1f26" }}>
                     {filterNodeList.length.toLocaleString('ko-KR')}
                 </Typography>
             </Paper>
             <Paper style={{ padding: '10px', flex: 1, marginRight: '10px', display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-                <Typography style={{ fontSize: '14px', color: "#1f1f26"  }}>채굴수량</Typography>
+                <Typography style={{ fontSize: '14px', color: "#1f1f26"  }}>요청된 채굴수량</Typography>
                 <Typography style={{ fontSize: "24px", fontWeight: "bold", color: "#1f1f26" }}>
-                    {filterNodeList
+                    {(filterNodeList
                         .filter(node => node.mainnet_request_status === 'S')
                         .reduce((sum, node) => sum + Number(node.mining_amount || 0), 0)
-                        .toLocaleString('ko-KR')} PTH
+                    * 2).toLocaleString('ko-KR')} PTH
                 </Typography>
             </Paper>
             <Paper style={{ padding: '10px', flex: 1, marginRight: '10px', display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-                <Typography style={{ fontSize: '14px', color: "#1f1f26"  }}>채굴완료</Typography>
+                <Typography style={{ fontSize: '14px', color: "#1f1f26"  }}>요청상태</Typography>
                 <Typography style={{ fontSize: "24px", fontWeight: "bold", color: "#1f1f26" }}>
-                    {filterNodeList.filter(node => node.mainnet_request_status == 'S' && node.tx_hash != null).length.toLocaleString('ko-KR')}
+                    {scheduleStatus ? '요청완료' : '예정'}
                 </Typography>
             </Paper>
             <Paper style={{ padding: '10px', flex: 1, marginRight: '10px', display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-                <Typography style={{ fontSize: '14px', color: "#1f1f26"  }}>채굴중</Typography>
+                <Typography style={{ fontSize: '14px', color: "#1f1f26"  }}>채굴진행중</Typography>
                 <Typography style={{ fontSize: "24px", fontWeight: "bold", color: "#1f1f26"}}>
-                    {filterNodeList.filter(node => node.mainnet_request_status == 'S' && node.tx_hash == null).length.toLocaleString('ko-KR')}
+                    {filterNodeList.filter(node => (node.mainnet_request_status == 'S' && node.done_yn == 'N')).length.toLocaleString('ko-KR')}
+                </Typography>
+            </Paper>
+            <Paper style={{ padding: '10px', flex: 1, marginRight: '10px', display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+                <Typography style={{ fontSize: '14px', color: "#1f1f26"  }}>채굴성공</Typography>
+                <Typography style={{ fontSize: "24px", fontWeight: "bold", color: "#1f1f26"}}>
+                    {filterNodeList.filter(node => (node.mainnet_request_status == 'S' && node.done_yn == 'Y') && node.tx_hash != null).length.toLocaleString('ko-KR')}
                 </Typography>
             </Paper>
             <Paper style={{ padding: '10px', flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
                 <Typography style={{ fontSize: '14px', color: "#1f1f26"  }}>채굴실패</Typography>
                 <Typography style={{ fontSize: "24px", fontWeight: "bold", color: "#1f1f26"}}>
-                    {filterNodeList.filter(node => node.mainnet_request_status === 'F').length.toLocaleString('ko-KR')}
+                    {filterNodeList.filter(node => (node.mainnet_request_status == 'F' || node.done_yn == 'F')).length.toLocaleString('ko-KR')}
+                </Typography>
+            </Paper>
+            <Paper style={{ padding: '10px', flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+                <Typography style={{ fontSize: '14px', color: "#1f1f26"  }}>분배여부</Typography>
+                <Typography style={{ fontSize: "24px", fontWeight: "bold", color: true ? 'green' : '#1f1f26'}}>
+                    {spreadStatus ? '분배완료' : '분배대기'}
                 </Typography>
             </Paper>
         </div>
@@ -1081,9 +1219,25 @@ export default function Home() {
                     marginRight:"10px",
                     fontSize: '14px'
                 }} 
-                onClick={handleTestFunc}
+                onClick={handleClickSearch}
             >
                 검색
+            </Button>
+            <Button 
+                id="keyBtns" 
+                variant="outlined" 
+                style={{
+                    color:"white",
+                    backgroundColor:"blue", 
+                    borderColor:"blue",
+                    height:"33px",
+                    width:'100px',
+                    marginRight:"10px",
+                    fontSize: '14px'
+                }} 
+                onClick={handlePassFunc}
+            >
+                분배
             </Button>
 
         </div>
@@ -1373,6 +1527,204 @@ export default function Home() {
                     startIcon={<CloseIcon style={{ fontSize: '20px', color: 'white' }} />}
                 >
                     닫기
+                </Button>
+            </DialogActions>
+        </Dialog>
+
+        <Dialog 
+            open={passDialogOpen} 
+            onClose={() => {
+                setPassDialogOpen(false);
+            }}
+            PaperProps={{
+                style: {
+                    width: '550px',
+                    padding: '0',
+                },
+            }}
+        >
+            <div style={{ 
+                display: 'flex', 
+                justifyContent: 'space-between', 
+                alignItems: 'center',
+                borderBottom: '1px solid #e0e0e0',
+                padding: '20px',
+                backgroundColor: '#2C73D2'
+            }}>
+                <DialogTitle 
+                    style={{
+                        fontWeight: 'bold', 
+                        margin: '0',
+                        padding: '0',
+                        fontSize: '16px',
+                        color: 'white'
+                    }}
+                >
+                    분배 실행
+                </DialogTitle>
+                <IconButton
+                    onClick={() => {
+                        setPassDialogOpen(false);
+                        setPassword('');
+                    }}
+                    sx={{
+                        padding: '0',
+                        '&:hover': {
+                            backgroundColor: 'transparent'
+                        }
+                    }}
+                >
+                    <CloseIcon sx={{ fontSize: '20px', color: 'white' }} />
+                </IconButton>
+            </div>
+
+            <DialogContent>
+
+            <Typography sx={{fontSize:"13px",  color: '#1f1f26', fontWeight:'bold' }}>
+                분배 예정 정보
+            </Typography>
+            
+            <Box sx={{ 
+                    backgroundColor: '#ffffff',
+                    borderRadius: '10px',
+                    p: 2.5,
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.06)',
+                    border: '1px solid #eaeaea',
+                    mb: 2,
+                    marginTop:'10px',
+                }}>
+
+
+                <div style={{padding:'10px', backgroundColor:'#f1f1f1', flex: '0 0 150px', marginTop:'10px' }}>
+                    <Typography sx={{fontSize:"13px",  color: '#1f1f26', }}>
+                        분배수량 : {filterNodeList
+                        .filter(node => node.mainnet_request_status === 'S')
+                        .reduce((sum, node) => sum + Number(node.mining_amount || 0), 0)
+                        .toLocaleString('ko-KR')} PTH
+                    </Typography>
+
+                    <Typography sx={{fontSize:"13px",  color: '#1f1f26', marginTop:'10px'}}>
+                        플라스틱히어로 글로벌 : 
+                        {(parseInt(companyList[0]?.mining_amount) * nodeList?.length)
+                        .toLocaleString('ko-KR')} PTH
+                    </Typography>
+
+                    <Typography sx={{fontSize:"13px",  color: '#1f1f26', marginTop:'5px'}}>
+                        플라스틱히어로 코리아 : 
+                        {(parseInt(companyList[1]?.mining_amount) * nodeList?.length)
+                        .toLocaleString('ko-KR')} PTH
+                    </Typography>
+
+                    <Typography sx={{fontSize:"13px",  color: '#1f1f26', marginTop:'5px'}}>
+                        에코센트레 : 
+                        {(parseInt(companyList[2]?.mining_amount) * nodeList?.length)
+                        .toLocaleString('ko-KR')} PTH
+                    </Typography>
+
+                    <Typography sx={{fontSize:"13px",  color: '#1f1f26', marginTop:'5px'}}>
+                        기부 : 
+                        {(parseInt(companyList[3]?.mining_amount) * nodeList?.length)
+                        .toLocaleString('ko-KR')} PTH
+                    </Typography>
+
+                    <Typography sx={{fontSize:"13px",  color: '#1f1f26', marginTop:'5px'}}>
+                        브릭스트림 : 
+                        {(parseInt(companyList[4]?.mining_amount) * nodeList?.length)
+                        .toLocaleString('ko-KR')} PTH
+                    </Typography>
+
+                </div>
+
+                </Box>
+
+                <Typography sx={{fontSize:"13px",  color: '#1f1f26', fontWeight:'bold' }}>
+                    분배 보안정보 입력
+                </Typography>
+
+                <Box sx={{ 
+                    backgroundColor: '#ffffff',
+                    borderRadius: '10px',
+                    p: 2.5,
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.06)',
+                    border: '1px solid #eaeaea',
+                    mb: 2,
+                    marginTop:'10px',
+                }}>
+
+                <FormControl sx={{minWidth: '330px' }} variant="outlined">
+                    <OutlinedInput
+                        id="keywordInfoField"
+                        sx={{
+                        height: "33px",
+                        backgroundColor: 'white',
+                        borderColor: '#e0e0e0',
+                        fontSize: '14px'
+                        }}
+                        placeholder='화면잠금 비밀번호를 입력해주세요'
+                        type='text'
+                        value={password}
+                        onChange={(text) => {
+
+                        setPassword(text.target.value);
+                        
+                        }}
+                    
+                        endAdornment={
+                        <InputAdornment position="end">
+                            <ClearIcon
+                            onClick={() => { setPassword(''); 
+
+                            }}
+                            />
+                        </InputAdornment>
+                        }
+                    />
+                </FormControl> 
+
+                </Box>
+
+            </DialogContent>
+
+            <DialogActions style={{ 
+                padding: '15px 20px',
+                marginTop: '20px', 
+
+                borderTop: '1px solid #e0e0e0',
+                backgroundColor: '#2C73D2'
+            }}>
+                <Button 
+                    onClick={() => {
+                        setPassDialogOpen(false);
+                        setPassword('');
+                    }}
+                    variant="outlined" 
+                    style={{ 
+                        color: 'white',
+                        borderColor: 'white',
+                        fontSize: '13px',
+                        height: '33px',
+                        backgroundColor: 'transparent'
+                    }}
+                    startIcon={<CloseIcon style={{ fontSize: '20px', color: 'white' }} />}
+                >
+                    닫기
+                </Button>
+                <Button 
+                    onClick={() => {
+
+                        handleAuthSpreadCheck();
+                    }}
+                    variant="outlined" 
+                    style={{ 
+                        color: 'white',
+                        borderColor: 'white',
+                        fontSize: '13px',
+                        height: '33px',
+                        backgroundColor: 'transparent'
+                    }}
+                    startIcon={<CheckCircleIcon style={{ fontSize: '20px', color: 'white' }} />}
+                >
+                    실행
                 </Button>
             </DialogActions>
         </Dialog>
