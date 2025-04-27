@@ -7,33 +7,24 @@ import sessionStore from './app/store/sessionStore';
 const JWT_SECRET = 'plastichero!*1'; // 실제 환경에서는 안전하게 관리해야 합니다.
 
 // 인증이 필요 없는 경로 목록
-const publicPaths = [
-  '/page/login', 
-  '/page/point/rewardInfo', 
-  '/api/login', 
-  '/api/logout',
-  '/api/public',  // 공개 API 경로 추가
-  '/public'       // 공개 미디어 접근 경로 추가
-];
+const publicPaths = ['/page/login', '/page/point/rewardInfo', '/api/login', '/api/logout'];
 
 export async function middleware(request) {
-  const { pathname } = request.nextUrl;
-  
-  // 공개 API 경로 또는 공개 미디어 경로는 인증 검사 없이 통과
-  if (pathname.startsWith('/api/public') || pathname.startsWith('/public')) {
-    console.log('Public path accessed:', pathname);
+  const pathname = request.nextUrl.pathname;
+
+  // 1. 인증이 필요 없는 경로는 검사 없이 통과
+  if (publicPaths.includes(pathname) || pathname.startsWith('/api/public') || pathname.startsWith('/public/media')) {
     return NextResponse.next();
   }
 
+  // 2. 토큰이 없으면 로그인 페이지로 리다이렉트
   const token = request.cookies.get('token')?.value;
-
-  // 토큰이 없으면 로그인 페이지로 리다이렉트
   if (!token) {
     console.log('middleware token empty');
     return NextResponse.redirect(new URL('/page/login', request.url));
   }
 
-  // 토큰 검증
+  // 3. 토큰 검증
   try {
     // 토큰이 'Bearer ' 접두사를 포함하고 있는지 확인하고 제거
     const actualToken = token.startsWith('Bearer ') ? token.split(' ')[1] : token;
@@ -63,10 +54,14 @@ export async function middleware(request) {
   }
 }
 
-// 미들웨어를 적용할 경로 설정
+// 미들웨어를 적용할 경로 설정 (특정 경로 명시적 제외)
 export const config = {
   matcher: [
-    // 특정 경로를 제외한 모든 경로에 미들웨어 적용
-    '/((?!_next/static|_next/image|favicon.ico|public/).*)',
+    /*
+     * 다음을 제외한 모든 경로에 미들웨어 적용:
+     * 1. 정적 파일 (_next/static, _next/image)
+     * 2. 파비콘
+     */
+    '/((?!_next/static|_next/image|favicon.ico).*)',
   ],
 };

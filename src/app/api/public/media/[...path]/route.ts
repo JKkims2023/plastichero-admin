@@ -7,8 +7,10 @@ export async function GET(
     request: NextRequest,
     { params }: { params: { path: string[] } }
 ) {
+    // 로그 추가
+    console.log(chalk.blue('🌐 Public Media API called:'), request.url);
+    console.log(chalk.blue('📂 Path params:'), params);
 
-    console.log('GET');
     try {
         // params 유효성 검사
         if (!params?.path) {
