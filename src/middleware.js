@@ -12,14 +12,16 @@ const publicPaths = [
   '/page/point/rewardInfo', 
   '/api/login', 
   '/api/logout',
-  '/api/public'  // 공개 API 경로 추가
+  '/api/public',  // 공개 API 경로 추가
+  '/public'       // 공개 미디어 접근 경로 추가
 ];
 
 export async function middleware(request) {
   const { pathname } = request.nextUrl;
   
-  // 공개 API 경로는 인증 검사 없이 통과
-  if (pathname.startsWith('/api/public')) {
+  // 공개 API 경로 또는 공개 미디어 경로는 인증 검사 없이 통과
+  if (pathname.startsWith('/api/public') || pathname.startsWith('/public')) {
+    console.log('Public path accessed:', pathname);
     return NextResponse.next();
   }
 
@@ -65,6 +67,6 @@ export async function middleware(request) {
 export const config = {
   matcher: [
     // 특정 경로를 제외한 모든 경로에 미들웨어 적용
-    '/((?!_next/static|_next/image|favicon.ico).*)',
+    '/((?!_next/static|_next/image|favicon.ico|public/).*)',
   ],
 };
