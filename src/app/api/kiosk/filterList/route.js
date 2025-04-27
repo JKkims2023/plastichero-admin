@@ -35,7 +35,7 @@ export async function POST(request) {
 
       from g5_member as N  inner join tbl_pth_wallet_info as W ON N.mb_no = W.user_idx and W.active = 'O' and W.is_main = 'O'
 
-      where N.mb_leave_date = '' and N.mb_id like '%${filterInfo}%'
+      where N.mb_leave_date = '' and N.mb_id like '%${filterInfo}%' and N.mb_kiosk_owner = 'Y'
       order by N.mb_datetime desc;
 
 

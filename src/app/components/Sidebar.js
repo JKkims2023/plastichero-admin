@@ -79,9 +79,10 @@ export default function Sidebar() {
             show_yn: 'show',
             checked: true,
             children: [
-                { href: '/page/user/normalUser', label: '• 일반 회원리스트', show_yn: 'show', checked: true },
-                { href: '/page/user/nodeUser', label: '• 노드 회원리스트', show_yn: 'show', checked: true },
+                { href: '/page/user/normalUser', label: '• 회원리스트', show_yn: 'show', checked: true },
+//                { href: '/page/user/nodeUser', label: '• 노드 회원리스트', show_yn: 'show', checked: true },
                 { href: '/page/user/kycInfo', label: '• KYC 정보관리', show_yn: 'show', checked: true },
+                { href: '/page/manage/lockInfo', label: '• LOCK 설정', show_yn: 'show', checked: true },
             ],
         },
         {
@@ -114,8 +115,8 @@ export default function Sidebar() {
                 { href: '/page/manage/noticeInfo', label: '• 공지 관리', show_yn: 'show', checked: true },
 //                { href: '/page/manage/mailInfo', label: '• 메일 인증내역', show_yn: 'show', checked: true },
 //                { href: '/page/manage/mailInfo', label: '• 메일 발송관리', show_yn: 'show', checked: true },
-//                { href: '/page/manage/smsInfo', label: '• SMS 인증내역', show_yn: 'show', checked: true },
-                { href: '/page/manage/lockInfo', label: '• Lock 설정', show_yn: 'show', checked: true },
+                { href: '/page/manage/smsInfo', label: '• SMS 인증내역', show_yn: 'show', checked: true },
+
 //                { href: '/page/user/blackList', label: '• 블랙리스트 관리', show_yn: 'show', checked: true },
                 { href: '/page/manage/supportInfo', label: '• 고객지원 관리', show_yn: 'show', checked: true },
 //                { href: '/page/manage/appInfo', label: '• 앱 관리', show_yn: 'show', checked: true },

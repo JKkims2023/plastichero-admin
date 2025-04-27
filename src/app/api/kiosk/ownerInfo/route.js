@@ -75,9 +75,11 @@ export async function POST(request) {
         if(W.address is null, 'Y', 'N') as not_match_user,
         if(W.address is null, '미 매칭 사용자', '매칭 사용자') as not_match_user_text        
 
-      from g5_member as N  inner join tbl_pth_wallet_info as W ON N.mb_no = W.user_idx and W.active = 'O' and W.is_main = 'O'
+      from g5_member as N  inner join tbl_pth_wallet_info as W ON 
+      
+      N.mb_no = W.user_idx and W.active = 'O' and W.is_main = 'O'
 
-      where N.mb_leave_date = ''
+      where N.mb_leave_date = '' and N.mb_kiosk_owner = 'Y'
       order by N.mb_datetime desc;
 
 

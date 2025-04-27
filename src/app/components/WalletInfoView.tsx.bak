@@ -257,14 +257,15 @@ const WalletInfoView = ({walletInfo}) => {
                 size="small"
                 sx={{ fontSize: '12px' }}
                 onClick={(event) => {
+                  
                     event.stopPropagation();
                     
-                    // 주소 가져오기
-                    const walletAddress = params.row.address;
-                    
-                    // 익스플로러 URL 생성 및 새 탭에서 열기
-                    const explorerUrl = `https://explorer.plasticherokorea.com/search-results?q=${walletAddress}`;
-                    window.open(explorerUrl, '_blank');
+
+                    ref_TargetWallet_Idx.current = parseInt(params.row.id) - 1;
+        
+                    get_WalletDetailHistory();
+        
+        
                 }}
             >
                 조회
@@ -361,12 +362,13 @@ const WalletInfoView = ({walletInfo}) => {
                 </Typography>
             </Box>
 
-            <Box sx={{ 
+            <Box sx={{
                 p: 2.5,
                 flex: '1 1 auto',
                 overflow: 'hidden',
                 display: 'flex',
                 flexDirection: 'column',
+                gap: 2,
                 backgroundColor: '#f8f9fa',
             }}>
                 {progressPoint ? 
@@ -392,43 +394,39 @@ const WalletInfoView = ({walletInfo}) => {
                         </Typography>
                     </Box>
                     :
-                    <Box sx={{ 
-                        flex: 1,
+                    <Box sx={{
                         display: 'flex',
                         flexDirection: 'column',
-                        overflow: 'hidden'
+                        gap: 2.5,
+                        height: '100%',
+                        overflow: 'auto',
+                        minHeight: 0
                     }}>
-                        <Box sx={{ 
+                        <Box sx={{
                             backgroundColor: '#ffffff',
                             p: 1,
                             boxShadow: '0 2px 4px rgba(0,0,0,0.06)',
                             border: '1px solid #eaeaea',
                             borderRadius: '10px',
-                            flex: 1,
-                            display: 'flex',
-                            flexDirection: 'column',
-                            overflow: 'hidden'
                         }}>
                             <StripedDataGrid 
                                 rows={walletList}
                                 columns={columns}
                                 autoHeight={false}
+
                                 initialState={{
                                     pagination: {
                                         paginationModel: {
-                                            pageSize: 10,
+                                        pageSize: 3,
                                         },
                                     },
                                 }}
-                                pageSizeOptions={[5, 10, 25, 50]}
+                                pageSizeOptions={[3]}
                                 rowHeight={42}
                                 columnHeaderHeight={45}
+
                                 sx={{
                                     border: 'none',
-                                    height: '100%',
-                                    '& .MuiDataGrid-root': {
-                                        border: 'none',
-                                    },
                                     '& .MuiDataGrid-columnHeaders': {
                                         backgroundColor: '#f8f9fa',
                                         borderBottom: '1px solid #eaeaea',
@@ -446,29 +444,33 @@ const WalletInfoView = ({walletInfo}) => {
                                         '&:hover': {
                                             backgroundColor: alpha('#1976d2', 0.12),
                                         }
-                                    },
-                                    '& .MuiDataGrid-footerContainer': {
-                                        borderTop: '1px solid #eaeaea',
-                                        backgroundColor: '#f8f9fa'
                                     }
                                 }}
+
                                 localeText={{
                                     toolbarExportCSV: "CVS 파일 저장",
                                     toolbarColumns: "헤더설정",
                                     toolbarFilters: "내부필터링",
                                     toolbarExport: "다운로드"
+                                    
                                 }}
                                 slotProps={{
                                     toolbar: {
                                         printOptions: { disableToolbarButton: true },
                                         csvOptions: { disableToolbarButton: true },
-                                    }
-                                }}
+                                        
+                                }}}
                                 getRowClassName={(params) =>
                                     params.indexRelativeToCurrentPage % 2 === 1 ? 'even' : 'odd'
                                 }
+                                style={{
+                                    height: '200px',
+                                    marginTop: '10px'
+                                }}
+
                             />
                         </Box>
+
                     </Box>
                 }
             </Box>
@@ -476,4 +478,4 @@ const WalletInfoView = ({walletInfo}) => {
     );
 };
 
-export default WalletInfoView;
+export default WalletInfoView; 
