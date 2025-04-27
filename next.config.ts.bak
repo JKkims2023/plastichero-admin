@@ -28,13 +28,8 @@ const nextConfig = {
                 source: '/uploads/:path*',
                 destination: '/api/uploads/:path*',
             },
-            // 공개 API용 경로 추가
-            {
-                source: '/public/media/:path*',
-                destination: '/api/public/media/:path*',
-            },
         ];
     },
 } as NextConfig;
 
-export default nextConfig;
+export default nextConfig; 
