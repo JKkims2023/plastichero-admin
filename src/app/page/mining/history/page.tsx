@@ -954,7 +954,7 @@ export default function Home() {
             console.log(process.env.BATCH_LIVE_URL);
 
 //            const response = await axios.post(process.env.BATCH_LIVE_URL + '/api/mining/spread', {
-            const response = await axios.post('http://localhost:3004/api/mining/spread', {
+            const response = await axios.post(process.env.BATCH_LIVE_URL + '/api/mining/spread', {
 
                 round_date: startDate.format('YYYY-MM-DD').replace(/-/g, ''),
 
