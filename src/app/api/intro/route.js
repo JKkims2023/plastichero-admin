@@ -16,8 +16,14 @@ export async function POST(request) {
       SELECT 
 
         (select count(kc_no) from g5_kiosk) as node_count, 
-        (select count(kc_no) from g5_kiosk where wallet_idx <> -1) as run_count,
-        (select count(kc_no) from g5_kiosk where wallet_idx = -1) as stop_count,
+        (
+        select count(K.kc_no) from g5_kiosk as K inner join tbl_pth_wallet_info as W ON
+        K.wallet_idx = W.idx  where K.wallet_idx <> -1 and (W.new_address is not null && W.new_address <> '')
+        ) as run_count,
+        (
+        select count(K.kc_no) from g5_kiosk as K inner join tbl_pth_wallet_info as W ON
+        K.wallet_idx = W.idx  where K.wallet_idx = -1 or (W.new_address is  null or W.new_address = '')
+        ) as stop_count,
         IF((select sum(mining_amount) from g5_mining_history where mainnet_request_status = 'S' and done_yn = 'Y') is null, 0, (select sum(mining_amount) from g5_mining_history where mainnet_request_status = 'S' and done_yn = 'Y')) as mining_amount,
         IF((select count(node_no) from g5_mining_history where mainnet_request_status = 'S' and done_yn = 'Y') is null, 0, (select count(node_no) from g5_mining_history where mainnet_request_status = 'S' and done_yn = 'Y')) as mining_count
 
@@ -89,7 +95,6 @@ export async function POST(request) {
 
     const [rows_done_schedule, fields_done_schedule] = await connection.execute(sql_done_schedule);
 
-    console.log(rows_done_schedule);
 
     if(rows_done_schedule.length > 0){
 
@@ -103,8 +108,6 @@ export async function POST(request) {
       };
 
     }
-
-    console.log(result_done_schedule);
 
     const sql_done_spread = `
       
@@ -144,7 +147,6 @@ export async function POST(request) {
 
     }
 
-    console.log(rows_mining[0]);
 
     const response = NextResponse.json({ 
         

@@ -231,12 +231,12 @@ export default function Home() {
 
                 console.log(params.row);
 
-                setInfoManagerID(params.row.manager_mail);
-                setInfoOwnerID(params.row.owner_id);
-                setInfoSellStatus(params.row.sell_status);
-                setFinalInfoAddress(params.row.match_address);
-                setFinalInfoAddressIdx(params.row.wallet_idx);
-                setTargetKioskID(params.row.kc_no);                
+                setInfoManagerID(params.row.manager_mail || '');
+                setInfoOwnerID(params.row.owner_id || '');
+                setInfoSellStatus(params.row.sell_status || '0');
+                setFinalInfoAddress(params.row.match_address || '');
+                setFinalInfoAddressIdx(params.row.wallet_idx || -1);
+                setTargetKioskID(params.row.kc_no || -1);                
 
                 setEditDialogOpen(true);
             };
@@ -261,13 +261,18 @@ export default function Home() {
 
     // 디바운스 함수 - 모든 디바운싱에 사용
     const debounce = useCallback((callback: Function, delay: number = 300) => {
+        
+        try{
         if (debounceTimerRef.current) {
             clearTimeout(debounceTimerRef.current);
         }
         
         debounceTimerRef.current = setTimeout(() => {
             callback();
-        }, delay);
+            }, delay);
+        } catch(error) {
+            console.log(error);
+        }
     }, []);
 
     // useEffect 훅들
@@ -756,14 +761,16 @@ export default function Home() {
         console.log('finalInfoAddressIdx : ' + finalInfoAddressIdx);
         console.log('infoOwnerIdx : ' + infoOwnerIdx);
         console.log('selectedWalletIdx : ' + selectedWalletIdx);
+        console.log('targetKioskID : ' + targetKioskID);
 
-        return;
-
+        console.log('jk what?');
 
         const infoAddress = finalInfoAddress;
         const infoAddressIdx = finalInfoAddressIdx;
         const infoEmail = infoOwnerID.trim();
         const infoTarget = targetKioskID;
+
+      //  return;
 
         const response = await fetch('/api/kiosk/changeOwnerInfo', {
               
@@ -771,7 +778,7 @@ export default function Home() {
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ infoAddress, infoAddressIdx, infoOwnerIdx, infoEmail, infoTarget, infoSellStatus }),
+            body: JSON.stringify({infoOwnerID, infoAddress, infoAddressIdx, infoOwnerIdx, infoEmail, infoTarget, infoSellStatus }),
         });
 
         const data = await response.json();
@@ -1494,7 +1501,7 @@ export default function Home() {
                                 fontSize: '14px'
                               }}
                               type='text'
-                              value={infoOwnerID}
+                              value={infoOwnerID || ''}
                               onChange={(text) => {
 
                                 if(text.target.value.length > 0){

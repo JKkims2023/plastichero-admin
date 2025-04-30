@@ -26,16 +26,16 @@ export async function POST(request) {
         N.mb_email,
         N.mb_name, 
         N.mb_id,
-        W.address as real_address,
+        W.new_address as real_address,
         W.email as real_email,
         W.idx as wallet_idx,
         W.user_idx,
-        if(W.address is null, 'Y', 'N') as not_match_user,
-        if(W.address is null, '미 매칭 사용자', '매칭 사용자') as not_match_user_text        
+        if(W.new_address is null, 'Y', 'N') as not_match_user,
+        if(W.new_address is null, '미 매칭 사용자', '매칭 사용자') as not_match_user_text        
 
       from g5_member as N  inner join tbl_pth_wallet_info as W ON N.mb_no = W.user_idx and W.active = 'O' and W.is_main = 'O'
 
-      where N.mb_leave_date = '' and N.mb_id like '%${filterInfo}%' and N.mb_kiosk_owner = 'Y'
+      where N.mb_leave_date = '' and N.mb_id like '%${filterInfo}%' and (W.new_address is not null && W.new_address <> '')
       order by N.mb_datetime desc;
 
 

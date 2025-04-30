@@ -265,6 +265,7 @@ export default function Home() {
                 backgroundColor: '#f8fafc',
                 borderRadius: '8px',
                 padding: '16px',
+                display: 'none',
                 transition: 'transform 0.2s',
                 '&:hover': { transform: 'translateY(-2px)' }
               }}>

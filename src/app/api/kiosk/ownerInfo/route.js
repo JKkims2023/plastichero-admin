@@ -130,7 +130,6 @@ export async function POST(request) {
 
     const [rows_node_member, fields_node_member] = await connection.execute(sql_node_member);
 
-    console.log(rows_node_member.length);
 
     const response = NextResponse.json({ 
         

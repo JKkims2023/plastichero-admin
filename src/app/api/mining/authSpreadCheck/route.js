@@ -18,9 +18,9 @@ export async function POST(request) {
 
     const connection = await getConnection();
 
-//    const auth_id = 'ppc4497';
+    const auth_id = 'ppc4497';
 
-  const auth_id = 'kwicmining';
+//  const auth_id = 'kwicmining';
 
     const sql = `
     

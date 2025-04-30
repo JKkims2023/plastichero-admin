@@ -12,7 +12,7 @@ export async function POST(request) {
   try{
 
 
-    const { infoAddress, infoAddressIdx, infoOwnerIdx, infoEmail, infoTarget, infoSellStatus } = await request.json();
+    const {infoOwnerID, infoAddress, infoAddressIdx, infoOwnerIdx, infoEmail, infoTarget, infoSellStatus } = await request.json();
 
     console.log('infoAddress : ' + infoAddress);
     console.log('infoAddressIdx : ' + infoAddressIdx);
@@ -54,7 +54,7 @@ export async function POST(request) {
 
         g5_kiosk SET 
 
-        owner_id = '${infoEmail}',
+        owner_id = '${infoOwnerID}',
         owner_key = ${infoOwnerIdx},
         wallet_idx = ${infoAddressIdx},
         sell_status = '${infoSellStatus}'
@@ -65,48 +65,9 @@ export async function POST(request) {
 
     const [rows, fields] = await connection.execute(sql);
 
-/*
-    // 업데이트 성공 시 실제 노드 적용
-    if(rows.affectedRows == 1){
 
-      const sql_update_node = `
-
-        UPDATE g5_node_list SET
-
-        wallet_idx = ${infoAddressIdx},
-
-        mb_no = ${infoOwnerIdx}
-      
-        where kc_kiosk_id = ${infoTarget}
-
-      `;
-
-      const [rows_node, fields_node] = await connection.execute(sql_update_node);
-
-      await connection.commit(); // 커밋 처리
-
-      const response = NextResponse.json({ 
-      
-        result: 'success',
-        result_data : [],
-      
-      });
-  
-
-      connection.release(); // 연결 반환
-      
-      return response;
-
-    }else{
-
-      await connection.rollback(); // 롤백 처리
-  
-      connection.release(); // 연결 반환
-
-      return NextResponse.json({ message: '정보 수정 중 문제가 발생하였습니다.' }, { status: 401 });
-  
-    }
-    */
+    console.log( sql);
+    console.log(rows);
 
     const response = NextResponse.json({ 
       

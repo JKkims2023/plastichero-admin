@@ -21,7 +21,8 @@ export async function POST(request) {
       SELECT 
 
         L.idx, 
-        L.address, 
+        L.address,
+        W.new_address,
         L.memo,
         L.lock_type,
         L.lock_balance,

@@ -19,12 +19,6 @@ const pool = mysql.createPool({
 module.exports.getConnection = async function() {
   try {
 
-    console.log('getConnection');
-    console.log(DB_HOST);
-    console.log(DB_PORT);
-    console.log(DB_USER);
-    console.log(DB_PASSWORD);
-    console.log(DB_DATABASE);
     const connection = await pool.getConnection();
     return connection;
   } catch (error) {
