@@ -11,14 +11,8 @@ export async function POST(request) {
   try{
 
 
-    const {infoOwnerID, infoAddress, infoAddressIdx, infoOwnerIdx, infoEmail, infoTarget, infoSellStatus } = await request.json();
+    const {infoTarget} = await request.json();
 
-    console.log('infoAddress : ' + infoAddress);
-    console.log('infoAddressIdx : ' + infoAddressIdx);
-    console.log('infoOwnerIdx : ' + infoOwnerIdx);
-    console.log('infoEmail : ' + infoEmail);
-    console.log('infoTarget : ' + infoTarget);
-    console.log('infoSellStatus : ' + infoSellStatus);
 
     const sql = `
       
@@ -26,10 +20,10 @@ export async function POST(request) {
 
         g5_kiosk SET 
 
-        owner_id = '${infoOwnerID}',
-        owner_key = ${infoOwnerIdx},
-        wallet_idx = ${infoAddressIdx},
-        sell_status = '${infoSellStatus}'
+        owner_id = '',
+        owner_key = -1,
+        wallet_idx = -1,
+        sell_status = '0'
 
       WHERE kc_no = ${infoTarget}
 

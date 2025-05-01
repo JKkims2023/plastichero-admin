@@ -40,18 +40,20 @@ export async function POST(request) {
         K.kg_no,
         K.kctry_no,
         K.owner_id,
+        K.owner_key,
         K.manager_mail,
         K.sell_status,
         K.wallet_idx,
         M.mb_name,
-        W.address as match_address,
+        W.new_address as match_address,
         if(K.sell_status = '0', '판매전', if(K.sell_status = '1', '판매중', if(K.sell_status = '3', '판매완료(운영지원금)', '판매완료(직접채굴)'))) as sell_status_text,
         (select kc_name from g5_kiosk_country where kctry_no = K.kctry_no) as kc_name
 
         FROM 
         
-        g5_kiosk as K left outer join tbl_pth_wallet_info as W ON K.owner_id = W.email and W.active = 'O' 
-        left outer join g5_member as M ON W.user_idx = M.mb_no 
+        g5_kiosk as K left outer join g5_member as M ON K.owner_key = M.mb_no
+        left outer join tbl_pth_wallet_info as W ON M.mb_no = W.user_idx and K.wallet_idx = W.idx and W.active = 'O' 
+         
         
         order by K.kc_no asc;
 
@@ -85,52 +87,8 @@ export async function POST(request) {
 
     `;
 
-    /*
-    
-      SELECT
-      
-        DATE_FORMAT(N.mb_datetime , '%Y-%m-%d %H:%i:%S') as mb_datetime,
-        N.mb_email,
-        M.mb_name, 
-        M.mb_id,
-        W.address as real_address,
-        W.email as real_email,
-        W.idx as wallet_idx,
-        W.user_idx,
-        if(W.address is null, 'Y', 'N') as not_match_user,
-        if(W.address is null, '미 매칭 사용자', '매칭 사용자') as not_match_user_text        
-
-      from g5_member as N inner join g5_member_kyc as K ON N.mb_no = K.mb_user_key and K.approval_yn = 'Y' left outer join tbl_pth_wallet_info as W ON BINARY(N.mb_email) = BINARY(W.email) and W.active = 'O' left outer join g5_member as M ON W.user_idx = M.mb_no 
-
-      order by N.mb_datetime desc;
-    */
-
-    /*
-
-      SELECT
-      
-        DATE_FORMAT(N.reg_date , '%Y-%m-%d %H:%i:%S') as mb_datetime,
-        N.mb_email,
-        N.mb_invite_code,
-        N.mb_invite_code as invite_code,
-        N.wallet_address,
-        M.mb_name, 
-        M.mb_id,
-        W.address as real_address,
-        W.email as real_email,
-        W.idx as wallet_idx,
-        W.user_idx,
-        if(W.address is null, 'Y', 'N') as not_match_user,
-        if(W.address is null, '미 매칭 사용자', '매칭 사용자') as not_match_user_text        
-
-      from g5_node_member as N left outer join tbl_pth_wallet_info as W ON BINARY(N.mb_email) = BINARY(W.email) and W.active = 'O' left outer join g5_member as M ON W.user_idx = M.mb_no 
-
-      order by N.reg_date desc;
-    */
-
     const [rows_node_member, fields_node_member] = await connection.execute(sql_node_member);
 
-    console.log(rows);
 
     const response = NextResponse.json({ 
         

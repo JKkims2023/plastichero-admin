@@ -163,6 +163,29 @@ export default function Home() {
           editable: false,
       },
       {
+          field: 'match_address',
+          headerName: '마이그레이션',
+          type: 'string',
+          flex: 0.8,
+          disableColumnMenu: true,
+          editable: false,
+          renderCell: (params) => {
+              const isCompleted = params.row.match_address || params.row.match_address === '';
+              return (
+                  <div style={{ 
+                      width: '100%',
+                      display: 'flex',
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                      fontSize: '13px',
+                      color: isCompleted ? 'blue' : 'red'
+                  }}>
+                      {isCompleted ? '완료' : '미완료'}
+                  </div>
+              );
+          }
+      },
+      {
           field: 'kc_kiosk_id',
           headerName: '키오스크ID',
           type: 'string',
@@ -233,9 +256,11 @@ export default function Home() {
 
                 setInfoManagerID(params.row.manager_mail || '');
                 setInfoOwnerID(params.row.owner_id || '');
+                setInfoOwnerIdx(params.row.owner_key || -1);
                 setInfoSellStatus(params.row.sell_status || '0');
                 setFinalInfoAddress(params.row.match_address || '');
                 setFinalInfoAddressIdx(params.row.wallet_idx || -1);
+                setSelectedWalletIdx(params.row.wallet_idx || -1);
                 setTargetKioskID(params.row.kc_no || -1);                
 
                 setEditDialogOpen(true);
@@ -762,13 +787,23 @@ export default function Home() {
         console.log('infoOwnerIdx : ' + infoOwnerIdx);
         console.log('selectedWalletIdx : ' + selectedWalletIdx);
         console.log('targetKioskID : ' + targetKioskID);
+        console.log('infoSellStatus : ' + infoSellStatus);
 
-        console.log('jk what?');
 
         const infoAddress = finalInfoAddress;
         const infoAddressIdx = finalInfoAddressIdx;
         const infoEmail = infoOwnerID.trim();
         const infoTarget = targetKioskID;
+        
+        let finalInfoSellStatus = infoSellStatus;
+
+        if(finalInfoSellStatus == '0' || finalInfoSellStatus == '' || finalInfoSellStatus == 'undefined'){
+
+            finalInfoSellStatus = '1';
+
+        }
+
+        console.log('finalInfoSellStatus : ' + finalInfoSellStatus);
 
       //  return;
 
@@ -778,7 +813,7 @@ export default function Home() {
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({infoOwnerID, infoAddress, infoAddressIdx, infoOwnerIdx, infoEmail, infoTarget, infoSellStatus }),
+            body: JSON.stringify({infoOwnerID, infoAddress, infoAddressIdx, infoOwnerIdx, infoEmail, infoTarget, infoSellStatus : finalInfoSellStatus }),
         });
 
         const data = await response.json();
@@ -807,6 +842,50 @@ export default function Home() {
         console.log(error);
         alert(error);
 
+      }
+
+    };
+
+    const handleCallBackInfo = async() => {
+
+      try{
+
+
+        const response = await fetch('/api/kiosk/callBackInfo', {
+              
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({infoTarget : targetKioskID}),
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+
+          setEditDialogOpen(false);
+          setInfoOwnerID(''); 
+          setInfoSellStatus('0');
+          setFinalInfoAddress('');
+          setFinalInfoAddressIdx(-1);
+          setTargetKioskID(-1);
+          setFilterInfoOwnerList([]); 
+
+          get_UserInfo();
+
+          alert('키오스크 초기화가 완료되었습니다');
+
+
+        } else {
+
+            alert(data.message);
+        
+        }
+
+      }catch(error){
+
+        console.log(error);
       }
 
     };
@@ -1640,6 +1719,24 @@ export default function Home() {
                 >
                     닫기
                 </Button>
+                <div style={{display:'flex', flexDirection:'row', alignItems: 'center'}}>
+                <Button 
+                    onClick={handleCallBackInfo} 
+                    variant="contained" 
+                    startIcon={<EditIcon sx={{ fontSize: 18 }} />}
+                    sx={{ 
+                        fontSize: '13px',
+                        height: '32px',
+                        padding: '0 16px',
+                        marginLeft: '10px',
+                        backgroundColor: '#1976d2',
+                        '&:hover': {
+                            backgroundColor: '#1565c0'
+                        }
+                    }}
+                >
+                    회수
+                </Button>
                 <Button 
                     onClick={handleChangeMiningInfo} 
                     variant="contained" 
@@ -1648,6 +1745,7 @@ export default function Home() {
                         fontSize: '13px',
                         height: '32px',
                         padding: '0 16px',
+                        marginLeft: '10px',
                         backgroundColor: '#1976d2',
                         '&:hover': {
                             backgroundColor: '#1565c0'
@@ -1656,6 +1754,7 @@ export default function Home() {
                 >
                     적용
                 </Button>
+                </div>
             </DialogActions>
         </Dialog>
 
