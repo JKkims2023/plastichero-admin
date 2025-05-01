@@ -2,6 +2,7 @@ const mysql = require('mysql2/promise');
 
 const DATABASE_URL='jdbc:mysql://49.247.43.209:3306/ecocentre0'
 const DB_HOST='49.247.43.209'
+//const DB_HOST='49.247.46.114'
 const DB_PORT=3306
 const DB_USER='ecocentre0'
 const DB_PASSWORD='eco_centre0@@'

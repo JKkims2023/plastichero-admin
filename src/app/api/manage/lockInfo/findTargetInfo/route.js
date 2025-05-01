@@ -27,6 +27,7 @@ export async function POST(request) {
         
         SELECT 
 
+          W.idx as wallet_idx,
           W.user_idx,
           W.email,
           W.new_address as address,
@@ -51,7 +52,8 @@ export async function POST(request) {
           M.mb_name,
           W.user_idx,
           W.new_address,
-          W.email
+          W.email,
+          W.idx as wallet_idx
 
 
         FROM g5_member as M left outer join tbl_pth_wallet_info as W ON M.mb_no = W.user_idx 
@@ -73,7 +75,8 @@ export async function POST(request) {
             M.mb_name,
             W.user_idx,
             W.new_address as address,
-            W.email
+            W.email,
+            W.idx as wallet_idx
 
 
           FROM g5_member as M left outer join tbl_pth_wallet_info as W ON M.mb_no = W.user_idx 
@@ -95,7 +98,8 @@ export async function POST(request) {
           W.email,
           W.new_address as address,
           M.mb_id,
-          M.mb_name
+          M.mb_name,
+          W.idx as wallet_idx
 
         FROM tbl_pth_wallet_info as W left outer join g5_member as M ON W.user_idx = M.mb_no
 
@@ -108,8 +112,6 @@ export async function POST(request) {
 
     } 
 
-
-    console.log('sql : ', sql);
 
     const [rows, fields] = await connection.execute(sql);
 

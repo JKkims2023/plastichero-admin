@@ -7,7 +7,6 @@ export async function POST(request) {
 
   const connection = await getConnection();
 
-  await connection.beginTransaction(); // 트랜잭션 시작
 
   try{
 
@@ -20,33 +19,6 @@ export async function POST(request) {
     console.log('infoEmail : ' + infoEmail);
     console.log('infoTarget : ' + infoTarget);
     console.log('infoSellStatus : ' + infoSellStatus);
-
-    /*
-
-    if(infoAddress == '' || infoAddress == null || infoAddress == 'undefined'){
-    
-      return NextResponse.json({ message: '소유자 지갑주소를 수신하지 못했습니다.' }, { status: 401 });
-    
-    }
-
-    if(infoEmail == '' || infoEmail == null || infoEmail == 'undefined'){
-    
-      return NextResponse.json({ message: '소유자 이메일 정보를 수신하지 못했습니다.' }, { status: 401 });
-    
-    }
-
-    if(infoTarget == '' || infoTarget == null || infoTarget == 'undefined'){
-    
-      return NextResponse.json({ message: '키오스크 타겟정보를 수신하지 못했습니다.' }, { status: 401 });
-    
-    }
-
-    if(infoAddressIdx == -1 || infoAddressIdx == null || infoAddressIdx == 'undefined'){
-    
-      return NextResponse.json({ message: '소유자 지갑주소 인덱스 정보를 수신하지 못했습니다.' }, { status: 401 });
-    
-    }
-    */
 
     const sql = `
       
@@ -81,7 +53,15 @@ export async function POST(request) {
     return response;
     
   }catch(error){
-  
+
+    try{
+      
+      connection.release();
+
+    }catch(error){
+
+      console.log(error);
+    }
 
     const response = NextResponse.json({ 
       

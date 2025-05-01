@@ -12,7 +12,7 @@ export async function POST(request) {
 
   try{
 
-    const { address, memo, unlock_date, lock_type, lock_balance } = await request.json();
+    const { address, memo, unlock_date, lock_type, lock_balance, user_idx, wallet_idx } = await request.json();
 
     const connection = await getConnection();
 
@@ -28,15 +28,21 @@ export async function POST(request) {
       reg_date, 
       unlock_date, 
       lock_type, 
-      lock_balance)
+      lock_balance,
+      wallet_idx,
+      user_idx
+      )
       VALUES(
       '${address}', 
       '${memo}', 
       CURRENT_TIMESTAMP, 
       '${unlock_date}', 
       '${lock_type}', 
-      '${lock_balance}');
-    
+      '${lock_balance}',
+      '${wallet_idx}',
+      '${user_idx}'
+      );
+
       `;
 
     console.log('sql : ', sql);

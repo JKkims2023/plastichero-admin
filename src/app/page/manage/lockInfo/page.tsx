@@ -123,7 +123,7 @@ export default function Home() {
         unlock_date: '',
         lock_type: '0',
         lock_type_text: '',
-        lock_balance: '0'
+        lock_balance: ''
     });
 
     const [filterContentTypeMethod, setFilterContentTypeMethod] = React.useState(10);
@@ -138,8 +138,10 @@ export default function Home() {
         mb_id: '',
         email: '',
         unlock_date: '',
-        lock_type: '',
-        lock_balance: '0'
+        lock_type: '0',
+        lock_balance: '',
+        wallet_idx: '',
+        user_idx: ''
     });
 
     const [openSearchDialog, setOpenSearchDialog] = React.useState(false);
@@ -168,8 +170,16 @@ export default function Home() {
           disableColumnMenu: true, 
       },
       {
+            field: 'new_address',
+            headerName: '신규 지갑주소',
+            type: 'string',
+            flex: 3.5,              // 비율 조정
+            disableColumnMenu: true,
+            editable: false,
+      },
+      {
           field: 'address',
-          headerName: '지갑주소',
+          headerName: '기존 지갑주소',
           type: 'string',
           flex: 3.5,              // 비율 조정
           disableColumnMenu: true,
@@ -576,8 +586,10 @@ export default function Home() {
             mb_id: '',
             email: '',
             unlock_date: '',
-            lock_type: '',
-            lock_balance: '0'
+            lock_type: '0',
+            lock_balance: '',
+            wallet_idx: '',
+            user_idx: ''
         });
     };
 
@@ -620,7 +632,7 @@ export default function Home() {
             return;
         }
 
-        if (newLockInfo.lock_type === 'amount_lock' && 
+        if (newLockInfo.lock_type === '1' && 
             (!newLockInfo.lock_balance || newLockInfo.lock_balance === '0' || newLockInfo.lock_balance === '')) {
             alert('Lock 금액을 입력해주세요.');
             return;
@@ -631,7 +643,8 @@ export default function Home() {
             return;
         }
 
-        handleSubmit();
+
+        handleRegister();
     };
 
     // 실제 등록 처리 함수
@@ -661,8 +674,12 @@ export default function Home() {
                 address: newLockInfo.address, 
                 memo: '', 
                 unlock_date: formattedDate, // MySQL datetime 형식으로 변환된 날짜
-                lock_type: newLockInfo.lock_type === 'amount_lock' ? '1' : '0', 
-                lock_balance: newLockInfo.lock_type === 'amount_lock' ? newLockInfo.lock_balance : '0' 
+                lock_type: newLockInfo.lock_type, 
+                lock_balance: newLockInfo.lock_type == '1' ? newLockInfo.lock_balance : '0' ,
+                //@ts-ignore
+                wallet_idx: newLockInfo.wallet_idx,
+                //@ts-ignore
+                user_idx: newLockInfo.user_idx
               }),
             
             });
@@ -674,6 +691,8 @@ export default function Home() {
               handleCloseDialog();
               // 등록 후 목록 새로고침
               get_UserInfo();
+              
+              alert('Lock 정보가 등록되었습니다.');
               
             } else {
       
@@ -728,7 +747,9 @@ export default function Home() {
                 mb_name: '',
                 mb_id: '',
                 email: '',
-                lock_balance: '0'
+                lock_balance: '',
+                wallet_idx: '',
+                user_idx: ''
             });
         }
     };
@@ -769,7 +790,7 @@ export default function Home() {
                                 fontWeight: 'bold'
                             }}
                         >
-                        지갑주소 검색
+                        Lock 등록대상 검색
                         </Typography>
                     </Box>
                 </DialogTitle>
@@ -846,7 +867,7 @@ export default function Home() {
                                 height: '32px',
                                 fontSize: '13px',
                                 padding: '0 16px',
-                                minWidth: '80px'
+                                minWidth: '100px'
                             }}
                         >
                             검색
@@ -966,7 +987,9 @@ export default function Home() {
                                                         address: result.address,
                                                         mb_name: result.mb_name,
                                                         mb_id: result.mb_id,
-                                                        email: result.email
+                                                        email: result.email,
+                                                        wallet_idx: result.wallet_idx,
+                                                        user_idx: result.user_idx
                                                     });
                                                     handleCloseSearchDialog();
                                                 }}
@@ -1202,7 +1225,7 @@ export default function Home() {
                                         <Divider sx={{ mt: 2, mb: 1 }} />
                                     </Grid>
 
-                                    <Grid item xs={12}>
+                                    <Grid item xs={12} style={{ display: 'none' }}>
                                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.2, mb: 0.8 }}>
                                             <EmailIcon sx={{ color: '#1976d2', fontSize: 18 }} />
                                             <Typography variant="subtitle2" sx={{ 
@@ -1250,16 +1273,25 @@ export default function Home() {
                                                     value={newLockInfo.lock_type === '0' ? '지갑' : '금액'}
                                                     onChange={(e) => {
                                                         const newLockType = e.target.value === '지갑' ? '0' : '1';
+
+                                                        /*
                                                         const newLockBalance = newLockType === '1' ? 
                                                             (newLockInfo.lock_balance === '') ? '' : newLockInfo.lock_balance : 
                                                             '0';
+                                                        */
+
+                                                        const newLockBalance = '';
                                                         
                                                         setNewLockInfo({
                                                             ...newLockInfo,
                                                             lock_type: newLockType,
                                                             //@ts-ignore
                                                             lock_type_text: e.target.value === '지갑' ? '지갑 Lock' : '금액 Lock',
-                                                            lock_balance: newLockBalance
+                                                            lock_balance: newLockBalance,
+                                                            //@ts-ignore
+                                                            wallet_idx: newLockInfo.wallet_idx,
+                                                            //@ts-ignore
+                                                            user_idx: newLockInfo.user_idx
                                                         });
                                                     }}
                                                     sx={{ 
@@ -1277,6 +1309,54 @@ export default function Home() {
                                                 </Select>
                                             </FormControl>
                                         </Box>
+                                        {/* //@ts-ignore */}
+                                        {newLockInfo.lock_type == '1' && (
+                                            <Box sx={{ flex: 1, marginTop: '15px' }}>
+                                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.2, mb: 0.8 }}>
+                                            <AccountBalanceWalletIcon sx={{ color: '#1976d2', fontSize: 18 }} />
+                                            <Typography variant="subtitle2" sx={{ 
+                                                color: '#444',
+                                                fontSize: '13px',
+                                                fontWeight: 600,
+                                            }}>
+                                                설정 금액
+                                            </Typography>
+                                        </Box>
+                                        <TextField
+                                            fullWidth
+                                            //@ts-ignore
+                                            value={newLockInfo.lock_type === '1' ? (newLockInfo?.lock_balance || '') : ''}
+                                            size="small"
+                                            type="number"
+                                            onChange={(e) => setNewLockInfo({
+                                                ...newLockInfo,
+                                                lock_balance: e.target.value == '' ? '' : e.target.value
+                                            })}
+                                            InputProps={{
+                                                endAdornment: <InputAdornment position="end">PTH</InputAdornment>,
+                                                sx: {
+                                                    height: '32px'
+                                                }
+                                            }}
+                                            sx={{ 
+                                                mt: 1,
+                                                backgroundColor: 'white',
+                                                '& .MuiInputBase-input': {
+                                                    fontSize: '13px',
+                                                    padding: '8px 12px',
+                                                    height: '16px',
+                                                    color: '#666666'
+                                                },
+                                                '& .MuiInputAdornment-root': {
+                                                    '& .MuiTypography-root': {
+                                                        fontSize: '13px',
+                                                        color: '#666666'
+                                                    }
+                                                }
+                                            }}
+                                        />
+                                            </Box>
+                                        )}
                                         <Divider sx={{ mt: 2, mb: 1 }} />
                                     </Grid>
 
@@ -1397,7 +1477,7 @@ export default function Home() {
                 unlock_date: content?.unlock_date || '',
                 lock_type: content?.lock_type || '0',
                 lock_type_text: content?.lock_type_text || '',
-                lock_balance: content?.lock_balance || '0'
+                lock_balance: content?.lock_balance || ''
             });
             setOpenManageDialog(true);
         } catch (error) {
@@ -1450,7 +1530,7 @@ export default function Home() {
                     idx: selectedContent.idx,
                     unlock_date: formattedDate,
                     lock_type: selectedContent.lock_type,
-                    lock_balance: selectedContent.lock_type === '1' ? (selectedContent.lock_balance || '0') : '0'
+                    lock_balance: selectedContent.lock_type === '1' ? (selectedContent.lock_balance || '') : '0'
                 }),
             });
 
@@ -1654,7 +1734,7 @@ export default function Home() {
                             <Divider sx={{ mt: 2, mb: 1 }} />
                         </Grid>
 
-                        <Grid item xs={12}>
+                        <Grid item xs={12} style={{ display: 'none' }}>
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.2, mb: 0.8 }}>
                                 <EmailIcon sx={{ color: '#1976d2', fontSize: 18 }} />
                                 <Typography variant="subtitle2" sx={{ 
@@ -1988,6 +2068,32 @@ export default function Home() {
 
         console.error('Error:', error);
       }
+
+    };
+
+    const handleMigrationLock = async () => {
+
+     try{
+
+        const filterInfo = '';
+        const keyword = ''; 
+
+        const response = await fetch('/api/manage/lockInfo/migration_lock', {
+
+            method: 'POST',
+            body: JSON.stringify({ filterInfo, keyword })
+  
+          });
+  
+          const data = await response.json();
+
+  
+          console.log(data);
+
+     }catch(error){
+
+        console.error('Error:', error);
+     }
 
     };
 

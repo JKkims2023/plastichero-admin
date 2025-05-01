@@ -50,7 +50,7 @@ export async function POST(request) {
 
         FROM 
         
-        g5_kiosk as K left outer join tbl_pth_wallet_info as W ON K.owner_id = W.email and W.active = 'O' and W.user_idx <> 2955
+        g5_kiosk as K left outer join tbl_pth_wallet_info as W ON K.owner_id = W.email and W.active = 'O' 
         left outer join g5_member as M ON W.user_idx = M.mb_no 
         
         order by K.kc_no asc;
@@ -130,6 +130,7 @@ export async function POST(request) {
 
     const [rows_node_member, fields_node_member] = await connection.execute(sql_node_member);
 
+    console.log(rows);
 
     const response = NextResponse.json({ 
         
