@@ -811,7 +811,7 @@ export default function Home() {
               
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
+                'Content-Type': 'applicat`ion/json',
             },
             body: JSON.stringify({infoOwnerID, infoAddress, infoAddressIdx, infoOwnerIdx, infoEmail, infoTarget, infoSellStatus : finalInfoSellStatus }),
         });

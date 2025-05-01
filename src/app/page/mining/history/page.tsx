@@ -952,8 +952,10 @@ export default function Home() {
 
             console.log(process.env.BATCH_LIVE_URL);
 
+            const response = await axios.post('https://port-0-plastichero-batch-m90know96390d9a9.sel4.cloudtype.app' + '/api/mining/spread', {
+
 //            const response = await axios.post(process.env.BATCH_LIVE_URL + '/api/mining/spread', {
-            const response = await axios.post(process.env.BATCH_LIVE_URL + '/api/mining/spread', {
+         //   const response = await axios.post(process.env.BATCH_LIVE_URL + '/api/mining/spread', {
 
                 round_date: startDate.format('YYYY-MM-DD').replace(/-/g, ''),
 
