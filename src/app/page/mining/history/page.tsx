@@ -950,7 +950,7 @@ export default function Home() {
         
         try {
 
-            console.log(process.env.BATCH_LIVE_URL);
+        //    console.log(process.env.BATCH_LIVE_URL);
 
             const response = await axios.post('https://port-0-plastichero-batch-m90know96390d9a9.sel4.cloudtype.app' + '/api/mining/spread', {
 
