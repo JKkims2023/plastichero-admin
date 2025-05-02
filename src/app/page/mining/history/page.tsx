@@ -1030,7 +1030,7 @@ export default function Home() {
             <Paper style={{ padding: '10px', flex: 1, marginRight: '10px', display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
                 <Typography style={{ fontSize: '14px', color: "#1f1f26"  }}>채굴성공</Typography>
                 <Typography style={{ fontSize: "24px", fontWeight: "bold", color: "#1f1f26"}}>
-                    {filterNodeList.filter(node => (node.mainnet_request_status == 'S' && node.done_yn == 'Y') && node.tx_hash != null).length.toLocaleString('ko-KR')}
+                    {filterNodeList.filter(node => (node.mainnet_request_status == 'S' && node.done_yn == 'S') && node.tx_hash != null).length.toLocaleString('ko-KR')}
                 </Typography>
             </Paper>
             <Paper style={{ padding: '10px', flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
