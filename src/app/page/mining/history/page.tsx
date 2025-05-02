@@ -223,33 +223,7 @@ export default function Home() {
             }
         }
       },
-      {
-          field: 'done_yn',
-          headerName: '분배상태',
-          type: 'string',
-          flex: 0.07,
-          disableColumnMenu: true,
-          editable: false,
-          renderCell: (params) => {
-              const status = params.row.done_yn == 'Y' ? '완료' : '미완료';
-              return (
-                  <div style={{ 
-                      width: '100%',
-                      height: '100%',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center'
-                  }}>
-                      <Typography sx={{ 
-                          fontSize: '13px',
-                          color: params.row.tx_hash != null ? 'green' : 'inherit'
-                      }}>
-                          {status}
-                      </Typography>
-                  </div>
-              );
-          }
-      },
+
       {
           field: 'req_date',
           headerName: '처리일시',

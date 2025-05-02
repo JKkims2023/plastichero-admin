@@ -37,7 +37,7 @@ export default function Home() {
     start_date : '',
     done_date : '',
     success_yn : 'N',
-
+    spreaded_yn : 'N',
   });
 
   const [companyNode, setCompanyNode] = React.useState([]);
@@ -50,7 +50,7 @@ export default function Home() {
     spread_no : -1,
     done_date : '',
     result_yn : 'N',
-
+    spreaded_yn : 'N',
   });
 
   const colors = ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40', '#FF5733', '#33FF57', '#3357FF']; // 각 항목별 색상
@@ -70,6 +70,9 @@ export default function Home() {
   
   // selectedDate가 변경될 때마다 데이터를 갱신
   React.useEffect(() => {
+
+    console.log('called')
+    console.log('selectedDate:', selectedDate);
     if (selectedDate) {
       getIntroInfo();
     }
@@ -105,7 +108,6 @@ export default function Home() {
 
       if (data.result == 'success') {
 
-        console.log(data);
          
         setIntroList(data.result_data.map((data, idx) => ({ id: idx + 1, ...data })));
         setCircleValues(data.result_data.map((data, idx) => ({ id: idx + 1, ...data }))); // 차트 데이터 설정
@@ -541,8 +543,8 @@ export default function Home() {
                 <Typography sx={{ fontSize: '16px', color: '#1e293b', fontWeight: '600', marginBottom: '12px'  }}>
                  분배 결과
                 </Typography>
-                <Typography sx={{  fontSize: '14px', color: '#64748b'  }}>
-                  {doneSpread.spread_no == -1 ? '예정' : '실행완료 ' + (doneSpread.result_yn == 'Y' ? '분배완료' : '실패')}
+                <Typography sx={{  fontSize: '14px', color: doneSchedule.spreaded_yn == 'N' ? '#64748b' : doneSchedule.spreaded_yn == 'Y' ? '#10b981' : '#ef4444' }}>
+                  {doneSchedule.spreaded_yn == 'N' ? '예정' : '분배완료 (' + (doneSchedule.spreaded_yn == 'Y' ? '성공' : '실패') + ')'}
                 </Typography>
               </Box>
 

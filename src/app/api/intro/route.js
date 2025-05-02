@@ -75,7 +75,8 @@ export async function POST(request) {
       schedule_no, 
       date_format(start_date, '%Y-%m-%d %H:%i:%s') as start_date, 
       date_format(done_date, '%Y-%m-%d %H:%i:%s') as done_date, 
-      scheduled_yn
+      scheduled_yn,
+      spreaded_yn
 
       from g5_mining_batch_schedule
 
@@ -104,7 +105,7 @@ export async function POST(request) {
         start_date : rows_done_schedule[0].start_date,
         done_date : rows_done_schedule[0].done_date,
         success_yn : rows_done_schedule[0].scheduled_yn,
-
+        spreaded_yn : rows_done_schedule[0].spreaded_yn,
       };
 
     }
@@ -128,7 +129,7 @@ export async function POST(request) {
       spread_no : -1,
       done_date : '',
       result_yn : 'N',
-
+      spreaded_yn : 'N',
     };
 
 
@@ -160,6 +161,7 @@ export async function POST(request) {
         result_done_spread : result_done_spread,
 
       });
+
 
       connection.release(); // 연결 반환
     
