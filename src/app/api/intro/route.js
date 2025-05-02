@@ -24,8 +24,8 @@ export async function POST(request) {
         select count(K.kc_no) from g5_kiosk as K inner join tbl_pth_wallet_info as W ON
         K.wallet_idx = W.idx  where K.wallet_idx = -1 or (W.new_address is  null or W.new_address = '')
         ) as stop_count,
-        IF((select sum(mining_amount) from g5_mining_history where mainnet_request_status = 'S' and done_yn = 'Y') is null, 0, (select sum(mining_amount) from g5_mining_history where mainnet_request_status = 'S' and done_yn = 'Y')) as mining_amount,
-        IF((select count(node_no) from g5_mining_history where mainnet_request_status = 'S' and done_yn = 'Y') is null, 0, (select count(node_no) from g5_mining_history where mainnet_request_status = 'S' and done_yn = 'Y')) as mining_count
+        IF((select sum(mining_amount) from g5_mining_history where mainnet_request_status = 'S' and done_yn = 'S') is null, 0, (select sum(mining_amount) from g5_mining_history where mainnet_request_status = 'S' and done_yn = 'S')) as mining_amount,
+        IF((select count(node_no) from g5_mining_history where mainnet_request_status = 'S' and done_yn = 'S') is null, 0, (select count(node_no) from g5_mining_history where mainnet_request_status = 'S' and done_yn = 'S')) as mining_count
 
     `;
 
