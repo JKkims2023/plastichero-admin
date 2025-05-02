@@ -36,7 +36,7 @@ export async function POST(request) {
         if(H.mainnet_request_status = 'S','채굴완료',if(H.mainnet_request_status = 'F','채굴실패','채굴중')) as done_status,
         N.kc_kiosk_id as node_name,
         N.kc_kiosk_id,
-        W.address
+        W.new_address as address
 
 
       from g5_mining_history as H inner join g5_kiosk as N ON H.node_no = N.kc_no
