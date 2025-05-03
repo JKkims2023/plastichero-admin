@@ -4,17 +4,14 @@ import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { GetObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3';
 import { ENV, checkEnvVars } from './env';
 
-// 환경 변수 체크
-checkEnvVars();
-
-// S3 설정 정보 (환경 변수 사용)
+// S3 설정 정보 하드코딩 (환경 변수가 로드되지 않는 문제 해결)
 const S3_CONFIG = {
-  region: ENV.AWS_REGION,
+  region: 'ap-northeast-2',
   credentials: {
-    accessKeyId: ENV.AWS_ACCESS_KEY_ID,
-    secretAccessKey: ENV.AWS_SECRET_ACCESS_KEY,
+    accessKeyId: 'AKIAR47724A577IOATXB',
+    secretAccessKey: '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',
   },
-  bucketName: ENV.S3_BUCKET_NAME
+  bucketName: 'plastichero-assets'
 };
 
 // 설정 로그 기록
