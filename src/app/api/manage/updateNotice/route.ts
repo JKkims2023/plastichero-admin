@@ -122,6 +122,8 @@ export async function POST(req: NextRequest) {
                 'application/pdf',  // 명시적으로 PDF MIME 타입 지정
                 'pdfs',  // PDF 전용 폴더
                 {
+                    // PDF 파일을 퍼블릭으로 설정
+                    ACL: 'public-read',
                     // 브라우저가 PDF 파일로 인식하도록 설정
                     ContentDisposition: `inline; filename="${encodeURIComponent(originalFileName)}"`,
                     CacheControl: 'max-age=31536000' // 1년간 캐싱

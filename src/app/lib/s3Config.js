@@ -2,7 +2,6 @@ import { S3Client } from '@aws-sdk/client-s3';
 import { Upload } from '@aws-sdk/lib-storage';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { GetObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3';
-import { ENV, checkEnvVars } from './env';
 
 // S3 설정 정보 하드코딩 (환경 변수가 로드되지 않는 문제 해결)
 const S3_CONFIG = {
@@ -35,15 +34,12 @@ export async function uploadToS3(fileBuffer, fileName, contentType, folder = 'up
   try {
     const key = `${folder}/${Date.now()}-${fileName.replace(/[^\w\d.]/g, '_')}`;
     
-    // ACL 옵션 제거 (S3 버킷이 ACL을 지원하지 않음)
-    const { ACL, ...safeOptions } = options;
-    
     const uploadParams = {
       Bucket: S3_CONFIG.bucketName,
       Key: key,
       Body: fileBuffer,
       ContentType: contentType,
-      ...safeOptions // ACL이 제거된 안전한 옵션만 사용
+      ...options // 추가 옵션을 병합
     };
     
     const upload = new Upload({

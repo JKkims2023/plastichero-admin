@@ -5,7 +5,7 @@
 
 import { S3Client, PutBucketPolicyCommand } from '@aws-sdk/client-s3';
 
-// S3 설정 정보 하드코딩
+// S3 설정 정보
 const S3_CONFIG = {
   region: 'ap-northeast-2',
   credentials: {
