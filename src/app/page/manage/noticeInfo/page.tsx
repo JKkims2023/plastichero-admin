@@ -1037,7 +1037,7 @@ export default function Home() {
                 const key = path.startsWith('/') ? path.substring(1) : path;
                 
                 // API 라우트를 통해 파일에 접근
-                return `/api/file?key=${encodeURIComponent(key)}`;
+                return `/api/file?key=${encodeURIComponent(key)}&inline=true`;
             } catch (e) {
                 console.error('PDF URL 파싱 오류:', e);
                 // 에러 발생 시 원본 URL 반환
