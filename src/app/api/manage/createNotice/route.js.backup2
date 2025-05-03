@@ -40,7 +40,7 @@ export async function POST(req) {
         let uploadErrors = [];
 
         // 이미지 파일 처리
-        for (let i = 1; i <= 4; i++) { // 5개에서 4개로 변경 (5번째는 PDF 전용)
+        for (let i = 1; i <= 5; i++) {
             const imageFile = formData.get(`image${i}`);
             if (imageFile && typeof imageFile !== 'string') {
                 console.log(`이미지 ${i} 처리 시작:`, imageFile.name);
@@ -63,43 +63,6 @@ export async function POST(req) {
                     console.error(`이미지 ${i} 업로드 실패:`, uploadResult.error);
                     uploadErrors.push(`이미지 ${i} 업로드 실패: ${uploadResult.error}`);
                 }
-            }
-        }
-        
-        // PDF 파일 처리 추가
-        const pdfFile = formData.get('pdf');
-        if (pdfFile && typeof pdfFile !== 'string') {
-            console.log('PDF 처리 시작:', pdfFile.name);
-            const originalFileName = pdfFile.name;
-            const fileName = `pdf-${Date.now()}${path.extname(originalFileName)}`;
-            
-            // 파일 버퍼로 변환
-            const bytes = await pdfFile.arrayBuffer();
-            const buffer = Buffer.from(bytes);
-            
-            // S3에 직접 업로드 - PDF용 컨텐츠 타입과 헤더 설정
-            const uploadResult = await uploadToS3(
-                buffer, 
-                fileName, 
-                'application/pdf',  // 명시적으로 PDF MIME 타입 지정
-                'pdfs',  // PDF 전용 폴더
-                {
-                    // PDF 파일을 퍼블릭으로 설정
-                    ACL: 'public-read',
-                    // 브라우저가 PDF 파일로 인식하도록 설정
-                    ContentDisposition: `inline; filename="${encodeURIComponent(originalFileName)}"`,
-                    CacheControl: 'max-age=31536000' // 1년간 캐싱
-                }
-            );
-            
-            if (uploadResult.success) {
-                console.log('PDF 업로드 성공:', uploadResult.key);
-                console.log('PDF URL:', uploadResult.url);
-                // S3에 업로드된 파일의 전체 URL을 DB에 저장 (notice_picture5 필드 사용)
-                fileData.notice_picture5 = uploadResult.url;
-            } else {
-                console.error('PDF 업로드 실패:', uploadResult.error);
-                uploadErrors.push(`PDF 업로드 실패: ${uploadResult.error}`);
             }
         }
 
@@ -144,8 +107,6 @@ export async function POST(req) {
         };
 
         console.log('DB 삽입 데이터 준비:', Object.keys(insertData));
-        console.log('이미지/비디오/PDF 필드:', fileData);
-        
         const insertQuery = 'INSERT INTO g5_notice SET ?';
         const [result] = await connection.query(insertQuery, [insertData]);
         console.log('DB 삽입 성공');

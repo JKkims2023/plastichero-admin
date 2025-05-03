@@ -57,6 +57,11 @@ import TextField from '@mui/material/TextField';
 import Divider from '@mui/material/Divider';
 import Switch from '@mui/material/Switch';
 import CommentIcon from '@mui/icons-material/Comment';
+import { getFileUrl, isS3File } from '../../../lib/fileHelper';
+import Tabs from '@mui/material/Tabs';
+import Tab from '@mui/material/Tab';
+import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
+import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 
 type Anchor = 'bottom';
 
@@ -109,9 +114,28 @@ const VisuallyHiddenInput = styled('input')({
     width: 1,
 });
 
+// 타입 인터페이스 수정
 interface ImageFile {
     file: File | null;
     preview: string;
+}
+
+// selectedContent 타입 정의 수정
+interface NoticeContent {
+    contentID: string;
+    contentTitle: string;
+    commentEnabled: boolean;
+    notice_no?: string;
+    notice_title?: string;
+    notice_desctription?: string;
+    notice_picture?: string;
+    notice_picture2?: string;
+    notice_picture3?: string;
+    notice_picture4?: string;
+    notice_picture5?: string; // PDF 파일 URL로 사용
+    notice_movie?: string;
+    comment_flag?: string;
+    [key: string]: any; // 추가 속성을 위한 인덱스 시그니처
 }
 
 export default function Home() {
@@ -123,7 +147,7 @@ export default function Home() {
     const [filterInfo, setFilterInfo] = React.useState('');
     const [noticeList, setNoticeList] = React.useState([]);
     const [filterNoticeList, setFilterNoticeList] = React.useState([]);
-    const [selectedContent, setSelectedContent] = React.useState({
+    const [selectedContent, setSelectedContent] = React.useState<NoticeContent>({
         contentID: '',
         contentTitle: '',
         commentEnabled: false
@@ -151,6 +175,22 @@ export default function Home() {
     ]);
     const [videoFile, setVideoFile] = React.useState<File | null>(null);
     const [videoPreview, setVideoPreview] = React.useState<string>('');
+    const [pdfFile, setPdfFile] = React.useState<File | null>(null);
+    const [pdfPreview, setPdfPreview] = React.useState<string>('');
+
+    // 미디어 섹션 접기/펼치기 상태 관리
+    const [mediaExpanded, setMediaExpanded] = React.useState({
+        images: true,
+        video: true,
+        pdf: true
+    });
+
+    // 탭 상태 관리
+    const [activeTab, setActiveTab] = React.useState(0);
+
+    // PDF 뷰어 상태 관리 추가
+    const [pdfViewerOpen, setPdfViewerOpen] = React.useState(false);
+    const [pdfViewerUrl, setPdfViewerUrl] = React.useState('');
 
     const page_info = 'Home > 운영관리 > 공지관리';
 
@@ -497,6 +537,9 @@ export default function Home() {
         ]);
         setVideoFile(null);
         setVideoPreview('');
+        setPdfFile(null);
+        setPdfPreview('');
+        setActiveTab(0);
         setDialogOpen(true);
     };
 
@@ -516,6 +559,8 @@ export default function Home() {
         ]);
         setVideoFile(null);
         setVideoPreview('');
+        setPdfFile(null);
+        setPdfPreview('');
     };
 
     // 이미지 파일 처리 함수 추가
@@ -574,7 +619,96 @@ export default function Home() {
         }
     };
 
-    // 수정 처리 함수
+    // 이미지 오류 처리 함수 추가
+    const handleImageError = (e: React.SyntheticEvent<HTMLImageElement>) => {
+        e.currentTarget.src = '/placeholder.jpg'; // 기본 이미지로 대체
+    };
+
+    // 이미지 삭제 함수 개선
+    const handleDeleteImage = (index: number) => {
+        // 1. 현재 모든 이미지 정보 수집
+        const allImages: { file: File | null; preview: string; dbKey?: string; dbValue?: any }[] = [];
+        
+        for (let i = 0; i < 4; i++) { // 5개에서 4개로 변경
+            const imageKey = `notice_picture${i > 0 ? i + 1 : ''}`;
+            
+            // 지금 삭제하려는 이미지는 제외
+            if (i === index) continue;
+            
+            // 첫번째로 체크: 새로 업로드된 이미지
+            if (imageFiles[i].file) {
+                allImages.push({
+                    file: imageFiles[i].file,
+                    preview: imageFiles[i].preview
+                });
+            } 
+            // 두번째로 체크: DB에 있는 기존 이미지
+            else if (selectedContent[imageKey]) {
+                allImages.push({
+                    file: null,
+                    preview: '',
+                    dbKey: imageKey,
+                    dbValue: selectedContent[imageKey]
+                });
+            }
+        }
+        
+        console.log('정렬 전 이미지:', allImages);
+        
+        // 2. 새 이미지 파일 배열 생성 및 초기화
+        const newImageFiles: ImageFile[] = Array(5).fill(null).map(() => ({ file: null, preview: '' }));
+        
+        // 3. UI에 보여줄 이미지 배열을 재배치
+        allImages.forEach((img, idx) => {
+            newImageFiles[idx] = {
+                file: img.file,
+                preview: img.file ? img.preview : ''
+            };
+        });
+        
+        // 4. selectedContent 객체 업데이트 (DB에 저장된 이미지 필드 초기화)
+        const updatedContent = { ...selectedContent };
+        
+        // 먼저 이미지 필드 null로 초기화 (notice_picture5는 PDF용으로 제외)
+        for (let i = 0; i < 4; i++) { // 5개에서 4개로 변경
+            const imageKey = `notice_picture${i > 0 ? i + 1 : ''}`;
+            updatedContent[imageKey] = null;
+        }
+        
+        // 기존 DB 이미지 재배치
+        allImages.forEach((img, idx) => {
+            if (img.dbKey && img.dbValue) {
+                const newKey = `notice_picture${idx > 0 ? idx + 1 : ''}`;
+                updatedContent[newKey] = img.dbValue;
+            }
+        });
+        
+        console.log('이미지 재배치 결과:', {
+            newImageFiles,
+            updatedContent: Object.keys(updatedContent)
+                .filter(key => key.startsWith('notice_picture'))
+                .reduce((obj, key) => ({ ...obj, [key]: updatedContent[key] }), {})
+        });
+        
+        setImageFiles(newImageFiles);
+        setSelectedContent(updatedContent);
+    };
+    
+    // 비디오 삭제 함수 개선
+    const handleDeleteVideo = () => {
+        setVideoFile(null);
+        setVideoPreview('');
+        
+        // 선택된 콘텐츠에서도 비디오 경로 명시적으로 제거 (수정 모드)
+        if (dialogOpen) {
+            setSelectedContent((prev) => ({
+                ...prev,
+                notice_movie: null
+            }));
+        }
+    };
+
+    // 수정 처리 함수 - PDF 처리 추가
     const handleEdit = async () => {
         try {
             const formData = new FormData();
@@ -587,19 +721,56 @@ export default function Home() {
 
             // 댓글 기능 상태를 명시적으로 Y/N으로 설정
             const commentFlag = selectedContent.commentEnabled ? 'Y' : 'N';
-            formData.append('comment_flag', commentFlag);  // 변수명을 comment_flag로 통일
+            formData.append('comment_flag', commentFlag);
 
-            // 이미지 파일 추가
+            // 삭제할 이미지 키 목록 생성
+            const imageKeysToRemove: string[] = [];
+            
+            // DB에 저장된 이미지 필드 중 null로 설정된 것들을 삭제 대상으로 지정
+            for (let i = 0; i < 4; i++) { // 5개에서 4개로 변경
+                const imageKey = `notice_picture${i > 0 ? i + 1 : ''}`;
+                if (selectedContent[imageKey] === null) {
+                    imageKeysToRemove.push(imageKey);
+                }
+            }
+            
+            // PDF 필드가 null이면 삭제 목록에 추가
+            if (selectedContent.notice_picture5 === null) {
+                imageKeysToRemove.push('notice_picture5');
+            }
+            
+            // 삭제할 이미지 키 목록 추가
+            if (imageKeysToRemove.length > 0) {
+                formData.append('imageKeysToRemove', JSON.stringify(imageKeysToRemove));
+                console.log('삭제할 이미지 키:', imageKeysToRemove);
+            }
+
+            // 새 이미지 파일 처리 (재배치된 순서대로 추가)
+            let addedImageCount = 0;
             imageFiles.forEach((imageFile, index) => {
-                if (imageFile.file) {
-                    formData.append(`image${index + 1}`, imageFile.file);
+                if (index < 4 && imageFile.file) { // 최대 4개 이미지만 처리
+                    // 이미지 인덱스를 1부터 시작하는 연속된 번호로 추가
+                    addedImageCount++;
+                    formData.append(`image${addedImageCount}`, imageFile.file);
+                    console.log(`이미지 ${addedImageCount} 추가:`, imageFile.file.name);
                 }
             });
+            
+            // PDF 파일 추가 - PDF 파일은 서버에서 notice_picture5 필드에 저장
+            if (pdfFile) {
+                formData.append('pdf', pdfFile);
+                console.log('PDF 파일 추가:', pdfFile.name);
+            }
 
             // 비디오 파일 추가
             if (videoFile) {
                 formData.append('video', videoFile);
+            } else if (selectedContent.notice_movie === null) {
+                // 비디오가 삭제됨을 명시적으로 표시
+                formData.append('removeVideo', 'true');
             }
+
+            console.log('수정 요청 데이터:', Object.fromEntries(formData.entries()));
 
             const response = await fetch('/api/manage/updateNotice', {
                 method: 'POST',
@@ -665,6 +836,9 @@ export default function Home() {
     };
 
     const handleOpenRegisterDialog = () => {
+        setActiveTab(0);
+        setPdfFile(null);
+        setPdfPreview('');
         setRegisterDialogOpen(true);
     };
 
@@ -679,9 +853,11 @@ export default function Home() {
         ]);
         setVideoFile(null);
         setVideoPreview('');
+        setPdfFile(null);
+        setPdfPreview('');
     };
 
-    // 등록 처리 함수
+    // 등록 처리 함수 - PDF 처리 추가
     const handleRegister = async () => {
         try {
             // 클라이언트 측 유효성 검사
@@ -702,12 +878,17 @@ export default function Home() {
             // @ts-ignore
             formData.append('comment_flag', selectedContent.commentEnabled === true ? 'Y' : 'N');
 
-            // 이미지 파일 추가
+            // 이미지 파일 추가 - 최대 4개로 제한
             imageFiles.forEach((imageFile, index) => {
-                if (imageFile.file) {
+                if (index < 4 && imageFile.file) { // 최대 4개 이미지만 처리
                     formData.append(`image${index + 1}`, imageFile.file);
                 }
             });
+            
+            // PDF 파일 추가
+            if (pdfFile) {
+                formData.append('pdf', pdfFile);
+            }
 
             // 비디오 파일 추가
             if (videoFile) {
@@ -735,6 +916,128 @@ export default function Home() {
         }
     };
 
+    // 미디어 섹션 토글 함수
+    const toggleMediaSection = (section: 'images' | 'video' | 'pdf') => {
+        setMediaExpanded({
+            ...mediaExpanded,
+            [section]: !mediaExpanded[section]
+        });
+    };
+
+    // 탭 변경 핸들러
+    const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+        setActiveTab(newValue);
+    };
+
+    // 다중 이미지 선택 처리 함수 추가
+    const handleMultipleImageChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+        if (event.target.files && event.target.files.length > 0) {
+            const files = Array.from(event.target.files);
+            
+            // 파일 크기와 타입 체크
+            const validFiles = files.filter(file => {
+                if (file.size > 5 * 1024 * 1024) {
+                    console.warn(`${file.name} 파일이 5MB를 초과합니다.`);
+                    return false;
+                }
+                if (!file.type.startsWith('image/')) {
+                    console.warn(`${file.name}은 이미지 파일이 아닙니다.`);
+                    return false;
+                }
+                return true;
+            });
+            
+            // 최대 5개까지만 처리
+            const filesToProcess = validFiles.slice(0, 5);
+            
+            // 미리보기 생성 및 상태 업데이트
+            const newImageFiles = [...imageFiles];
+            
+            for (let i = 0; i < filesToProcess.length; i++) {
+                const file = filesToProcess[i];
+                const reader = new FileReader();
+                
+                // 비동기 처리를 위한 Promise 래핑
+                await new Promise<void>((resolve) => {
+                    reader.onload = () => {
+                        newImageFiles[i] = {
+                            file: file,
+                            preview: reader.result as string
+                        };
+                        resolve();
+                    };
+                    reader.readAsDataURL(file);
+                });
+            }
+            
+            setImageFiles(newImageFiles);
+        }
+    };
+
+    // PDF 파일 처리 함수 추가
+    const handlePdfChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+        if (event.target.files && event.target.files[0]) {
+            const file = event.target.files[0];
+            
+            // 파일 크기 체크 (예: 10MB)
+            if (file.size > 10 * 1024 * 1024) {
+                alert('PDF 파일은 10MB 이하만 가능합니다.');
+                return;
+            }
+
+            // PDF 파일 타입 체크
+            if (file.type !== 'application/pdf') {
+                alert('PDF 파일만 업로드 가능합니다.');
+                return;
+            }
+
+            setPdfFile(file);
+            
+            // PDF 파일 미리보기 URL 생성 (파일명만 표시)
+            setPdfPreview(file.name);
+        }
+    };
+    
+    // PDF 삭제 함수 추가
+    const handleDeletePdf = () => {
+        setPdfFile(null);
+        setPdfPreview('');
+        
+        // 선택된 콘텐츠에서도 PDF 경로 명시적으로 제거 (수정 모드)
+        if (dialogOpen) {
+            setSelectedContent((prev) => ({
+                ...prev,
+                notice_picture5: null
+            }));
+        }
+    };
+
+    // PDF 뷰어 열기 함수
+    const handleOpenPdfViewer = (url: string) => {
+        setPdfViewerUrl(url);
+        setPdfViewerOpen(true);
+    };
+    
+    // PDF 뷰어 닫기 함수
+    const handleClosePdfViewer = () => {
+        setPdfViewerOpen(false);
+        setPdfViewerUrl('');
+    };
+
+    // PDF 파일 URL 가져오기 함수 추가
+    const getPdfProxyUrl = (pdfUrl: string) => {
+        // 이미 S3 URL인 경우, 파일 키만 추출
+        if (pdfUrl && pdfUrl.includes('plastichero-assets.s3')) {
+            // URL에서 키 부분만 추출 (s3.amazonaws.com/ 이후 부분)
+            const keyMatch = pdfUrl.match(/amazonaws\.com\/(.*)/);
+            if (keyMatch && keyMatch[1]) {
+                return `/api/file?key=${encodeURIComponent(keyMatch[1])}`; 
+            }
+        }
+        // 그렇지 않으면 직접 URL 반환
+        return pdfUrl;
+    };
+
     return (
 
       <div style={{display:'flex', flexDirection:'column',  width:'100%', height:'100vh',  paddingLeft:'20px', paddingRight:'20px',}}>
@@ -751,7 +1054,7 @@ export default function Home() {
             </Typography>
         </div>
 
-        <div style={{ marginTop: '5px' }}>
+        <div style={{ marginTop: '5px', display:'none' }}>
 
             <Grid container spacing={2}>
                 <Grid item xs={2.4}>
@@ -1117,7 +1420,7 @@ export default function Home() {
 
         <Backdrop open={loading} sx={{ color: '#fff', display: 'flex', flexDirection: 'column', zIndex: (theme) => theme.zIndex.drawer + 1 }}>
             <CircularProgress color="inherit" />
-            <Typography variant="h6" color="inherit">메일 인증 정보를 불러오는 중입니다</Typography>
+            <Typography variant="h6" color="inherit">공지 정보를 불러오는 중입니다</Typography>
         </Backdrop>
 
         <Dialog 
@@ -1168,15 +1471,37 @@ export default function Home() {
                     gap: 2,
                 }}
             >
+                {/* 탭 추가 */}
+                <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+                    <Tabs 
+                        value={activeTab} 
+                        onChange={handleTabChange}
+                        variant="fullWidth"
+                        sx={{
+                            '& .MuiTab-root': {
+                                fontSize: '13px',
+                                minHeight: '40px',
+                                padding: '8px 16px'
+                            }
+                        }}
+                    >
+                        <Tab label="내용" />
+                        <Tab label="미디어" />
+                    </Tabs>
+                </Box>
+                
                 <Box sx={{ 
                     backgroundColor: '#ffffff',
                     borderRadius: '10px',
-                    marginTop:'15px',
                     p: 2.5,
                     boxShadow: '0 2px 4px rgba(0,0,0,0.06)',
                     border: '1px solid #eaeaea',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    flex: 1,
+                    overflow: 'hidden'
                 }}>
-                    <Grid container spacing={2}>
+                    <Grid container spacing={2} sx={{ display: activeTab === 0 ? 'flex' : 'none', overflow: 'auto', flex: 1 }}>
                     <Grid item xs={12}>
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.2, mb: 0.8 }}>
                                 <DescriptionIcon sx={{ color: '#1976d2', fontSize: 18 }} />
@@ -1222,7 +1547,7 @@ export default function Home() {
                             <TextField
                                 fullWidth
                                 multiline
-                                rows={4}
+                                rows={12} // 공지 내용 영역 확장
                                 // @ts-ignore
                                 value={selectedContent?.notice_desctription || ''}
                                 onChange={(e) => setSelectedContent({
@@ -1237,20 +1562,66 @@ export default function Home() {
                                     }
                                 }}
                             />
-                            <Divider sx={{ mt: 2, mb: 1 }} />
+                        </Grid>
                     </Grid>
 
+                    <Grid container spacing={2} sx={{ display: activeTab === 1 ? 'flex' : 'none', overflow: 'auto', flex: 1 }}>
                     <Grid item xs={12}>
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.2, mb: 0.8 }}>
+                            <Box 
+                                sx={{ 
+                                    display: 'flex', 
+                                    alignItems: 'center', 
+                                    gap: 1.2, 
+                                    mb: 0.8,
+                                    cursor: 'pointer',
+                                    '&:hover': {
+                                        opacity: 0.8
+                                    }
+                                }}
+                                onClick={() => toggleMediaSection('images')}
+                            >
                                 <ImageIcon sx={{ color: '#1976d2', fontSize: 18 }} />
                                 <Typography variant="subtitle2" sx={{ 
                                     color: '#444',
                                     fontSize: '13px',
                                     fontWeight: 600,
+                                    flexGrow: 1
                                 }}>
                                     이미지 파일
                                 </Typography>
+                                {/* 다중 이미지 업로드 버튼 추가 */}
+                                <Button
+                                    component="label"
+                                    size="small"
+                                    variant="outlined"
+                                    onClick={(e) => e.stopPropagation()}
+                                    sx={{
+                                        fontSize: '11px',
+                                        height: '24px',
+                                        padding: '0 8px',
+                                        minWidth: 'auto',
+                                        mr: 1,
+                                        color: '#1976d2',
+                                        borderColor: '#1976d2',
+                                        '&:hover': {
+                                            backgroundColor: 'rgba(25, 118, 210, 0.04)'
+                                        }
+                                    }}
+                                >
+                                    이미지 일괄 선택
+                                    <VisuallyHiddenInput 
+                                        type="file" 
+                                        accept="image/*"
+                                        multiple
+                                        onChange={handleMultipleImageChange}
+                                    />
+                                </Button>
+                                {mediaExpanded.images ? 
+                                    <Box sx={{ fontSize: '16px', color: '#666' }}>▼</Box> : 
+                                    <Box sx={{ fontSize: '16px', color: '#666' }}>▶</Box>}
                             </Box>
+                            
+                            {mediaExpanded.images && (
                             <Box sx={{ 
                                 display: 'flex', 
                                 gap: 1,
@@ -1258,12 +1629,13 @@ export default function Home() {
                                 overflowX: 'auto',
                                 pb: 1,
                             }}>
-                                {[1, 2, 3, 4, 5].map((num) => (
+                                {[1, 2, 3, 4].map((num) => ( // 5개에서 4개로 변경
                                     <Box 
                                         key={num} 
                                         sx={{ 
                                             flex: '0 0 100px',
                                             minWidth: '100px',
+                                                position: 'relative'
                                         }}
                                     >
                                         <Button
@@ -1296,15 +1668,31 @@ export default function Home() {
                                                     }}
                                                 />
                                             ) : selectedContent?.[`notice_picture${num > 1 ? num : ''}`] ? (
+                                                    isS3File(selectedContent[`notice_picture${num > 1 ? num : ''}`] as string) ? (
                                                 <Box
                                                     component="img"
-                                                    src={`/uploads/images/${selectedContent[`notice_picture${num > 1 ? num : ''}`]}`}
+                                                            src={selectedContent[`notice_picture${num > 1 ? num : ''}`].startsWith('http') 
+                                                                ? selectedContent[`notice_picture${num > 1 ? num : ''}`] as string
+                                                                : `/api/file?key=${encodeURIComponent(selectedContent[`notice_picture${num > 1 ? num : ''}`] as string)}`
+                                                            }
                                                     sx={{
                                                         width: '100%',
                                                         height: '100%',
                                                         objectFit: 'cover'
                                                     }}
+                                                            onError={handleImageError}
+                                                        />
+                                                    ) : (
+                                                        <Box
+                                                            component="img"
+                                                            src={selectedContent[`notice_picture${num > 1 ? num : ''}`]}
+                                                            sx={{
+                                                                width: '100%',
+                                                                height: '100%',
+                                                                objectFit: 'cover'
+                                                            }}
                                                 />
+                                                    )
                                             ) : (
                                                 <Box sx={{ 
                                                     display: 'flex', 
@@ -1324,23 +1712,73 @@ export default function Home() {
                                                 onChange={(e) => handleImageChange(num-1)(e)}
                                             />
                                         </Button>
+                                            
+                                            {/* 삭제 버튼 추가 - 위치 및 스타일 개선 */}
+                                            {(imageFiles[num-1]?.preview || selectedContent?.[`notice_picture${num > 1 ? num : ''}`]) && (
+                                                <IconButton 
+                                                    size="small"
+                                                    sx={{
+                                                        position: 'absolute',
+                                                        top: 5,
+                                                        right: 5,
+                                                        backgroundColor: 'rgba(244, 67, 54, 0.8)',
+                                                        color: 'white',
+                                                        border: '1px solid #f44336',
+                                                        width: 28,
+                                                        height: 28,
+                                                        transition: 'all 0.2s ease',
+                                                        '&:hover': {
+                                                            backgroundColor: '#f44336',
+                                                            transform: 'scale(1.1)'
+                                                        },
+                                                        zIndex: 10,
+                                                        boxShadow: '0 2px 5px rgba(0,0,0,0.2)'
+                                                    }}
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleDeleteImage(num-1);
+                                                    }}
+                                                >
+                                                    <DeleteIcon sx={{ fontSize: 18 }} />
+                                                </IconButton>
+                                            )}
                                     </Box>
                                 ))}
                             </Box>
+                            )}
                             <Divider sx={{ mt: 2, mb: 1 }} />
                     </Grid>
 
                         <Grid item xs={12}>
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.2, mb: 0.8 }}>
+                            <Box 
+                                sx={{ 
+                                    display: 'flex', 
+                                    alignItems: 'center', 
+                                    gap: 1.2, 
+                                    mb: 0.8,
+                                    cursor: 'pointer',
+                                    '&:hover': {
+                                        opacity: 0.8
+                                    }
+                                }}
+                                onClick={() => toggleMediaSection('video')}
+                            >
                                 <VideoLibraryIcon sx={{ color: '#1976d2', fontSize: 18 }} />
                                 <Typography variant="subtitle2" sx={{ 
                                     color: '#444',
                                     fontSize: '13px',
                                     fontWeight: 600,
+                                    flexGrow: 1
                                 }}>
                                     동영상 파일
                                 </Typography>
+                                {mediaExpanded.video ? 
+                                    <Box sx={{ fontSize: '16px', color: '#666' }}>▼</Box> : 
+                                    <Box sx={{ fontSize: '16px', color: '#666' }}>▶</Box>}
                             </Box>
+                            
+                            {mediaExpanded.video && (
+                                <Box sx={{ position: 'relative' }}>
                             <Button
                                 component="label"
                                 variant="outlined"
@@ -1348,14 +1786,18 @@ export default function Home() {
                                 startIcon={!videoPreview && !selectedContent?.notice_movie && <VideoLibraryIcon />}
                                 sx={{ 
                                     width: '100%',
-                                    height: '100px',
+                                            height: 'auto',
+                                            minHeight: '300px',
                                     border: '1px dashed #ccc',
                                     fontSize: '13px',
                                     color: '#666',
                                     mt: 1,
                                     padding: 0,
                                     overflow: 'hidden',
-                                    position: 'relative'
+                                            position: 'relative',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center'
                                 }}
                             >
                                 {videoPreview ? (
@@ -1365,26 +1807,57 @@ export default function Home() {
                                         sx={{
                                             width: '100%',
                                             height: '100%',
-                                            objectFit: 'cover'
+                                                    maxHeight: '500px',
+                                                    objectFit: 'contain',
+                                                    backgroundColor: '#000'
                                         }}
                                         controls
                                     />
                                 ) : 
-                                    // @ts-ignore
                                     selectedContent?.notice_movie ? (
+                                            isS3File(selectedContent.notice_movie as string) ? (
                                     <Box
                                         component="video"
-                                        // @ts-ignore
-                                        src={`/uploads/videos/${selectedContent.notice_movie}`}
+                                                    src={selectedContent.notice_movie.startsWith('http')
+                                                        ? selectedContent.notice_movie as string
+                                                        : `/api/file?key=${encodeURIComponent(selectedContent.notice_movie as string)}`
+                                                    }
                                         sx={{
                                             width: '100%',
                                             height: '100%',
-                                            objectFit: 'cover'
+                                                        maxHeight: '500px',
+                                                        objectFit: 'contain',
+                                                        backgroundColor: '#000'
                                         }}
                                         controls
+                                                    onError={(e) => {
+                                                        console.error('비디오 로드 오류:', e);
+                                                    }}
                                     />
                                 ) : (
-                                    '동영상 업로드'
+                                                <Box
+                                                    component="video"
+                                                    src={selectedContent.notice_movie}
+                                                    sx={{
+                                                        width: '100%',
+                                                        height: '100%',
+                                                        maxHeight: '500px',
+                                                        objectFit: 'contain',
+                                                        backgroundColor: '#000'
+                                                    }}
+                                                    controls
+                                                />
+                                            )
+                                        ) : (
+                                            <Box sx={{ textAlign: 'center', p: 2 }}>
+                                                <VideoLibraryIcon sx={{ fontSize: 40, color: '#999', mb: 1 }} />
+                                                <Typography sx={{ fontSize: '14px', color: '#666' }}>
+                                                    동영상 파일을 업로드하세요
+                                                </Typography>
+                                                <Typography sx={{ fontSize: '12px', color: '#999', mt: 1 }}>
+                                                    (최대 50MB, MP4, WebM, Ogg 형식 지원)
+                                                </Typography>
+                                            </Box>
                                 )}
                                 <VisuallyHiddenInput 
                                     type="file" 
@@ -1392,7 +1865,172 @@ export default function Home() {
                                     onChange={handleVideoChange}
                                 />
                             </Button>
-                </Grid>
+                                    
+                                    {/* 비디오 삭제 버튼 추가 - 위치 및 스타일 개선 */}
+                                    {(videoPreview || selectedContent?.notice_movie) && (
+                                        <IconButton 
+                                            size="small"
+                                            sx={{
+                                                position: 'absolute',
+                                                top: 10,
+                                                right: 10,
+                                                backgroundColor: 'rgba(244, 67, 54, 0.8)',
+                                                color: 'white',
+                                                border: '1px solid #f44336',
+                                                width: 28,
+                                                height: 28,
+                                                transition: 'all 0.2s ease',
+                                                '&:hover': {
+                                                    backgroundColor: '#f44336',
+                                                    transform: 'scale(1.1)'
+                                                },
+                                                zIndex: 10,
+                                                boxShadow: '0 2px 5px rgba(0,0,0,0.2)'
+                                            }}
+                                            onClick={handleDeleteVideo}
+                                        >
+                                            <DeleteIcon sx={{ fontSize: 18 }} />
+                                        </IconButton>
+                                    )}
+                                </Box>
+                            )}
+                            <Divider sx={{ mt: 2, mb: 1 }} />
+                        </Grid>
+
+                        <Grid item xs={12}>
+                            <Box 
+                                sx={{ 
+                                    display: 'flex', 
+                                    alignItems: 'center', 
+                                    gap: 1.2, 
+                                    mb: 0.8,
+                                    cursor: 'pointer',
+                                    '&:hover': {
+                                        opacity: 0.8
+                                    }
+                                }}
+                                onClick={() => toggleMediaSection('pdf')}
+                            >
+                                <PictureAsPdfIcon sx={{ color: '#f44336', fontSize: 18 }} />
+                                <Typography variant="subtitle2" sx={{ 
+                                    color: '#444',
+                                    fontSize: '13px',
+                                    fontWeight: 600,
+                                    flexGrow: 1
+                                }}>
+                                    PDF 파일
+                                </Typography>
+                                {mediaExpanded.pdf ? 
+                                    <Box sx={{ fontSize: '16px', color: '#666' }}>▼</Box> : 
+                                    <Box sx={{ fontSize: '16px', color: '#666' }}>▶</Box>}
+                            </Box>
+                            
+                            {mediaExpanded.pdf && (
+                                <Box sx={{ position: 'relative' }}>
+                                    <Button
+                                        component="label"
+                                        variant="outlined"
+                                        startIcon={!pdfPreview && !selectedContent?.notice_picture5 && <PictureAsPdfIcon />}
+                                        sx={{ 
+                                            width: '100%',
+                                            height: '80px',
+                                            border: '1px dashed #ccc',
+                                            fontSize: '13px',
+                                            color: '#666',
+                                            mt: 1,
+                                            padding: pdfPreview || selectedContent?.notice_picture5 ? 0 : '16px',
+                                            overflow: 'hidden',
+                                            position: 'relative',
+                                            display: 'flex',
+                                            flexDirection: 'column',
+                                            alignItems: 'center',
+                                            justifyContent: 'center'
+                                        }}
+                                    >
+                                        {pdfPreview ? (
+                                            <Box sx={{ 
+                                                display: 'flex', 
+                                                alignItems: 'center', 
+                                                width: '100%', 
+                                                height: '100%',
+                                                p: 2
+                                            }}>
+                                                <PictureAsPdfIcon sx={{ color: '#f44336', fontSize: 24, mr: 1 }} />
+                                                <Typography sx={{ fontSize: '14px', flexGrow: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                                    {pdfPreview}
+                                                </Typography>
+                                            </Box>
+                                        ) : 
+                                            selectedContent?.notice_picture5 && selectedContent.notice_picture5.endsWith('.pdf') ? (
+                                                <Box sx={{ 
+                                                    display: 'flex', 
+                                                    alignItems: 'center', 
+                                                    width: '100%', 
+                                                    height: '100%',
+                                                    p: 2
+                                                }}>
+                                                    <PictureAsPdfIcon sx={{ color: '#f44336', fontSize: 24, mr: 1 }} />
+                                                    <Typography sx={{ fontSize: '14px', flexGrow: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                                        {selectedContent.notice_picture5.split('/').pop()}
+                                                    </Typography>
+                                                    <Button 
+                                                        variant="outlined" 
+                                                        size="small" 
+                                                        sx={{ ml: 1, minWidth: 'auto', p: '4px 8px' }}
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            window.open(getPdfProxyUrl(selectedContent.notice_picture5), '_blank');
+                                                        }}
+                                                    >
+                                                        보기
+                                                    </Button>
+                                                </Box>
+                                            ) : (
+                                                <>
+                                                    <PictureAsPdfIcon sx={{ color: '#f44336', fontSize: 24, mb: 1 }} />
+                                                    <Typography sx={{ fontSize: '13px' }}>
+                                                        PDF 파일 추가
+                                                    </Typography>
+                                                </>
+                                            )
+                                        }
+                                        <VisuallyHiddenInput 
+                                            type="file" 
+                                            accept="application/pdf"
+                                            onChange={handlePdfChange}
+                                        />
+                                    </Button>
+                                    
+                                    {/* PDF 삭제 버튼 */}
+                                    {(pdfPreview || (selectedContent?.notice_picture5 && selectedContent.notice_picture5.endsWith('.pdf'))) && (
+                                        <IconButton 
+                                            size="small"
+                                            sx={{
+                                                position: 'absolute',
+                                                top: 10,
+                                                right: 10,
+                                                backgroundColor: 'rgba(244, 67, 54, 0.8)',
+                                                color: 'white',
+                                                border: '1px solid #f44336',
+                                                width: 28,
+                                                height: 28,
+                                                transition: 'all 0.2s ease',
+                                                '&:hover': {
+                                                    backgroundColor: '#f44336',
+                                                    transform: 'scale(1.1)'
+                                                },
+                                                zIndex: 10,
+                                                boxShadow: '0 2px 5px rgba(0,0,0,0.2)'
+                                            }}
+                                            onClick={handleDeletePdf}
+                                        >
+                                            <DeleteIcon sx={{ fontSize: 18 }} />
+                                        </IconButton>
+                                    )}
+                                </Box>
+                            )}
+                            <Divider sx={{ mt: 2, mb: 1 }} />
+                        </Grid>
                     </Grid>
                 </Box>
             </DialogContent>
@@ -1542,15 +2180,38 @@ export default function Home() {
                     gap: 2,
                 }}
             >
+                {/* 탭 추가 */}
+                <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+                    <Tabs 
+                        value={activeTab} 
+                        onChange={handleTabChange}
+                        variant="fullWidth"
+                        sx={{
+                            '& .MuiTab-root': {
+                                fontSize: '13px',
+                                minHeight: '40px',
+                                padding: '8px 16px'
+                            }
+                        }}
+                    >
+                        <Tab label="내용" />
+                        <Tab label="미디어" />
+                    </Tabs>
+                </Box>
+                
                 <Box sx={{ 
                     backgroundColor: '#ffffff',
                     borderRadius: '10px',
-                    marginTop:'15px',
+                    marginTop:'5px',
                     p: 2.5,
                     boxShadow: '0 2px 4px rgba(0,0,0,0.06)',
                     border: '1px solid #eaeaea',
+                    overflow: 'hidden',
+                    flex: 1,
+                    display: 'flex',
+                    flexDirection: 'column'
                 }}>
-                    <Grid container spacing={2}>
+                    <Grid container spacing={2} sx={{ display: activeTab === 0 ? 'flex' : 'none', overflow: 'auto', flex: 1 }}>
                         <Grid item xs={12}>
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.2, mb: 0.8 }}>
                                 <DescriptionIcon sx={{ color: '#4CAF50', fontSize: 18 }} />
@@ -1593,7 +2254,7 @@ export default function Home() {
                             <TextField
                                 fullWidth
                                 multiline
-                                rows={4}
+                                rows={12} // 공지 내용 영역 확장
                                 onChange={(e) => setSelectedContent({
                                     ...selectedContent,
                                     // @ts-ignore
@@ -1606,20 +2267,66 @@ export default function Home() {
                                     }
                                 }}
                             />
-                            <Divider sx={{ mt: 2, mb: 1 }} />
+                        </Grid>
                         </Grid>
 
+                    <Grid container spacing={2} sx={{ display: activeTab === 1 ? 'flex' : 'none', overflow: 'auto', flex: 1 }}>
                         <Grid item xs={12}>
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.2, mb: 0.8 }}>
+                            <Box 
+                                sx={{ 
+                                    display: 'flex', 
+                                    alignItems: 'center', 
+                                    gap: 1.2, 
+                                    mb: 0.8,
+                                    cursor: 'pointer',
+                                    '&:hover': {
+                                        opacity: 0.8
+                                    }
+                                }}
+                                onClick={() => toggleMediaSection('images')}
+                            >
                                 <ImageIcon sx={{ color: '#4CAF50', fontSize: 18 }} />
                                 <Typography variant="subtitle2" sx={{ 
                                     color: '#444',
                                     fontSize: '13px',
                                     fontWeight: 600,
+                                    flexGrow: 1
                                 }}>
                                     이미지 파일
                                 </Typography>
+                                {/* 다중 이미지 업로드 버튼 추가 */}
+                                <Button
+                                    component="label"
+                                    size="small"
+                                    variant="outlined"
+                                    onClick={(e) => e.stopPropagation()}
+                                    sx={{
+                                        fontSize: '11px',
+                                        height: '24px',
+                                        padding: '0 8px',
+                                        minWidth: 'auto',
+                                        mr: 1,
+                                        color: '#4CAF50',
+                                        borderColor: '#4CAF50',
+                                        '&:hover': {
+                                            backgroundColor: 'rgba(76, 175, 80, 0.04)'
+                                        }
+                                    }}
+                                >
+                                    이미지 일괄 선택
+                                    <VisuallyHiddenInput 
+                                        type="file" 
+                                        accept="image/*"
+                                        multiple
+                                        onChange={handleMultipleImageChange}
+                                    />
+                                </Button>
+                                {mediaExpanded.images ? 
+                                    <Box sx={{ fontSize: '16px', color: '#666' }}>▼</Box> : 
+                                    <Box sx={{ fontSize: '16px', color: '#666' }}>▶</Box>}
                             </Box>
+                            
+                            {mediaExpanded.images && (
                             <Box sx={{ 
                                 display: 'flex', 
                                 gap: 1,
@@ -1627,12 +2334,13 @@ export default function Home() {
                                 overflowX: 'auto',
                                 pb: 1,
                             }}>
-                                {[1, 2, 3, 4, 5].map((num) => (
+                                {[1, 2, 3, 4].map((num) => ( // 5개에서 4개로 변경
                                     <Box 
                                         key={num} 
                                         sx={{ 
                                             flex: '0 0 100px',
                                             minWidth: '100px',
+                                                position: 'relative'
                                         }}
                                     >
                                         <Button
@@ -1683,36 +2391,90 @@ export default function Home() {
                                                 onChange={(e) => handleImageChange(num-1)(e)}
                                             />
                                         </Button>
+                                            
+                                            {/* 삭제 버튼 추가 - 위치 및 스타일 개선 */}
+                                            {imageFiles[num-1]?.preview && (
+                                                <IconButton 
+                                                    size="small"
+                                                    sx={{
+                                                        position: 'absolute',
+                                                        top: 5,
+                                                        right: 5,
+                                                        backgroundColor: 'rgba(244, 67, 54, 0.8)',
+                                                        color: 'white',
+                                                        border: '1px solid #f44336',
+                                                        width: 28,
+                                                        height: 28,
+                                                        transition: 'all 0.2s ease',
+                                                        '&:hover': {
+                                                            backgroundColor: '#f44336',
+                                                            transform: 'scale(1.1)'
+                                                        },
+                                                        zIndex: 10,
+                                                        boxShadow: '0 2px 5px rgba(0,0,0,0.2)'
+                                                    }}
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleDeleteImage(num-1);
+                                                    }}
+                                                >
+                                                    <DeleteIcon sx={{ fontSize: 18 }} />
+                                                </IconButton>
+                                            )}
                                     </Box>
                                 ))}
                             </Box>
+                            )}
                             <Divider sx={{ mt: 2, mb: 1 }} />
                         </Grid>
 
                         <Grid item xs={12}>
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.2, mb: 0.8 }}>
+                            <Box 
+                                sx={{ 
+                                    display: 'flex', 
+                                    alignItems: 'center', 
+                                    gap: 1.2, 
+                                    mb: 0.8,
+                                    cursor: 'pointer',
+                                    '&:hover': {
+                                        opacity: 0.8
+                                    }
+                                }}
+                                onClick={() => toggleMediaSection('video')}
+                            >
                                 <VideoLibraryIcon sx={{ color: '#4CAF50', fontSize: 18 }} />
                                 <Typography variant="subtitle2" sx={{ 
                                     color: '#444',
                                     fontSize: '13px',
                                     fontWeight: 600,
+                                    flexGrow: 1
                                 }}>
                                     동영상 파일
                                 </Typography>
+                                {mediaExpanded.video ? 
+                                    <Box sx={{ fontSize: '16px', color: '#666' }}>▼</Box> : 
+                                    <Box sx={{ fontSize: '16px', color: '#666' }}>▶</Box>}
                             </Box>
+                            
+                            {mediaExpanded.video && (
+                                <Box sx={{ position: 'relative' }}>
                             <Button
                                 component="label"
                                 variant="outlined"
                                 sx={{ 
                                     width: '100%',
-                                    height: '100px',
+                                            height: 'auto',
+                                            minHeight: '300px',
                                     border: '1px dashed #ccc',
                                     fontSize: '13px',
                                     color: '#666',
                                     mt: 1,
                                     padding: 0,
                                     overflow: 'hidden',
-                                    position: 'relative'
+                                            position: 'relative',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center'
                                 }}
                             >
                                 {videoPreview ? (
@@ -1722,12 +2484,22 @@ export default function Home() {
                                         sx={{
                                             width: '100%',
                                             height: '100%',
-                                            objectFit: 'cover'
+                                                    maxHeight: '500px',
+                                                    objectFit: 'contain',
+                                                    backgroundColor: '#000'
                                         }}
                                         controls
                                     />
                                 ) : (
-                                    '동영상 업로드'
+                                            <Box sx={{ textAlign: 'center', p: 2 }}>
+                                                <VideoLibraryIcon sx={{ fontSize: 40, color: '#999', mb: 1 }} />
+                                                <Typography sx={{ fontSize: '14px', color: '#666' }}>
+                                                    동영상 파일을 업로드하세요
+                                                </Typography>
+                                                <Typography sx={{ fontSize: '12px', color: '#999', mt: 1 }}>
+                                                    (최대 50MB, MP4, WebM, Ogg 형식 지원)
+                                                </Typography>
+                                            </Box>
                                 )}
                                 <VisuallyHiddenInput 
                                     type="file" 
@@ -1735,6 +2507,35 @@ export default function Home() {
                                     onChange={handleVideoChange}
                                 />
                             </Button>
+                                    
+                                    {/* 비디오 삭제 버튼 추가 - 위치 및 스타일 개선 */}
+                                    {videoPreview && (
+                                        <IconButton 
+                                            size="small"
+                                            sx={{
+                                                position: 'absolute',
+                                                top: 10,
+                                                right: 10,
+                                                backgroundColor: 'rgba(244, 67, 54, 0.8)',
+                                                color: 'white',
+                                                border: '1px solid #f44336',
+                                                width: 28,
+                                                height: 28,
+                                                transition: 'all 0.2s ease',
+                                                '&:hover': {
+                                                    backgroundColor: '#f44336',
+                                                    transform: 'scale(1.1)'
+                                                },
+                                                zIndex: 10,
+                                                boxShadow: '0 2px 5px rgba(0,0,0,0.2)'
+                                            }}
+                                            onClick={handleDeleteVideo}
+                                        >
+                                            <DeleteIcon sx={{ fontSize: 18 }} />
+                                        </IconButton>
+                                    )}
+                                </Box>
+                            )}
                         </Grid>
                     </Grid>
                 </Box>
@@ -1823,6 +2624,96 @@ export default function Home() {
                         등록
                     </Button>
                 </Box>
+            </DialogActions>
+        </Dialog>
+
+        {/* PDF 뷰어 다이얼로그 추가 */}
+        <Dialog
+            open={pdfViewerOpen}
+            onClose={handleClosePdfViewer}
+            maxWidth="lg"
+            fullWidth
+            PaperProps={{
+                sx: {
+                    height: '90vh',
+                    display: 'flex',
+                    flexDirection: 'column'
+                }
+            }}
+        >
+            <DialogTitle
+                sx={{
+                    backgroundColor: '#f44336',
+                    color: 'white',
+                    p: 2,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between'
+                }}
+            >
+                <Box sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 1
+                }}>
+                    <PictureAsPdfIcon sx={{ fontSize: 20 }} />
+                    <Typography
+                        component="span"
+                        sx={{
+                            fontSize: '14px',
+                            fontWeight: 'bold'
+                        }}
+                    >
+                        PDF 문서 보기
+                    </Typography>
+                </Box>
+                <IconButton 
+                    size="small" 
+                    onClick={handleClosePdfViewer}
+                    sx={{ color: 'white' }}
+                >
+                    <CancelIcon fontSize="small" />
+                </IconButton>
+            </DialogTitle>
+            <DialogContent
+                sx={{
+                    p: 0,
+                    flex: '1 1 auto',
+                    overflow: 'hidden'
+                }}
+            >
+                <Box 
+                    component="iframe"
+                    src={pdfViewerUrl}
+                    sx={{
+                        width: '100%',
+                        height: '100%',
+                        border: 'none'
+                    }}
+                />
+            </DialogContent>
+            <DialogActions
+                sx={{
+                    p: 2,
+                    backgroundColor: '#f8f9fa',
+                    borderTop: '1px solid #eaeaea'
+                }}
+            >
+                <Button 
+                    onClick={() => window.open(pdfViewerUrl, '_blank')} 
+                    variant="outlined"
+                    startIcon={<OpenInNewIcon />}
+                    sx={{ mr: 'auto' }}
+                >
+                    새 창에서 열기
+                </Button>
+                <Button
+                    onClick={handleClosePdfViewer}
+                    variant="contained"
+                    color="error"
+                >
+                    닫기
+                </Button>
             </DialogActions>
         </Dialog>
 

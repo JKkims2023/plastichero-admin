@@ -16,7 +16,11 @@ const nextConfig = {
         ignoreBuildErrors: true, // 타입스크립트 오류 무시
     },
     images: {
-        domains: ['localhost'], // 개발 환경
+        domains: [
+            'localhost', // 개발 환경
+            'plastichero-assets.s3.ap-northeast-2.amazonaws.com', // AWS S3 버킷
+            's3.ap-northeast-2.amazonaws.com' // S3 리전
+        ],
         // 이미지 최적화 설정 추가
         deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
         imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
@@ -32,6 +36,11 @@ const nextConfig = {
             {
                 source: '/public/media/:path*',
                 destination: '/api/public/media/:path*',
+            },
+            // S3 파일 API 경로 추가
+            {
+                source: '/s3-file/:path*',
+                destination: '/api/file?key=:path*',
             },
         ];
     },

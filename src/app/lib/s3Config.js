@@ -1,0 +1,111 @@
+import { S3Client } from '@aws-sdk/client-s3';
+import { Upload } from '@aws-sdk/lib-storage';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import { GetObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3';
+
+// S3 설정 정보 하드코딩 (환경 변수가 로드되지 않는 문제 해결)
+const S3_CONFIG = {
+  region: 'ap-northeast-2',
+  credentials: {
+    accessKeyId: 'AKIAR47724A577IOATXB',
+    secretAccessKey: '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',
+  },
+  bucketName: 'plastichero-assets'
+};
+
+// 설정 로그 기록
+console.log('S3 설정 정보:', { 
+  region: S3_CONFIG.region, 
+  bucketName: S3_CONFIG.bucketName,
+  baseUrl: `https://${S3_CONFIG.bucketName}.s3.${S3_CONFIG.region}.amazonaws.com`
+});
+
+// S3 버킷의 기본 URL을 생성
+const S3_BASE_URL = `https://${S3_CONFIG.bucketName}.s3.${S3_CONFIG.region}.amazonaws.com`;
+
+// S3 클라이언트 객체 생성
+export const s3Client = new S3Client({
+  region: S3_CONFIG.region,
+  credentials: S3_CONFIG.credentials
+});
+
+// S3에 파일 업로드 함수 - 추가 메타데이터 지원
+export async function uploadToS3(fileBuffer, fileName, contentType, folder = 'uploads', options = {}) {
+  try {
+    const key = `${folder}/${Date.now()}-${fileName.replace(/[^\w\d.]/g, '_')}`;
+    
+    const uploadParams = {
+      Bucket: S3_CONFIG.bucketName,
+      Key: key,
+      Body: fileBuffer,
+      ContentType: contentType,
+      ...options // 추가 옵션을 병합
+    };
+    
+    const upload = new Upload({
+      client: s3Client,
+      params: uploadParams
+    });
+
+    const result = await upload.done();
+    console.log(`파일 업로드 성공: ${key}`);
+    
+    // 파일의 전체 URL을 생성
+    const fileUrl = `${S3_BASE_URL}/${key}`;
+    
+    return {
+      key: key,
+      url: fileUrl,
+      location: fileUrl, // 전체 URL을 location으로도 제공 (for_my_hero와 호환)
+      success: true
+    };
+  } catch (error) {
+    console.error('S3 업로드 오류:', error);
+    return {
+      success: false,
+      error: error.message
+    };
+  }
+}
+
+// S3에서 파일의 서명된 URL 가져오기
+export async function getSignedFileUrl(key, expiresIn = 3600) {
+  try {
+    const command = new GetObjectCommand({
+      Bucket: S3_CONFIG.bucketName,
+      Key: key,
+    });
+    
+    const url = await getSignedUrl(s3Client, command, { expiresIn });
+    return { url, success: true };
+  } catch (error) {
+    console.error('S3 URL 생성 오류:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+// 파일 키에서 전체 URL 생성
+export function getFileUrlFromKey(key) {
+  if (!key) return '';
+  return `${S3_BASE_URL}/${key}`;
+}
+
+// 이미지 최적화 후 S3에 업로드하는 함수
+export async function optimizeAndUploadImage(sharpInstance, fileName, folder = 'images') {
+  try {
+    // 최적화된 이미지 버퍼 생성
+    const buffer = await sharpInstance
+      .resize(1200, 1200, { fit: 'inside', withoutEnlargement: true })
+      .jpeg({ quality: 80 })
+      .toBuffer();
+
+    // 최적화된 파일명 생성
+    const optimizedFileName = fileName.replace(/\.\w+$/, '_optimized.jpg');
+    
+    // S3에 업로드
+    return await uploadToS3(buffer, optimizedFileName, 'image/jpeg', folder);
+  } catch (error) {
+    console.error('이미지 최적화 및 업로드 오류:', error);
+    return { success: false, error: error.message };
+  }
+} 
