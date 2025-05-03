@@ -2003,7 +2003,7 @@ export default function Home() {
                                                         sx={{ ml: 1, minWidth: 'auto', p: '4px 8px' }}
                                                         onClick={(e) => {
                                                             e.stopPropagation();
-                                                            handlePdfView(selectedContent.notice_picture5);
+                                                            window.open(`/api/download?url=${encodeURIComponent(selectedContent.notice_picture5)}`, '_blank');
                                                         }}
                                                     >
                                                         보기
@@ -2708,7 +2708,7 @@ export default function Home() {
             >
                 <Box 
                     component="iframe"
-                    src={pdfViewerUrl}
+                    src={`/api/download?url=${encodeURIComponent(pdfViewerUrl)}`}
                     sx={{
                         width: '100%',
                         height: '100%',
@@ -2724,7 +2724,7 @@ export default function Home() {
                 }}
             >
                 <Button 
-                    onClick={() => handlePdfView(pdfViewerUrl)} 
+                    onClick={() => window.open(`/api/download?url=${encodeURIComponent(pdfViewerUrl)}`, '_blank')}
                     variant="outlined"
                     startIcon={<OpenInNewIcon />}
                     sx={{ mr: 'auto' }}
