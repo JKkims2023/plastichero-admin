@@ -1048,6 +1048,63 @@ export default function Home() {
         return pdfUrl;
     };
 
+    // PDF 다운로드 및 표시 함수로 변경
+    const handlePdfView = async (pdfUrl: string) => {
+        try {
+            console.log('PDF 처리 시작:', pdfUrl);
+            
+            // 서버에 PDF 다운로드 요청
+            const response = await fetch(`/api/download?url=${encodeURIComponent(pdfUrl)}`);
+            
+            if (!response.ok) {
+                throw new Error('PDF 다운로드에 실패했습니다');
+            }
+            
+            // 파일 형식이 PDF인지 확인
+            const contentType = response.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/pdf')) {
+                throw new Error('올바른 PDF 파일이 아닙니다');
+            }
+            
+            // 파일 이름 추출
+            let fileName = 'document.pdf';
+            const contentDisposition = response.headers.get('content-disposition');
+            if (contentDisposition) {
+                const matches = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/.exec(contentDisposition);
+                if (matches && matches[1]) {
+                    fileName = matches[1].replace(/['"]/g, '');
+                }
+            } else {
+                // URL에서 파일 이름 추출 시도
+                const urlParts = pdfUrl.split('/');
+                if (urlParts.length > 0) {
+                    const lastPart = urlParts[urlParts.length - 1];
+                    if (lastPart && lastPart.includes('.pdf')) {
+                        fileName = lastPart;
+                    }
+                }
+            }
+            
+            // Blob 생성
+            const blob = await response.blob();
+            
+            // Blob URL 생성
+            const blobUrl = URL.createObjectURL(blob);
+            
+            // 새 창에서 PDF 열기
+            window.open(blobUrl, '_blank');
+            
+            // 메모리 누수 방지를 위해 나중에 URL 해제 (타임아웃 설정)
+            setTimeout(() => {
+                URL.revokeObjectURL(blobUrl);
+            }, 30000); // 30초 후 해제
+            
+        } catch (error) {
+            console.error('PDF 처리 오류:', error);
+            alert('PDF 파일을 열 수 없습니다');
+        }
+    };
+
     return (
 
       <div style={{display:'flex', flexDirection:'column',  width:'100%', height:'100vh',  paddingLeft:'20px', paddingRight:'20px',}}>
@@ -1989,7 +2046,7 @@ export default function Home() {
                                                         sx={{ ml: 1, minWidth: 'auto', p: '4px 8px' }}
                                                         onClick={(e) => {
                                                             e.stopPropagation();
-                                                            window.open(getPdfProxyUrl(selectedContent.notice_picture5), '_blank');
+                                                            handlePdfView(selectedContent.notice_picture5);
                                                         }}
                                                     >
                                                         보기
@@ -2710,7 +2767,7 @@ export default function Home() {
                 }}
             >
                 <Button 
-                    onClick={() => window.open(pdfViewerUrl, '_blank')} 
+                    onClick={() => handlePdfView(pdfViewerUrl)} 
                     variant="outlined"
                     startIcon={<OpenInNewIcon />}
                     sx={{ mr: 'auto' }}
