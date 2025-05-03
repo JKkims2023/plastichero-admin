@@ -4,15 +4,16 @@
  */
 
 import { S3Client, PutBucketPolicyCommand } from '@aws-sdk/client-s3';
+import { ENV } from './env';
 
 // S3 설정 정보 (환경 변수 사용)
 const S3_CONFIG = {
-  region: process.env.AWS_REGION || 'ap-northeast-2',
+  region: ENV.AWS_REGION,
   credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+    accessKeyId: ENV.AWS_ACCESS_KEY_ID,
+    secretAccessKey: ENV.AWS_SECRET_ACCESS_KEY,
   },
-  bucketName: process.env.S3_BUCKET_NAME || 'plastichero-assets'
+  bucketName: ENV.S3_BUCKET_NAME
 };
 
 // S3 클라이언트 생성
