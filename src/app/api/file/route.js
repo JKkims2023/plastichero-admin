@@ -18,22 +18,26 @@ export async function GET(request) {
             }, { status: 400 });
         }
         
-        // 이미 전체 URL인 경우 리다이렉트
+        // 파일 키가 이미 전체 URL인 경우 처리
         if (fileKey.startsWith('http')) {
+            console.log('이미 전체 URL인 파일 키를 리다이렉트:', fileKey);
             return NextResponse.redirect(fileKey);
         }
         
         // 파일 확장자 추출
         const fileExt = fileKey.split('.').pop()?.toLowerCase();
+        console.log('파일 확장자:', fileExt);
         
         // direct 모드일 경우 리다이렉트로 처리 (서명되지 않은 URL로)
         // 공개적으로 접근 가능한 이미지/비디오인 경우 사용
         if (direct) {
             const directUrl = getFileUrlFromKey(fileKey);
+            console.log('직접 접근 URL로 리다이렉트:', directUrl);
             return NextResponse.redirect(directUrl);
         }
         
         // S3에서 서명된 URL 가져오기
+        console.log('서명된 URL 요청 중, 키:', fileKey);
         const result = await getSignedFileUrl(fileKey);
         
         if (!result.success) {
@@ -45,7 +49,7 @@ export async function GET(request) {
             }, { status: 500 });
         }
         
-        console.log('파일 URL 생성 성공:', result.url.substring(0, 100) + '...');
+        console.log('서명된 URL 생성 성공:', result.url.substring(0, 100) + '...');
         
         // 파일 유형에 따른 헤더 설정
         const headers = {
@@ -64,6 +68,7 @@ export async function GET(request) {
         
         // URL로 리다이렉트 (JSON 응답 대신)
         // 이렇게 하면 프론트엔드에서 추가 요청이 필요 없어짐
+        console.log('최종 리다이렉트 URL:', result.url.substring(0, 100) + '...');
         return NextResponse.redirect(result.url, { headers });
         
     } catch (error) {

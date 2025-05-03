@@ -1027,11 +1027,21 @@ export default function Home() {
     // PDF 파일 URL 가져오기 함수 추가
     const getPdfProxyUrl = (pdfUrl: string) => {
         // 이미 S3 URL인 경우, 파일 키만 추출
-        if (pdfUrl && pdfUrl.includes('plastichero-assets.s3')) {
-            // URL에서 키 부분만 추출 (s3.amazonaws.com/ 이후 부분)
-            const keyMatch = pdfUrl.match(/amazonaws\.com\/(.*)/);
-            if (keyMatch && keyMatch[1]) {
-                return `/api/file?key=${encodeURIComponent(keyMatch[1])}`; 
+        if (pdfUrl && (pdfUrl.includes('s3.') || pdfUrl.includes('plastichero-assets'))) {
+            try {
+                // URL을 파싱하여 경로 추출
+                const parsedUrl = new URL(pdfUrl);
+                const path = parsedUrl.pathname;
+                
+                // 경로에서 맨 앞의 슬래시(/)를 제거
+                const key = path.startsWith('/') ? path.substring(1) : path;
+                
+                // API 라우트를 통해 파일에 접근
+                return `/api/file?key=${encodeURIComponent(key)}`;
+            } catch (e) {
+                console.error('PDF URL 파싱 오류:', e);
+                // 에러 발생 시 원본 URL 반환
+                return pdfUrl;
             }
         }
         // 그렇지 않으면 직접 URL 반환
