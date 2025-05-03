@@ -35,12 +35,15 @@ export async function uploadToS3(fileBuffer, fileName, contentType, folder = 'up
   try {
     const key = `${folder}/${Date.now()}-${fileName.replace(/[^\w\d.]/g, '_')}`;
     
+    // ACL 옵션 제거 (S3 버킷이 ACL을 지원하지 않음)
+    const { ACL, ...safeOptions } = options;
+    
     const uploadParams = {
       Bucket: S3_CONFIG.bucketName,
       Key: key,
       Body: fileBuffer,
       ContentType: contentType,
-      ...options // 추가 옵션을 병합
+      ...safeOptions // ACL이 제거된 안전한 옵션만 사용
     };
     
     const upload = new Upload({
