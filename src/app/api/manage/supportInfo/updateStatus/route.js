@@ -47,9 +47,12 @@ export async function POST(request) {
     
     
 
-    const result = await axios.post('https://port-0-plastichero-batch-m90know96390d9a9.sel4.cloudtype.app/' + 'api/push/send', {
-      
-      token: token,
+//    const result = await axios.post('https://port-0-plastichero-batch-m90know96390d9a9.sel4.cloudtype.app/' + 'api/push/send', {
+  
+
+  const result = await axios.post('https://port-0-plastichero-batch-maa8f8088cfc79d3.sel4.cloudtype.app/' + 'api/push/send', {
+  
+    token: token,
       title: '고객지원 답변 완료',
       body: '요청하신 문의에 대한 답변이 등록되었습니다.',
       data: 'PlasticHero',
