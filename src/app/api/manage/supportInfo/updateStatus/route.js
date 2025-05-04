@@ -47,7 +47,7 @@ export async function POST(request) {
     
     
 
-    const result = await axios.post(process.env.NEXT_PUSH_URL + 'api/push/send', {
+    const result = await axios.post('https://port-0-plastichero-batch-m90know96390d9a9.sel4.cloudtype.app/' + 'api/push/send', {
       
       token: token,
       title: '고객지원 답변 완료',
