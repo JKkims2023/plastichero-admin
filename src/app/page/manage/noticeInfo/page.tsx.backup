@@ -71,8 +71,6 @@ import Tooltip from '@mui/material/Tooltip';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import Pagination from '@mui/material/Pagination';
-import FilterAltIcon from '@mui/icons-material/FilterAlt';
-import Chip from '@mui/material/Chip';
 
 type Anchor = 'bottom';
 
@@ -208,7 +206,6 @@ export default function Home() {
 
     const [page, setPage] = React.useState(0);
     const rowsPerPage = 5;
-    const [commentFilter, setCommentFilter] = React.useState('all'); // 'all', 'approved', 'unapproved'
 
     // @ts-ignore
     const columns: GridColDef<(typeof rows)[number]>[] = [
@@ -351,49 +348,78 @@ export default function Home() {
 
     
     const handleChangeFilterContentType = (event: SelectChangeEvent<number>) => {
-        try {
-            setFilterContentTypeMethod(Number(event.target.value)); 
 
-            switch(event.target.value) {
-                case 10: {
-                    setFilterContentTypeValueMethod('all');
-                } break;
-                case 20: {
-                    setFilterContentTypeValueMethod('title');
-                } break;
-                case 30: {
-                    setFilterContentTypeValueMethod('description');
-                } break;
-                default: { 
-                    setFilterContentTypeValueMethod('all');
-                } break;  
-            }
-        } catch(error) {
+        try{
+
+          setFilterContentTypeMethod(Number(event.target.value)); 
+
+          switch(event.target.value){
+
+            case 10:{
+
+              setFilterContentTypeValueMethod('all');
+            }break;
+            case 20:{
+
+              setFilterContentTypeValueMethod('phone');
+            }break;
+            case 30:{
+
+              setFilterContentTypeValueMethod('mb_id');
+            }break;
+            case 40:{
+
+              setFilterContentTypeValueMethod('mb_name');
+            }break;
+            default:{ 
+
+              setFilterContentTypeValueMethod('all');
+            }break;  
+
+          }
+
+        }catch(error){
+
             console.log(error);
+
         }
     };
 
     const handleChangeFilterType = (event: SelectChangeEvent<number>) => {
-        try {
-            setFilterStatusMethod(Number(event.target.value));
 
-            switch(event.target.value) {
-                case 10: {
-                    setFilterStatusValueMethod('all');
-                } break;
-                case 20: {
-                    setFilterStatusValueMethod('Y');
-                } break;
-                case 30: {
-                    setFilterStatusValueMethod('N');
-                } break;
-                default: {
-                    setFilterStatusValueMethod('all');
-                } break;
-            }
-        } catch(error) {  
-            console.log(error);
-        } 
+      try{
+
+        setFilterStatusMethod(Number(event.target.value));
+
+        switch(event.target.value){
+
+          case 10:{
+            setFilterStatusValueMethod('all');
+          }break;
+          case 20:{
+            setFilterStatusValueMethod('0');
+          }break;
+          case 30:{
+            setFilterStatusValueMethod('1');
+          }break;
+          case 40:{
+            setFilterStatusValueMethod('2');
+          }break;
+          case 50:{
+            setFilterStatusValueMethod('3');
+          }break;
+          default:{
+            setFilterStatusValueMethod('all');
+          }break;
+
+        }
+
+      }catch(error){  
+
+        console.log(error);
+
+      } 
+
     };  
 
     const handleClickDeleteKeyword = () => {
@@ -411,72 +437,90 @@ export default function Home() {
     };
 
     const handleClickSearch = () => {
-        try {
-            let filteredList = [...noticeList];
 
-            if(filterStatusValueMethod === 'all') {
-                // 상태 필터 미적용 (전체)
-                if(filterInfo.length > 0) {
-                    switch(filterContentTypeValueMethod) {
-                        case 'title': {
-                            filteredList = filteredList.filter((notice) => 
-                                notice.notice_title?.toString().toLowerCase().includes(filterInfo.toLowerCase())
-                            ).map((notice, idx) => ({ ...notice, id: idx + 1 }));
-                        } break;
-                        case 'description': {
-                            filteredList = filteredList.filter((notice) => 
-                                notice.notice_desctription?.toString().toLowerCase().includes(filterInfo.toLowerCase())
-                            ).map((notice, idx) => ({ ...notice, id: idx + 1 }));
-                        } break;
-                        default: {
-                            // 모든 필드 검색
-                            filteredList = filteredList.filter((notice) => 
-                                notice.notice_title?.toString().toLowerCase().includes(filterInfo.toLowerCase()) ||
-                                notice.notice_desctription?.toString().toLowerCase().includes(filterInfo.toLowerCase())
-                            ).map((notice, idx) => ({ ...notice, id: idx + 1 }));
-                        } break;
-                    }
-                } else {
-                    filteredList = filteredList.map((notice, idx) => ({ ...notice, id: idx + 1 }));
-                }
-            } else {
-                // comment_flag로 필터링
-                if(filterInfo.length > 0) {
-                    switch(filterContentTypeValueMethod) {
-                        case 'title': {
-                            filteredList = filteredList.filter((notice) => 
-                                notice.notice_title?.toString().toLowerCase().includes(filterInfo.toLowerCase()) &&
-                                notice.comment_flag === filterStatusValueMethod
-                            ).map((notice, idx) => ({ ...notice, id: idx + 1 }));
-                        } break;
-                        case 'description': {
-                            filteredList = filteredList.filter((notice) => 
-                                notice.notice_desctription?.toString().toLowerCase().includes(filterInfo.toLowerCase()) &&
-                                notice.comment_flag === filterStatusValueMethod
-                            ).map((notice, idx) => ({ ...notice, id: idx + 1 }));
-                        } break;
-                        default: {
-                            // 모든 필드 검색
-                            filteredList = filteredList.filter((notice) => 
-                                (notice.notice_title?.toString().toLowerCase().includes(filterInfo.toLowerCase()) ||
-                                notice.notice_desctription?.toString().toLowerCase().includes(filterInfo.toLowerCase())) &&
-                                notice.comment_flag === filterStatusValueMethod
-                            ).map((notice, idx) => ({ ...notice, id: idx + 1 }));
-                        } break;
-                    }
-                } else {
-                    // 키워드 없이 comment_flag만으로 필터링
-                    filteredList = filteredList.filter((notice) => 
-                        notice.comment_flag === filterStatusValueMethod
-                    ).map((notice, idx) => ({ ...notice, id: idx + 1 }));
-                }
+      try{
+
+        let filteredList = [...noticeList];
+
+        if(filterStatusValueMethod === 'all') {
+
+          if(filterInfo.length > 0) {
+            
+            switch(filterContentTypeValueMethod) {
+              case 'target': {
+                filteredList = filteredList.filter((user) => 
+                  user.phone?.includes(filterInfo))
+                  .map((user, idx) => ({ ...user, id: idx + 1 }));
+              } break;
+              case 'mb_id': {
+                filteredList = filteredList.filter((user) => 
+                  user.mb_id?.includes(filterInfo))
+                  .map((user, idx) => ({ ...user, id: idx + 1 }));
+              } break;
+              case 'mb_name': {
+                filteredList = filteredList.filter((user) => 
+                  user.mb_name?.includes(filterInfo))
+                  .map((user, idx) => ({ ...user, id: idx + 1 }));
+              } break;
+
+              default: {
+                filteredList = filteredList.map((user, idx) => ({ ...user, id: idx + 1 }));
+              } break;
             }
+          
+          }else{
 
-            setFilterNoticeList(filteredList);
-                
-        } catch(error) {
-            console.log(error);
+            filteredList = filteredList.map((user, idx) => ({ ...user, id: idx + 1 }));
+          
+          }
+
+        } else {
+          // sell_status 비교 전에 공백 제거
+          const normalizedStatus = filterStatusValueMethod.trim();
+
+          
+          if(filterInfo.length > 0) {
+
+            switch(filterContentTypeValueMethod) {
+              case 'target': {
+                filteredList = filteredList.filter((user) => 
+                  user.target?.includes(filterInfo) && 
+                  user.auth_type?.toString() === normalizedStatus)
+                  .map((user, idx) => ({ ...user, id: idx + 1 }));
+              } break;
+              case 'mb_id': {
+                filteredList = filteredList.filter((user) => 
+                  user.mb_id?.includes(filterInfo) && 
+                  user.auth_type?.toString() === normalizedStatus)
+                  .map((user, idx) => ({ ...user, id: idx + 1 }));
+              } break;
+              case 'mb_name': {
+                filteredList = filteredList.filter((user) => 
+                  user.mb_name?.includes(filterInfo) && 
+                  user.auth_type?.toString() === normalizedStatus)
+                  .map((user, idx) => ({ ...user, id: idx + 1 }));
+              } break;
+              default: {
+                filteredList = filteredList.map((user, idx) => ({ ...user, id: idx + 1 }));
+              } break;
+            }
+          } else {
+
+
+            filteredList = filteredList.filter((user) => 
+              user.auth_type?.toString() == normalizedStatus)
+              .map((user, idx) => ({ ...user, id: idx + 1 }));
+          }
         }
+
+        setFilterNoticeList(filteredList);
+          
+      }catch(error){
+
+        console.log(error);
+
+      }
+
     };
 
     // Custom Pagination Component
@@ -1164,7 +1208,9 @@ export default function Home() {
                             )}
                         </Box>
                         
-
+                        <Typography sx={{ width: 180, fontSize: '13px', color: 'text.secondary' }}>
+                            {row.reg_date ? new Date(row.reg_date).toLocaleString('ko-KR') : ''}
+                        </Typography>
                     </Box>
                     
                     <Box sx={{ display: 'flex', gap: 1, flexShrink: 0 }}>
@@ -1368,8 +1414,9 @@ export default function Home() {
                   onChange={handleChangeFilterType}
                   >
                   <MenuItem style={{fontSize:13}} value={10}>전체</MenuItem>
-                  <MenuItem style={{fontSize:13}} value={20}>댓글허용</MenuItem>
-                  <MenuItem style={{fontSize:13}} value={30}>댓글비허용</MenuItem>
+                  <MenuItem style={{fontSize:13}} value={20}>지갑생성</MenuItem>
+                  <MenuItem style={{fontSize:13}} value={30}>지갑 불러오기</MenuItem>
+                  <MenuItem style={{fontSize:13}} value={40}>기타</MenuItem>
                   </Select>
               </FormControl>
 
@@ -1409,8 +1456,9 @@ export default function Home() {
                       onChange={handleChangeFilterContentType}
                   >
                       <MenuItem style={{fontSize:14}} value={10}>전체</MenuItem>
-                      <MenuItem style={{fontSize:14}} value={20}>공지제목</MenuItem>
-                      <MenuItem style={{fontSize:14}} value={30}>공지내용</MenuItem>
+                      <MenuItem style={{fontSize:14}} value={20}>이메일주소</MenuItem>
+                      <MenuItem style={{fontSize:14}} value={30}>사용자ID</MenuItem>
+                      <MenuItem style={{fontSize:14}} value={40}>사용자명</MenuItem>
                   </Select>
               </FormControl>
             </div>
@@ -1740,53 +1788,9 @@ export default function Home() {
                                     color: '#444',
                                     fontSize: '13px',
                                     fontWeight: 600,
-
                                 }}>
                                     공지 제목
                                 </Typography>
-
-
-                                <Box sx={{ 
-                                display: 'flex', 
-                                alignItems: 'center',
-                                gap: 1,
-                                marginLeft:'auto',
-                            }}>
-                                <CommentIcon sx={{ 
-                                    color: selectedContent.commentEnabled ? '#1976d2' : '#666',
-                                    fontSize: 20,
-                                    transition: 'color 0.3s ease'
-                                }} />
-                                <Typography sx={{ 
-                                    fontSize: '13px',
-                                    color: selectedContent.commentEnabled ? '#1976d2' : '#666',
-                                    mr: 1,
-                                    transition: 'color 0.3s ease',
-                                    fontWeight: selectedContent.commentEnabled ? 600 : 400
-                                }}>
-                                    댓글 기능 {selectedContent.commentEnabled ? '사용' : '미사용'}
-                                </Typography>
-                                <Switch
-                                    size="small"
-                                    checked={selectedContent.commentEnabled}
-                                    onChange={(e) => setSelectedContent({
-                                        ...selectedContent,
-                                        commentEnabled: e.target.checked
-                                    })}
-                                    sx={{
-                                        '& .MuiSwitch-switchBase.Mui-checked': {
-                                            color: '#1976d2',
-                                            '&:hover': {
-                                                backgroundColor: 'rgba(25, 118, 210, 0.08)',
-                                            },
-                                        },
-                                        '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
-                                            backgroundColor: '#1976d2',
-                                        },
-                                    }}
-                                />
-                            </Box>
-
                             </Box>
                             <TextField
                                 fullWidth
@@ -2176,11 +2180,10 @@ export default function Home() {
                         <Grid item xs={12}>
                             <Box 
                                 sx={{ 
-                                    display: 'none', 
+                                    display: 'flex', 
                                     alignItems: 'center', 
                                     gap: 1.2, 
                                     mb: 0.8,
-
                                     cursor: 'pointer',
                                     '&:hover': {
                                         opacity: 0.8
@@ -2215,11 +2218,10 @@ export default function Home() {
                                             fontSize: '13px',
                                             color: '#666',
                                             mt: 1,
-                                            display: 'none',
                                             padding: pdfPreview || selectedContent?.notice_picture5 ? 0 : '16px',
                                             overflow: 'hidden',
                                             position: 'relative',
-
+                                            display: 'flex',
                                             flexDirection: 'column',
                                             alignItems: 'center',
                                             justifyContent: 'center'
@@ -2340,330 +2342,244 @@ export default function Home() {
                             }}>
                                 총 {commentList.length}개
                             </Typography>
-                            
-                            {/* 필터링 UI 추가 */}
-                            <Box sx={{ display: 'flex', ml: 'auto', alignItems: 'center', gap: 1 }}>
-                                <FilterAltIcon sx={{ color: '#666', fontSize: 18 }} />
-                                <Box sx={{ 
-                                    display: 'flex',
-                                    gap: 1
-                                }}>
-                                    <Chip
-                                        label="전체"
-                                        size="small"
-                                        onClick={() => {
-                                            setCommentFilter('all');
-                                            setPage(0);
-                                        }}
-                                        color={commentFilter === 'all' ? 'primary' : 'default'}
-                                        sx={{ 
-                                            fontSize: '12px',
-                                            height: '24px'
-                                        }}
-                                    />
-                                    <Chip
-                                        label="승인"
-                                        size="small"
-                                        onClick={() => {
-                                            setCommentFilter('approved');
-                                            setPage(0);
-                                        }}
-                                        color={commentFilter === 'approved' ? 'success' : 'default'}
-                                        sx={{ 
-                                            fontSize: '12px',
-                                            height: '24px'
-                                        }}
-                                    />
-                                    <Chip
-                                        label="미승인"
-                                        size="small"
-                                        onClick={() => {
-                                            setCommentFilter('unapproved');
-                                            setPage(0);
-                                        }}
-                                        color={commentFilter === 'unapproved' ? 'error' : 'default'}
-                                        sx={{ 
-                                            fontSize: '12px',
-                                            height: '24px'
-                                        }}
-                                    />
-                                </Box>
-                            </Box>
                         </Box>
                         
-                        {/* 댓글 목록 표시 - 스크롤 뷰로 감싸기 */}
+                        {/* 댓글 목록 표시 - DataGrid 대신 단순 리스트 사용 */}
                         <Box sx={{ 
-                            width: '100%',
-                            height: '300px',
-                            overflowY: 'auto',
-                            border: '1px solid #eaeaea',
-                            borderRadius: '8px',
-                            p: 2,
-                            bgcolor: '#f9f9f9',
-                            '&::-webkit-scrollbar': {
-                                width: '8px',
-                            },
-                            '&::-webkit-scrollbar-track': {
-                                backgroundColor: '#f1f1f1',
-                                borderRadius: '10px',
-                            },
-                            '&::-webkit-scrollbar-thumb': {
-                                backgroundColor: '#c1c1c1',
-                                borderRadius: '10px',
-                                '&:hover': {
-                                    backgroundColor: '#a8a8a8',
-                                },
-                            },
+                            width: '100%', 
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: 2
                         }}>
-                            <Box sx={{ 
-                                width: '100%', 
-                                display: 'flex',
-                                flexDirection: 'column',
-                                gap: 2
-                            }}>
-                                {/* 필터링된 댓글 목록 */}
-                                {(() => {
-                                    // 필터링된 댓글 목록 생성
-                                    const filteredComments = commentList.filter(comment => {
-                                        if (commentFilter === 'all') return true;
-                                        if (commentFilter === 'approved') return comment.approval_yn === 'Y';
-                                        if (commentFilter === 'unapproved') return comment.approval_yn !== 'Y';
-                                        return true;
-                                    });
-                                    
-                                    // 필터링된 결과가 있으면 표시
-                                    if (filteredComments.length > 0) {
-                                        return (
-                                            <>
-                                                {/* 현재 페이지 댓글만 보여주기 */}
-                                                {filteredComments
-                                                    .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                                                    .map((comment) => {
-                                                        const isExpanded = expandedRows.includes(comment.id);
-                                                        const isLongComment = comment.comment && comment.comment.length > 100;
-                                                        
-                                                        return (
-                                                            <Paper 
-                                                                key={comment.id}
-                                                                elevation={0}
-                                                                sx={{
-                                                                    width: '100%',
-                                                                    borderRadius: '8px',
-                                                                    border: '1px solid #eaeaea',
-                                                                    overflow: 'hidden'
-                                                                }}
-                                                            >
-                                                                {/* 첫 번째 줄: 메타데이터 및 액션 버튼 */}
-                                                                <Box sx={{ 
-                                                                    display: 'flex', 
-                                                                    alignItems: 'center',
-                                                                    justifyContent: 'space-between', 
-                                                                    p: 2,
-                                                                    bgcolor: comment.id % 2 === 0 ? '#fafafa' : 'white',
-                                                                    borderBottom: '1px solid #f0f0f0'
-                                                                }}>
-                                                                    <Box sx={{ 
-                                                                        display: 'flex', 
-                                                                        alignItems: 'center', 
-                                                                        gap: { xs: 1.5, sm: 3 },
-                                                                        flexWrap: { xs: 'wrap', sm: 'nowrap' }
-                                                                    }}>
-                                                                        <Typography sx={{ 
-                                                                            width: { xs: '100%', sm: 'auto' }, 
-                                                                            minWidth: { sm: '60px' }, 
-                                                                            fontWeight: 500, 
-                                                                            fontSize: '13px',
-                                                                            color: 'text.secondary'
-                                                                        }}>
-                                                                            No. {comment.id}
-                                                                        </Typography>
-                                                                        
-                                                                        <Typography sx={{ 
-                                                                            width: { xs: '50%', sm: '120px' }, 
-                                                                            fontSize: '13px'
-                                                                        }}>
-                                                                            {comment.mb_no}
-                                                                        </Typography>
-                                                                        
-                                                                        <Box sx={{ 
-                                                                            display: 'flex', 
-                                                                            alignItems: 'center', 
-                                                                            gap: 0.5,
-                                                                            color: comment.approval_yn === 'Y' ? green[700] : red[700],
-                                                                            fontWeight: 500,
-                                                                            fontSize: '13px',
-                                                                            width: { xs: '50%', sm: '80px' }
-                                                                        }}>
-                                                                            {comment.approval_yn === 'Y' ? (
-                                                                                <>
-                                                                                    <CheckCircleIcon sx={{ fontSize: 16 }} />
-                                                                                    <span>승인</span>
-                                                                                </>
-                                                                            ) : (
-                                                                                <>
-                                                                                    <CancelOutlinedIcon sx={{ fontSize: 16 }} />
-                                                                                    <span>미승인</span>
-                                                                                </>
-                                                                            )}
-                                                                        </Box>
-                                                                        
-                                                                    </Box>
-                                                                    
-                                                                    <Box sx={{ display: 'flex', gap: 1, flexShrink: 0 }}>
-                                                                        {comment.approval_yn === 'Y' ? (
-                                                                            <Button
-                                                                                variant="outlined"
-                                                                                color="error"
-                                                                                size="small"
-                                                                                onClick={() => handleCommentApproval(comment.comment_no, false)}
-                                                                                sx={{ 
-                                                                                    fontSize: '11px',
-                                                                                    height: '26px',
-                                                                                    minWidth: { xs: '40px', sm: '60px' }
-                                                                                }}
-                                                                            >
-                                                                                미승인
-                                                                            </Button>
-                                                                        ) : (
-                                                                            <Button
-                                                                                variant="outlined"
-                                                                                color="success"
-                                                                                size="small"
-                                                                                onClick={() => handleCommentApproval(comment.comment_no, true)}
-                                                                                sx={{ 
-                                                                                    fontSize: '11px',
-                                                                                    height: '26px',
-                                                                                    minWidth: { xs: '40px', sm: '60px' }
-                                                                                }}
-                                                                            >
-                                                                                승인
-                                                                            </Button>
-                                                                        )}
-                                                                        <Button
-                                                                            variant="outlined"
-                                                                            color="error"
-                                                                            size="small"
-                                                                            onClick={() => handleCommentDelete(comment.comment_no)}
-                                                                            sx={{ 
-                                                                                fontSize: '11px',
-                                                                                height: '26px',
-                                                                                minWidth: { xs: '40px', sm: '60px' }
-                                                                            }}
-                                                                        >
-                                                                            삭제
-                                                                        </Button>
-                                                                    </Box>
-                                                                </Box>
-                                                                
-                                                                {/* 두 번째 줄: 댓글 내용 */}
-                                                                <Box sx={{ 
-                                                                    p: 2,
-                                                                    bgcolor: 'white'
-                                                                }}>
-                                                                    <Typography 
-                                                                        sx={{ 
-                                                                            width: '100%',
-                                                                            fontSize: '13px',
-                                                                            overflow: 'hidden',
-                                                                            textOverflow: isExpanded ? 'clip' : 'ellipsis',
-                                                                            display: '-webkit-box',
-                                                                            WebkitLineClamp: isExpanded ? 'unset' : 3,
-                                                                            WebkitBoxOrient: 'vertical',
-                                                                            lineHeight: 1.6,
-                                                                            whiteSpace: 'pre-wrap',
-                                                                            bgcolor: '#f5f5f5',
-                                                                            p: 2,
-                                                                            borderRadius: '4px'
-                                                                        }}
-                                                                    >
-                                                                        {comment.comment}
-                                                                    </Typography>
-                                                                    
-                                                                    {isLongComment && (
-                                                                        <Button 
-                                                                            size="small" 
-                                                                            onClick={() => {
-                                                                                setExpandedRows(prev => 
-                                                                                    prev.includes(comment.id) 
-                                                                                        ? prev.filter(id => id !== comment.id) 
-                                                                                        : [...prev, comment.id]
-                                                                                );
-                                                                            }}
-                                                                            endIcon={isExpanded ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
-                                                                            sx={{ 
-                                                                                mt: 1, 
-                                                                                fontSize: '11px', 
-                                                                                p: 0, 
-                                                                                minWidth: 'auto',
-                                                                                color: 'text.secondary',
-                                                                                '&:hover': { 
-                                                                                    backgroundColor: 'transparent',
-                                                                                    color: 'primary.main' 
-                                                                                }
-                                                                            }}
-                                                                        >
-                                                                            {isExpanded ? '접기' : '더보기'}
-                                                                        </Button>
-                                                                    )}
-                                                                </Box>
-                                                                
-                                                                {/* 모바일에서만 표시되는 등록일 */}
-                                                                <Box sx={{ 
-                                                                    display: { xs: 'block', sm: 'none' },
-                                                                    p: 1.5,
-                                                                    borderTop: '1px solid #f0f0f0',
-                                                                    bgcolor: '#f9f9f9'
-                                                                }}>
-                                                                    <Typography sx={{ fontSize: '12px', color: 'text.secondary' }}>
-                                                                        등록일: {comment.reg_date ? new Date(comment.reg_date).toLocaleString('ko-KR') : ''}
-                                                                    </Typography>
-                                                                </Box>
-                                                            </Paper>
-                                                        );
-                                                    })
-                                                }
-                                                
-                                                {/* 페이지네이션 */}
-                                                {filteredComments.length > rowsPerPage && (
+                            {commentList.length > 0 ? (
+                                <>
+                                    {/* 현재 페이지 댓글만 보여주기 */}
+                                    {commentList
+                                        .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                                        .map((comment) => {
+                                            const isExpanded = expandedRows.includes(comment.id);
+                                            const isLongComment = comment.comment && comment.comment.length > 100;
+                                            
+                                            return (
+                                                <Paper 
+                                                    key={comment.id}
+                                                    elevation={0}
+                                                    sx={{
+                                                        width: '100%',
+                                                        borderRadius: '8px',
+                                                        border: '1px solid #eaeaea',
+                                                        overflow: 'hidden'
+                                                    }}
+                                                >
+                                                    {/* 첫 번째 줄: 메타데이터 및 액션 버튼 */}
                                                     <Box sx={{ 
                                                         display: 'flex', 
-                                                        justifyContent: 'center', 
-                                                        mt: 2, 
-                                                        mb: 1 
+                                                        alignItems: 'center',
+                                                        justifyContent: 'space-between', 
+                                                        p: 2,
+                                                        bgcolor: comment.id % 2 === 0 ? '#fafafa' : 'white',
+                                                        borderBottom: '1px solid #f0f0f0'
                                                     }}>
-                                                        <Pagination
-                                                            count={Math.ceil(filteredComments.length / rowsPerPage)}
-                                                            page={page + 1}
-                                                            onChange={(e, newPage) => setPage(newPage - 1)}
-                                                            color="primary"
-                                                            size="small"
-                                                        />
+                                                        <Box sx={{ 
+                                                            display: 'flex', 
+                                                            alignItems: 'center', 
+                                                            gap: { xs: 1.5, sm: 3 },
+                                                            flexWrap: { xs: 'wrap', sm: 'nowrap' }
+                                                        }}>
+                                                            <Typography sx={{ 
+                                                                width: { xs: '100%', sm: 'auto' }, 
+                                                                minWidth: { sm: '60px' }, 
+                                                                fontWeight: 500, 
+                                                                fontSize: '13px',
+                                                                color: 'text.secondary'
+                                                            }}>
+                                                                No. {comment.id}
+                                                            </Typography>
+                                                            
+                                                            <Typography sx={{ 
+                                                                width: { xs: '50%', sm: '120px' }, 
+                                                                fontSize: '13px'
+                                                            }}>
+                                                                {comment.mb_no}
+                                                            </Typography>
+                                                            
+                                                            <Box sx={{ 
+                                                                display: 'flex', 
+                                                                alignItems: 'center', 
+                                                                gap: 0.5,
+                                                                color: comment.approval_yn === 'Y' ? green[700] : red[700],
+                                                                fontWeight: 500,
+                                                                fontSize: '13px',
+                                                                width: { xs: '50%', sm: '80px' }
+                                                            }}>
+                                                                {comment.approval_yn === 'Y' ? (
+                                                                    <>
+                                                                        <CheckCircleIcon sx={{ fontSize: 16 }} />
+                                                                        <span>승인</span>
+                                                                    </>
+                                                                ) : (
+                                                                    <>
+                                                                        <CancelOutlinedIcon sx={{ fontSize: 16 }} />
+                                                                        <span>미승인</span>
+                                                                    </>
+                                                                )}
+                                                            </Box>
+                                                            
+                                                            <Typography sx={{ 
+                                                                display: { xs: 'none', sm: 'block' },
+                                                                width: '180px', 
+                                                                fontSize: '13px', 
+                                                                color: 'text.secondary' 
+                                                            }}>
+                                                                {comment.reg_date ? new Date(comment.reg_date).toLocaleString('ko-KR') : ''}
+                                                            </Typography>
+                                                        </Box>
+                                                        
+                                                        <Box sx={{ display: 'flex', gap: 1, flexShrink: 0 }}>
+                                                            {comment.approval_yn === 'Y' ? (
+                                                                <Button
+                                                                    variant="outlined"
+                                                                    color="error"
+                                                                    size="small"
+                                                                    onClick={() => handleCommentApproval(comment.comment_no, false)}
+                                                                    sx={{ 
+                                                                        fontSize: '11px',
+                                                                        height: '26px',
+                                                                        minWidth: { xs: '40px', sm: '60px' }
+                                                                    }}
+                                                                >
+                                                                    미승인
+                                                                </Button>
+                                                            ) : (
+                                                                <Button
+                                                                    variant="outlined"
+                                                                    color="success"
+                                                                    size="small"
+                                                                    onClick={() => handleCommentApproval(comment.comment_no, true)}
+                                                                    sx={{ 
+                                                                        fontSize: '11px',
+                                                                        height: '26px',
+                                                                        minWidth: { xs: '40px', sm: '60px' }
+                                                                    }}
+                                                                >
+                                                                    승인
+                                                                </Button>
+                                                            )}
+                                                            <Button
+                                                                variant="outlined"
+                                                                color="error"
+                                                                size="small"
+                                                                onClick={() => handleCommentDelete(comment.comment_no)}
+                                                                sx={{ 
+                                                                    fontSize: '11px',
+                                                                    height: '26px',
+                                                                    minWidth: { xs: '40px', sm: '60px' }
+                                                                }}
+                                                            >
+                                                                삭제
+                                                            </Button>
+                                                        </Box>
                                                     </Box>
-                                                )}
-                                            </>
-                                        );
-                                    } else {
-                                        // 필터링된 결과가 없으면 메시지 표시
-                                        return (
-                                            <Box sx={{ 
-                                                display: 'flex', 
-                                                alignItems: 'center', 
-                                                justifyContent: 'center',
-                                                height: '200px',
-                                                color: 'text.secondary',
-                                                borderRadius: '8px',
-                                                border: '1px dashed #ccc'
-                                            }}>
-                                                <Typography>
-                                                    {commentFilter === 'approved' ? '승인된 댓글이 없습니다.' : 
-                                                     commentFilter === 'unapproved' ? '미승인 댓글이 없습니다.' : 
-                                                     '댓글이 없습니다.'}
-                                                </Typography>
-                                            </Box>
-                                        );
+                                                    
+                                                    {/* 두 번째 줄: 댓글 내용 */}
+                                                    <Box sx={{ 
+                                                        p: 2,
+                                                        bgcolor: 'white'
+                                                    }}>
+                                                        <Typography 
+                                                            sx={{ 
+                                                                width: '100%',
+                                                                fontSize: '13px',
+                                                                overflow: 'hidden',
+                                                                textOverflow: isExpanded ? 'clip' : 'ellipsis',
+                                                                display: '-webkit-box',
+                                                                WebkitLineClamp: isExpanded ? 'unset' : 3,
+                                                                WebkitBoxOrient: 'vertical',
+                                                                lineHeight: 1.6,
+                                                                whiteSpace: 'pre-wrap',
+                                                                bgcolor: '#f5f5f5',
+                                                                p: 2,
+                                                                borderRadius: '4px'
+                                                            }}
+                                                        >
+                                                            {comment.comment}
+                                                        </Typography>
+                                                        
+                                                        {isLongComment && (
+                                                            <Button 
+                                                                size="small" 
+                                                                onClick={() => {
+                                                                    setExpandedRows(prev => 
+                                                                        prev.includes(comment.id) 
+                                                                            ? prev.filter(id => id !== comment.id) 
+                                                                            : [...prev, comment.id]
+                                                                    );
+                                                                }}
+                                                                endIcon={isExpanded ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
+                                                                sx={{ 
+                                                                    mt: 1, 
+                                                                    fontSize: '11px', 
+                                                                    p: 0, 
+                                                                    minWidth: 'auto',
+                                                                    color: 'text.secondary',
+                                                                    '&:hover': { 
+                                                                        backgroundColor: 'transparent',
+                                                                        color: 'primary.main' 
+                                                                    }
+                                                                }}
+                                                            >
+                                                                {isExpanded ? '접기' : '더보기'}
+                                                            </Button>
+                                                        )}
+                                                    </Box>
+                                                    
+                                                    {/* 모바일에서만 표시되는 등록일 */}
+                                                    <Box sx={{ 
+                                                        display: { xs: 'block', sm: 'none' },
+                                                        p: 1.5,
+                                                        borderTop: '1px solid #f0f0f0',
+                                                        bgcolor: '#f9f9f9'
+                                                    }}>
+                                                        <Typography sx={{ fontSize: '12px', color: 'text.secondary' }}>
+                                                            등록일: {comment.reg_date ? new Date(comment.reg_date).toLocaleString('ko-KR') : ''}
+                                                        </Typography>
+                                                    </Box>
+                                                </Paper>
+                                            );
+                                        })
                                     }
-                                })()}
-                            </Box>
+                                    
+                                    {/* 페이지네이션 */}
+                                    {commentList.length > rowsPerPage && (
+                                        <Box sx={{ 
+                                            display: 'flex', 
+                                            justifyContent: 'center', 
+                                            mt: 2, 
+                                            mb: 1 
+                                        }}>
+                                            <Pagination
+                                                count={Math.ceil(commentList.length / rowsPerPage)}
+                                                page={page + 1}
+                                                onChange={(e, newPage) => setPage(newPage - 1)}
+                                                color="primary"
+                                                size="small"
+                                            />
+                                        </Box>
+                                    )}
+                                </>
+                            ) : (
+                                <Box sx={{ 
+                                    display: 'flex', 
+                                    alignItems: 'center', 
+                                    justifyContent: 'center',
+                                    height: '200px',
+                                    color: 'text.secondary',
+                                    borderRadius: '8px',
+                                    border: '1px dashed #ccc'
+                                }}>
+                                    <Typography>댓글이 없습니다.</Typography>
+                                </Box>
+                            )}
                         </Box>
                     </Box>
                 )}
@@ -2675,20 +2591,55 @@ export default function Home() {
                     borderTop: '1px solid #eaeaea',
                     gap: 1,
                     display: 'flex',
-                    flex:1,
-                    width: '100%',
                     justifyContent: 'space-between'
                 }}
             >
-
-                <Box sx={{ display: 'flex', gap: 1, width: '100%' }}>
+                <Box sx={{ 
+                    display: 'flex', 
+                    alignItems: 'center',
+                    gap: 1
+                }}>
+                    <CommentIcon sx={{ 
+                        color: selectedContent.commentEnabled ? '#1976d2' : '#666',
+                        fontSize: 20,
+                        transition: 'color 0.3s ease'
+                    }} />
+                    <Typography sx={{ 
+                        fontSize: '13px',
+                        color: selectedContent.commentEnabled ? '#1976d2' : '#666',
+                        mr: 1,
+                        transition: 'color 0.3s ease',
+                        fontWeight: selectedContent.commentEnabled ? 600 : 400
+                    }}>
+                        댓글 기능 {selectedContent.commentEnabled ? '사용' : '미사용'}
+                    </Typography>
+                    <Switch
+                        size="small"
+                        checked={selectedContent.commentEnabled}
+                        onChange={(e) => setSelectedContent({
+                            ...selectedContent,
+                            commentEnabled: e.target.checked
+                        })}
+                        sx={{
+                            '& .MuiSwitch-switchBase.Mui-checked': {
+                                color: '#1976d2',
+                                '&:hover': {
+                                    backgroundColor: 'rgba(25, 118, 210, 0.08)',
+                                },
+                            },
+                            '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                                backgroundColor: '#1976d2',
+                            },
+                        }}
+                    />
+                </Box>
+                <Box sx={{ display: 'flex', gap: 1 }}>
                     <Button 
                         onClick={handleDelete}
                         variant="contained"
                         color="error"
                         startIcon={<DeleteIcon sx={{ fontSize: 18 }} />}
                         sx={{ 
-
                             fontSize: '13px',
                             height: '32px',
                             padding: '0 16px'
@@ -2701,7 +2652,6 @@ export default function Home() {
                         variant="outlined" 
                         startIcon={<CancelIcon sx={{ fontSize: 18 }} />}
                         sx={{
-                            marginLeft: 'auto',
                             fontSize: '13px',
                             height: '32px',
                             padding: '0 16px',

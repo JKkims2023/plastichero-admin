@@ -27,6 +27,7 @@ export async function POST(request) {
           notice_movie, 
           notice_html, 
           notice_type, 
+          (select count(*) from g5_notice_comment where notice_no = g5_notice.notice_no and delete_flag = 'N') as comment_count,
           DATE_FORMAT(reg_date, '%Y-%m-%d %H:%i:%s') as reg_date, 
           delete_flag
 

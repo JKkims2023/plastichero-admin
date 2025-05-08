@@ -956,6 +956,42 @@ export default function Home() {
         }
     };
 
+    const handleExcelFunc = async() => {
+
+
+        setLoading(true);
+
+        try {
+
+          const response = await fetch('/api/excel', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ password }),
+            });
+
+            const data = await response.json();
+
+
+            if (data.result == 'success') {
+        
+                alert('엑셀 파일 업로드 완료');
+             
+            } else {
+            
+                alert(data.info);
+            
+            }
+
+        } catch (error) {
+            console.log(error);
+        } finally {
+            setLoading(false);
+        }
+
+    };
+
 
     return (
 
@@ -1210,7 +1246,7 @@ export default function Home() {
                     marginRight:"10px",
                     fontSize: '14px'
                 }} 
-                onClick={handlePassFunc}
+                onClick={handleExcelFunc}
             >
                 분배
             </Button>
