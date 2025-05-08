@@ -1872,6 +1872,7 @@ export default function Home() {
                                     variant="outlined"
                                     onClick={(e) => e.stopPropagation()}
                                     sx={{
+                                        display:'none',
                                         fontSize: '11px',
                                         height: '24px',
                                         padding: '0 8px',
@@ -2901,6 +2902,7 @@ export default function Home() {
                                     variant="outlined"
                                     onClick={(e) => e.stopPropagation()}
                                     sx={{
+                                        display:'none',
                                         fontSize: '11px',
                                         height: '24px',
                                         padding: '0 8px',
