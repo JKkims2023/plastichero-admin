@@ -354,10 +354,10 @@ export default function Home() {
               setFilterContentTypeValueMethod('all');
             }break;
             case 20:{
-              setFilterContentTypeValueMethod('1');
+              setFilterContentTypeValueMethod('0');
             }break;
             case 30:{
-              setFilterContentTypeValueMethod('0');
+              setFilterContentTypeValueMethod('1');
             }break;
             case 40:{
               setFilterContentTypeValueMethod('2');
@@ -383,6 +383,7 @@ export default function Home() {
       try{
 
         setFilterSellStatusMethod(Number(event.target.value));
+        setFilterInfo(''); // 필터 유형이 변경될 때 검색어 초기화
 
         switch(event.target.value){
 
@@ -390,16 +391,20 @@ export default function Home() {
             setFilterSellStatusValueMethod('all');
           }break;
           case 20:{
-            setFilterSellStatusValueMethod('address');
+            setFilterSellStatusValueMethod('title');
           }break;
           case 30:{
-            setFilterSellStatusValueMethod('name');
+            setFilterSellStatusValueMethod('content');
           }break;
           case 40:{
             setFilterSellStatusValueMethod('id');
           }break;
           case 50:{
-            setFilterSellStatusValueMethod('mail');
+            setFilterSellStatusValueMethod('name');
+          }break;
+          case 60:{
+            setFilterSellStatusValueMethod('status');
+            setFilterInfo('전체'); // 처리상태 필터 선택 시 기본값을 '전체'로 설정
           }break;
           default:{
             setFilterSellStatusValueMethod('all');
@@ -415,21 +420,6 @@ export default function Home() {
 
     };  
 
-    const handleClickDeleteKeyword = () => {
-
-      try{
-
-        setFilterInfo('');
-        setSearchResults([]);
-
-      }catch(error){
-
-        console.log(error);
-
-      }
-
-    };
-
     const handleClickSearch = () => {
 
       try{
@@ -441,78 +431,103 @@ export default function Home() {
           if(filterInfo.length > 0) {
 
             switch(filterSellStatusValueMethod) {
-              case 'address': {
-                filteredList = filteredList.filter((user) => 
-                  user.address?.includes(filterInfo) && user.lock_type == filterContentTypeValueMethod)
-                  .map((user, idx) => ({ ...user, id: idx + 1 }));
+              case 'title': {
+                filteredList = filteredList.filter((item) => 
+                  item.support_title?.includes(filterInfo) && item.support_type == filterContentTypeValueMethod)
+                  .map((item, idx) => ({ ...item, id: idx + 1 }));
               } break;
-              case 'name': {
-                filteredList = filteredList.filter((user) => 
-                  user.mb_name?.includes(filterInfo) && user.lock_type == filterContentTypeValueMethod)
-                  .map((user, idx) => ({ ...user, id: idx + 1 }));
+              case 'content': {
+                filteredList = filteredList.filter((item) => 
+                  item.support_desc?.includes(filterInfo) && item.support_type == filterContentTypeValueMethod)
+                  .map((item, idx) => ({ ...item, id: idx + 1 }));
               } break;
               case 'id': {
-                filteredList = filteredList.filter((user) => 
-                  user.mb_id?.includes(filterInfo) && user.lock_type == filterContentTypeValueMethod)
-                  .map((user, idx) => ({ ...user, id: idx + 1 }));
+                filteredList = filteredList.filter((item) => 
+                  item.mb_id?.includes(filterInfo) && item.support_type == filterContentTypeValueMethod)
+                  .map((item, idx) => ({ ...item, id: idx + 1 }));
               } break;
-              case 'mail': {
-                filteredList = filteredList.filter((user) => 
-                  user.email?.includes(filterInfo) && user.lock_type == filterContentTypeValueMethod)
-                  .map((user, idx) => ({ ...user, id: idx + 1 }));
+              case 'name': {
+                filteredList = filteredList.filter((item) => 
+                  item.mb_name?.includes(filterInfo) && item.support_type == filterContentTypeValueMethod)
+                  .map((item, idx) => ({ ...item, id: idx + 1 }));
+              } break;
+              case 'status': {
+                let statusValue = 'N'; // 기본값은 미처리
+                if(filterInfo === '처리완료') statusValue = 'D';
+                else if(filterInfo === '전체') {
+                  // 전체 선택 시 필터링 없이 모든 아이템을 포함
+                  filteredList = filteredList.filter((item) => 
+                    item.support_type == filterContentTypeValueMethod)
+                    .map((item, idx) => ({ ...item, id: idx + 1 }));
+                  break;
+                }
+                
+                filteredList = filteredList.filter((item) => 
+                  item.support_status === statusValue && item.support_type == filterContentTypeValueMethod)
+                  .map((item, idx) => ({ ...item, id: idx + 1 }));
               } break;
               default: {
-                filteredList = filteredList.filter((user) => 
-                  user.lock_type == filterContentTypeValueMethod)
-                  .map((user, idx) => ({ ...user, id: idx + 1 }));
+                filteredList = filteredList.filter((item) => 
+                  item.support_type == filterContentTypeValueMethod)
+                  .map((item, idx) => ({ ...item, id: idx + 1 }));
               } break;
             
             }
           
           }else{
 
-            filteredList = filteredList.filter((user) => 
-              user.lock_type == filterContentTypeValueMethod)
-              .map((user, idx) => ({ ...user, id: idx + 1 }));
+            filteredList = filteredList.filter((item) => 
+              item.support_type == filterContentTypeValueMethod)
+              .map((item, idx) => ({ ...item, id: idx + 1 }));
           
             }
 
         } else {
 
-          console.log('here2');
-
           if(filterInfo.length > 0) {
 
             switch(filterSellStatusValueMethod) {
-              case 'address': {
-                filteredList = filteredList.filter((user) => 
-                  user.address?.includes(filterInfo) )
-                  .map((user, idx) => ({ ...user, id: idx + 1 }));
+              case 'title': {
+                filteredList = filteredList.filter((item) => 
+                  item.support_title?.includes(filterInfo))
+                  .map((item, idx) => ({ ...item, id: idx + 1 }));
               } break;
-              case 'name': {
-                filteredList = filteredList.filter((user) => 
-                  user.mb_name?.includes(filterInfo) )
-                  .map((user, idx) => ({ ...user, id: idx + 1 }));
+              case 'content': {
+                filteredList = filteredList.filter((item) => 
+                  item.support_desc?.includes(filterInfo))
+                  .map((item, idx) => ({ ...item, id: idx + 1 }));
               } break;
               case 'id': {
-                filteredList = filteredList.filter((user) => 
-                  user.mb_id?.includes(filterInfo) )
-                  .map((user, idx) => ({ ...user, id: idx + 1 }));
+                filteredList = filteredList.filter((item) => 
+                  item.mb_id?.includes(filterInfo))
+                  .map((item, idx) => ({ ...item, id: idx + 1 }));
               } break;
-              case 'mail': {
-                filteredList = filteredList.filter((user) => 
-                  user.email?.includes(filterInfo))
-                  .map((user, idx) => ({ ...user, id: idx + 1 }));
+              case 'name': {
+                filteredList = filteredList.filter((item) => 
+                  item.mb_name?.includes(filterInfo))
+                  .map((item, idx) => ({ ...item, id: idx + 1 }));
+              } break;
+              case 'status': {
+                let statusValue = 'N'; // 기본값은 미처리
+                if(filterInfo === '처리완료') statusValue = 'D';
+                else if(filterInfo === '전체') {
+                  // 전체 선택 시 필터링 없음
+                  break;
+                }
+                
+                filteredList = filteredList.filter((item) => 
+                  item.support_status === statusValue)
+                  .map((item, idx) => ({ ...item, id: idx + 1 }));
               } break;
               default: {
-                filteredList = filteredList.map((user, idx) => ({ ...user, id: idx + 1 }));
+                filteredList = filteredList.map((item, idx) => ({ ...item, id: idx + 1 }));
               } break;
             
             }
           
           }else{
 
-            filteredList = filteredList.map((user, idx) => ({ ...user, id: idx + 1 }));
+            filteredList = filteredList.map((item, idx) => ({ ...item, id: idx + 1 }));
           
             }
           
@@ -1756,7 +1771,7 @@ export default function Home() {
                             서비스 장애
                         </Typography>
                         <Typography sx={{fontSize: "24px", fontWeight: "bold", color: "#1f1f26"}}>
-                          {filterSupportList.length.toLocaleString()}
+                          {filterSupportList.filter(item => item.support_type === '0').length.toLocaleString()}
                         </Typography>
                         
                     </Box>
@@ -1768,7 +1783,7 @@ export default function Home() {
                         AI Robot 장애
                         </Typography>
                         <Typography sx={{fontSize: "24px", fontWeight: "bold", color: "#1f1f26"}}>
-                          {filterSupportList.filter(user => user.lock_type === '1').length.toLocaleString()}
+                          {filterSupportList.filter(item => item.support_type === '1').length.toLocaleString()}
                         </Typography>
 
                     </Box>
@@ -1780,7 +1795,7 @@ export default function Home() {
                             제안
                         </Typography>
                         <Typography sx={{fontSize: "24px", fontWeight: "bold", color: "#1f1f26"}}>
-                            {filterSupportList.filter(user => user.lock_type === '0').length.toLocaleString()}
+                            {filterSupportList.filter(item => item.support_type === '2').length.toLocaleString()}
                         </Typography>
                     </Box>
                 </Grid>
@@ -1791,7 +1806,7 @@ export default function Home() {
                             기타문의
                         </Typography>
                         <Typography sx={{fontSize: "24px", fontWeight: "bold", color: "#1f1f26"}}>
-                            {filterSupportList.filter(user => user.lock_type === '2').length.toLocaleString()}
+                            {filterSupportList.filter(item => item.support_type === '3').length.toLocaleString()}
                         </Typography>
                         
                     </Box>
@@ -1889,13 +1904,65 @@ export default function Home() {
                         onChange={handleChangeFilterSellStatus}
                     >
                         <MenuItem style={{fontSize:14}} value={10}>전체</MenuItem>
-                        <MenuItem style={{fontSize:14}} value={20}>지갑주소</MenuItem>
-                        <MenuItem style={{fontSize:14}} value={30}>이용자명</MenuItem>
+                        <MenuItem style={{fontSize:14}} value={20}>요청제목</MenuItem>
+                        <MenuItem style={{fontSize:14}} value={30}>요청내용</MenuItem>
                         <MenuItem style={{fontSize:14}} value={40}>이용자ID</MenuItem>
-                        <MenuItem style={{fontSize:14}} value={50}>연결된 메일</MenuItem>
+                        <MenuItem style={{fontSize:14}} value={50}>이용자명</MenuItem>
+                        <MenuItem style={{fontSize:14}} value={60}>처리상태</MenuItem>
                     </Select>
                 </FormControl>
-
+                
+                {filterSellStatusValueMethod === 'status' ? (
+                    <FormControl sx={{ 
+                        width: "110px", 
+                        marginLeft: "5px",
+                        '& .MuiOutlinedInput-root': {
+                            height: '33px',
+                            backgroundColor: 'white'
+                        }
+                    }}>
+                        <Select
+                            value={filterInfo}
+                            onChange={(e) => setFilterInfo(e.target.value)}
+                            size="small"
+                            sx={{
+                                height: '33px',
+                                fontSize: '14px'
+                            }}
+                        >
+                            <MenuItem style={{fontSize:14}} value="전체">전체</MenuItem>
+                            <MenuItem style={{fontSize:14}} value="처리완료">처리완료</MenuItem>
+                            <MenuItem style={{fontSize:14}} value="미처리">미처리</MenuItem>
+                        </Select>
+                    </FormControl>
+                ) : (
+                    <OutlinedInput
+                        id="outlined-search"
+                        placeholder="검색어를 입력 해주세요."
+                        size="small"
+                        style={{
+                            fontSize:14,
+                            width:'250px', 
+                            marginRight:'5px',
+                            marginLeft:'5px',
+                            backgroundColor:'white',
+                            height:'33px'
+                        }}
+                        value={filterInfo}
+                        onChange={(e) => setFilterInfo(e.target.value)}
+                        startAdornment={
+                            <InputAdornment position="start">
+                                <div style={{cursor:'pointer'}} onClick={()=>{}}><SearchIcon /></div>
+                            </InputAdornment>
+                        }
+                        endAdornment={
+                            <InputAdornment position="end">
+                                <div style={{cursor:'pointer'}} onClick={()=>{setFilterInfo('')}}><ClearIcon /></div>
+                            </InputAdornment>
+                        }
+                    />
+                )}
+                
                 <Button 
                     variant="contained" 
                     style={{
