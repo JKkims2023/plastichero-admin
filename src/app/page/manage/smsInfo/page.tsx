@@ -132,7 +132,7 @@ export default function Home() {
           editable: false,
       },
       {
-          field: 'phone',
+          field: 'mb_phone',
           headerName: '핸드폰 번호',
           type: 'string',
           flex: 1.3,
@@ -140,7 +140,7 @@ export default function Home() {
           editable: false,
       },
       {
-          field: 'code',
+          field: 'auth_info',
           headerName: '인증코드',
           type: 'string',
           flex: 0.8,
@@ -148,7 +148,7 @@ export default function Home() {
           editable: false,
       },
       {
-          field: 'status',
+          field: 'auth_result',
           headerName: '인증상태',
           type: 'string',
           flex: 0.8,
