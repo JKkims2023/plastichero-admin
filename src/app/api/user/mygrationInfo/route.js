@@ -29,7 +29,7 @@ export async function POST(request) {
 
       from tbl_pth_wallet_info
 
-      where user_idx = '${mb_idx}'
+      where user_idx = '${mb_idx}' and active = 'O'
       order by reg_date desc;
 
     `;
