@@ -1246,7 +1246,7 @@ export default function Home() {
                     marginRight:"10px",
                     fontSize: '14px'
                 }} 
-                onClick={handleExcelFunc}
+                onClick={handlePassFunc}
             >
                 분배
             </Button>

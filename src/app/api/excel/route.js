@@ -7,12 +7,16 @@ import path from 'path';
 
 export async function POST(request) {
   try {
+
+    console.log('excel 파일 업로드 시작');
     // 프로젝트 루트 경로 구하기
     const rootDir = process.cwd();
-    const excelFilePath = path.join(rootDir, 'restore.xlsx');
+    const excelFilePath = path.join(rootDir, 'real_final.xlsx');
     
     // 파일이 존재하는지 확인
     if (!fs.existsSync(excelFilePath)) {
+
+      console.log('파일을 찾을 수 없습니다.');
       return NextResponse.json({ message: '파일을 찾을 수 없습니다.' }, { status: 404 });
     }
     
@@ -43,6 +47,8 @@ export async function POST(request) {
     const results = [];
 
     for (const row of data) {
+
+
       // 엑셀에서 확인된 구조에 맞게 데이터 추출
       const keys = Object.keys(row);
       
@@ -56,21 +62,21 @@ export async function POST(request) {
         continue;
       }
       
-      const recoveryAmount = row['1000']; // 첫 번째 열 값
-      const walletAddress = keys[1]; // 두 번째 열 키 (지갑 주소)
-      const useableSwapAmount = row['1000_1']; // 세 번째 열 값
+      const recoveryAmount = row['amount']; // 첫 번째 열 값
+      const walletAddress = row['address']; // 두 번째 열 키 (지갑 주소)
+      const useableSwapAmount = row['swap']; // 세 번째 열 값
       
       // SQL 쿼리 실행
       try {
+
+        
         const updateQuery = `UPDATE tbl_pth_wallet_info SET 
           recovery_amount = ?,
           useable_swap_amount = ?,
           import_status = 'Y'
           WHERE address = ?`;
-        
-
-        console.log(updateQuery);
-
+      
+      
         
         const [result] = await connection.execute(updateQuery, [
           recoveryAmount,
@@ -96,7 +102,10 @@ export async function POST(request) {
             affected: 0
           });
         }
+
+        console.log('count : ', updatedCount);
         
+
       } catch (err) {
         console.error('행 업데이트 중 오류:', err);
         results.push({
@@ -111,6 +120,13 @@ export async function POST(request) {
     
     // 연결 종료
     await connection.end();
+
+    console.log('연결 종료');
+    console.log('업데이트 완료');
+    console.log('업데이트 결과 개수 : ', results.length);
+    console.log('업데이트 결과 중 성공 개수 : ', results.filter(result => result.status === 'success').length);
+    console.log('업데이트 결과 중 실패 개수 : ', results.filter(result => result.status === 'error').length);
+    console.log('업데이트 결과 중 건너뛴 개수 : ', results.filter(result => result.status === 'skipped').length);
     
     return NextResponse.json({ 
       message: 'Data imported successfully!',
