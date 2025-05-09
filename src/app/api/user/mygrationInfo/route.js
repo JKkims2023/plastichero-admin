@@ -20,6 +20,7 @@ export async function POST(request) {
     
       SELECT 
       
+        idx,
         address,
         new_address,
         recovery_amount,

@@ -1,9 +1,7 @@
 import React, { useState, useRef, useCallback, useEffect } from "react";
 import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
-import ApartmentIcon from '@mui/icons-material/Apartment';
-import SettingsIcon from '@mui/icons-material/Settings';
-import NoteAltIcon from '@mui/icons-material/NoteAlt';
+import axios from 'axios';
 import PersonIcon from '@mui/icons-material/Person';
 import EmailIcon from '@mui/icons-material/Email';
 import PhoneIcon from '@mui/icons-material/Phone';
@@ -213,6 +211,41 @@ const UserInfoView = ({userInfo}) => {
         }
     };
 
+    const handleManualMigration = async(item) => {
+
+        try{
+
+            const response = await fetch('/api/user/updateManualMigration', {
+  
+                method: 'POST',
+                headers: {
+                
+                  'Content-Type': 'application/json',
+                
+                },
+                
+                body: JSON.stringify({wallet_idx : item.idx }),
+                
+            });
+        
+            const data = await response.json(); 
+        
+            if(data.result == 'success'){
+
+                alert('아이그레이션 처리가 완료되었습니다.');
+                await handleMigrationRequest();
+
+            }else{
+
+                alert(data.error);
+
+            }
+
+        }catch(error){
+
+            console.log(error);
+        }
+    };
 
     const handleMigrationDetail = () => {
         setOpenMigrationDialog(true);
@@ -287,19 +320,121 @@ const UserInfoView = ({userInfo}) => {
 
     // 재요청 함수 구현
     const handleRetryFunc = async (item) => {
+        
         try {
-            console.log("재요청 처리중...", item);
             
-            // 여기에는 실제 재요청 API 호출 코드가 들어갈 것입니다.
-            // JK님이 나중에 구현하실 예정이므로 로그만 출력합니다.
-            alert(`마이그레이션 재요청이 접수되었습니다. 주소: ${item.address}`);
+            if(item.new_address == null || item.new_address == '' || item.new_address == 'undefined'){
+
+                alert('마이그레이션 가능한 지갑 주소가 없습니다.');
+                return;
+
+            }
             
-            // 데이터 갱신을 위해 마이그레이션 정보 다시 불러오기
-            await handleMigrationRequest();
+            const headers_config = {
+
+
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'Accept': 'application/json',   
+                
+            };
+
+            const response = await axios({
+                url : 'https://backend-api.plasticherokorea.com/' + 'api/regist/migration_reward', 
+                method : 'POST',
+                headers : headers_config,
+                data : {
+              
+                    "to" : item.new_address,
+                    "count" : parseFloat(item.recovery_amount.toString().replace(/,/g, '')),
+                    "timestamp" : Math.floor(Date.now() / 1000),  // UTC 10자리 타임스탬프
+                },
+                transformRequest: [data => JSON.stringify(data)], // 요청 데이터를 JSON 문자열로 변환
+
+            });
+
+            if(response.data.success){
+
+                handleManualMigration(item);
+  
+            }else{
+
+                let info = '';
+                switch(response.data.code){
+
+                    case 'MR_001': // user_idx 필드누락.
+                        info = 'to 필드 누락 또는 유효한 지갑 주소(EVM기반 주소 체계)가 아닐경우';
+                        break;
+                    case 'MR_002': // to 필드 누락 또는 유효한 지갑 주소가 아님.
+                        info = 'count 필드 누락 또는 0 이하 값 일경우';
+                        break;
+                    case 'MR_003': // count 필드 누락 또는 0 이하의 값.
+                        info = 'timestamp 필드 누락';
+                        break;
+                    case 'MR_100': // Timestamp 필드 누락.
+                        info = '이미 존재 하는 To 주소';
+                        break;
+                    case 'MR_500': // 이미 리워드 받은 회원.
+                        info = 'DB 에러';
+                        break;
+                    default: // DB에러.
+                        info = 'DB에러';
+                        break;
+                        
+                }
+
+                alert(info);
+
+            }
+
         } catch (error) {
             console.error("마이그레이션 재요청 중 오류 발생:", error);
             alert("재요청 처리 중 오류가 발생했습니다.");
         }
+    };
+
+    const handleChangeKioskOwner = async() => {
+
+        try{
+
+            const response = await fetch('/api/user/changeKioskOwnerInfo', {
+  
+                method: 'POST',
+                headers: {
+                
+                  'Content-Type': 'application/json',
+                
+                },
+                
+                body: JSON.stringify({mb_no : userInfo?.mb_no, kiosk_owner : userInfo?.mb_kiosk_owner == 'Y' ? 'N' : 'Y' }),
+                
+            });
+        
+            const data = await response.json(); 
+        
+            if(data.result == 'success'){
+
+                if(userInfo?.mb_kiosk_owner == 'Y'){
+
+                    alert('키오스크 소유주 해지가 완료되었습니다.');
+
+                }else{
+
+                    alert('키오스크 소유주 등록이 완료되었습니다.');
+                }
+
+
+            }else{
+
+                alert(data.error);
+
+            }
+
+        }catch(error){
+
+            console.log(error);
+
+        }
+
     };
 
     return (
@@ -477,7 +612,7 @@ const UserInfoView = ({userInfo}) => {
                                             }
                                         }}
                                     >
-                                        상세내역
+                                        잔액전환 상세내역
                                     </Button>
 
                             </Box>
@@ -497,9 +632,41 @@ const UserInfoView = ({userInfo}) => {
                                     fontSize: '13px',
                                     fontWeight: 600,
                                 }}>
-                                    마이그레이션 상태 : {migrationStatus == 'Y' ? '완료' : '대기'}
+                                    지갑 마이그레이션 상태 : {migrationStatus == 'Y' ? '완료' : '대기'}
                                 </Typography>
                             </div>
+                        </div>
+                        <div>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.2, mb: 1.5 }}>
+                                <VerifiedUserIcon sx={{ color: '#1976d2', fontSize: 18 }} />
+                                <Typography variant="subtitle2" sx={{ 
+                                    color: '#444',
+                                    fontSize: '13px',
+                                    fontWeight: 600,
+                                }}>
+                                    키오스크 소유주  : {userInfo.mb_kiosk_owner == 'Y' ? '소유주' : '일반'}
+                                </Typography>
+
+                                    <Button
+                                        variant="contained"
+                                        size="small"
+                                        onClick={handleChangeKioskOwner}
+                                        sx={{
+
+                                            ml: 'auto',
+                                            fontSize: '12px',
+                                            height: '28px',
+                                            backgroundColor: '#4CAF50',
+                                            '&:hover': {
+                                                backgroundColor: '#388E3C'
+                                            }
+                                        }}
+                                    >
+                                        {userInfo.mb_kiosk_owner == 'Y' ? '해지' : '등록'}
+                                    </Button>
+
+                            </Box>
+
                         </div>
                     </div>
                 </Box>
@@ -749,7 +916,7 @@ const UserInfoView = ({userInfo}) => {
                                                                 fontSize: '13px'
                                                             }}
                                                         >
-                                                            복구 금액
+                                                            마이그레이션 금액
                                                         </TableCell>
                                                         <TableCell sx={{ fontSize: '13px' }}>
                                                             {item.recovery_amount || '-'}
@@ -772,7 +939,7 @@ const UserInfoView = ({userInfo}) => {
                                                             {item.useable_swap_amount || '-'}
                                                         </TableCell>
                                                     </TableRow>
-                                                    <TableRow sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
+                                                    <TableRow sx={{ '&:last-child td, &:last-child th': { border: 0 }, }}>
                                                         <TableCell 
                                                             component="th" 
                                                             scope="row"
@@ -783,7 +950,7 @@ const UserInfoView = ({userInfo}) => {
                                                                 fontSize: '13px'
                                                             }}
                                                         >
-                                                            복구 상태
+                                                            잔액이동 상태
                                                         </TableCell>
                                                         <TableCell sx={{ fontSize: '13px' }}>
                                                             <Box 
@@ -812,6 +979,7 @@ const UserInfoView = ({userInfo}) => {
                                                                         height: '28px',
                                                                         fontSize: '12px',
                                                                         backgroundColor: '#1565c0',
+                                                                        marginLeft:'20px',
                                                                         '&:hover': { backgroundColor: '#0d47a1' }
                                                                     }}
                                                                 >

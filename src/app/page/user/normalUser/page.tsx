@@ -774,7 +774,7 @@ export default function Home() {
             }}  
             onClick={handleClickSearch}
           >
-            검색
+            초기화
           </Button>
 
       </div>

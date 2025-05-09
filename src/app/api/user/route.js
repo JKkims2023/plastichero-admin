@@ -30,6 +30,7 @@ export async function POST(request) {
         M.mb_hp, 
         M.mb_point,
         M.push_key,
+        M.mb_kiosk_owner,
         FORMAT(M.mb_point, 0) AS mb_point, 
         DATE_FORMAT(M.mb_today_login , '%Y-%m-%d %H:%i:%S') as mb_today_login, 
         DATE_FORMAT(M.mb_open_date , '%Y-%m-%d %H:%i:%S') as mb_datetime,

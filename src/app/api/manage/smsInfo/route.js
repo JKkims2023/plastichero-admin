@@ -24,8 +24,9 @@ export async function POST(request) {
         DATE_FORMAT(A.reg_dt , '%Y-%m-%d %H:%i:%S') as reg_dt,
         M.mb_id,
         M.mb_name
-        
-        from tbl_valid_phone as A left outer join g5_member as M on A.phone = M.mb_hp
+    
+        from g5_auth_info as A left outer join g5_member as M on A.auth_mb_no = M.mb_no
+
       
       order by A.reg_dt desc;
 

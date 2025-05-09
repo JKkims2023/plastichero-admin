@@ -33,7 +33,8 @@ export async function POST(request) {
     
       SELECT 
       
-        push_key
+        push_key,
+        push_status
       
       FROM g5_member
       
@@ -49,6 +50,7 @@ export async function POST(request) {
 
 //    const result = await axios.post('https://port-0-plastichero-batch-m90know96390d9a9.sel4.cloudtype.app/' + 'api/push/send', {
   
+if(rows_user[0].push_status == 'Y'){
 
   const result = await axios.post('https://port-0-plastichero-batch-maa8f8088cfc79d3.sel4.cloudtype.app/' + 'api/push/send', {
   
@@ -70,12 +72,38 @@ export async function POST(request) {
       connection.release(); // 연결 반환
     
       return response;
+   
+
+    }else{
+
+      const response = NextResponse.json({ 
+        
+        result: 'success',
+        result_data : rows,
+
+      });
+
+      connection.release(); // 연결 반환
     
+      return response;
+  
+    }
+
+       
   
   }catch(error){
 
     console.log(error);
 
+    connection.release(); // 연결 반환
+
+    const response = NextResponse.json({ 
+        
+      result: 'fail',
+      error: error.message
+    });
+
+    return response;
   }
 
 }
