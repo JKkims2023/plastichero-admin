@@ -329,60 +329,31 @@ const UserInfoView = ({userInfo}) => {
                 return;
 
             }
+
             
-            const headers_config = {
+            
+            const response = await fetch('/api/user/retryFunc', {
 
-
-                'Content-Type': 'application/x-www-form-urlencoded',
-                'Accept': 'application/json',   
+                method: 'POST',
+                headers: {
                 
-            };
-
-            const response = await axios({
-                url : 'https://backend-api.plasticherokorea.com/' + 'api/regist/migration_reward', 
-                method : 'POST',
-                headers : headers_config,
-                data : {
-              
-                    "to" : item.new_address,
-                    "count" : parseFloat(item.recovery_amount.toString().replace(/,/g, '')),
-                    "timestamp" : Math.floor(Date.now() / 1000),  // UTC 10자리 타임스탬프
+                  'Content-Type': 'application/json',
+                
                 },
-                transformRequest: [data => JSON.stringify(data)], // 요청 데이터를 JSON 문자열로 변환
+                
+                body: JSON.stringify({new_address : item.new_address, count : item.recovery_amount, timestamp : Math.floor(Date.now() / 1000) }),
 
             });
 
-            if(response.data.success){
+            const data = await response.json(); 
+
+            if(data.success){
 
                 handleManualMigration(item);
   
             }else{
 
-                let info = '';
-                switch(response.data.code){
-
-                    case 'MR_001': // user_idx 필드누락.
-                        info = 'to 필드 누락 또는 유효한 지갑 주소(EVM기반 주소 체계)가 아닐경우';
-                        break;
-                    case 'MR_002': // to 필드 누락 또는 유효한 지갑 주소가 아님.
-                        info = 'count 필드 누락 또는 0 이하 값 일경우';
-                        break;
-                    case 'MR_003': // count 필드 누락 또는 0 이하의 값.
-                        info = 'timestamp 필드 누락';
-                        break;
-                    case 'MR_100': // Timestamp 필드 누락.
-                        info = '이미 존재 하는 To 주소';
-                        break;
-                    case 'MR_500': // 이미 리워드 받은 회원.
-                        info = 'DB 에러';
-                        break;
-                    default: // DB에러.
-                        info = 'DB에러';
-                        break;
-                        
-                }
-
-                alert(info);
+                alert(data.error);
 
             }
 
