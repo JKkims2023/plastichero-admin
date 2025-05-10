@@ -66,6 +66,9 @@ import EditIcon from '@mui/icons-material/Edit';
 import SaveIcon from '@mui/icons-material/Save';
 import CancelIcon from '@mui/icons-material/Cancel';
 import Divider from '@mui/material/Divider';
+import ImageIcon from '@mui/icons-material/Image';
+import ZoomInIcon from '@mui/icons-material/ZoomIn';
+import CloseIcon from '@mui/icons-material/Close';
 
 type Anchor = 'bottom';
 
@@ -104,6 +107,92 @@ const StripedDataGrid = styled(DataGrid)(({ theme }) => ({
       },
     },
 }));
+
+interface ImagePreviewProps {
+  imageUrl: string;
+  alt?: string;
+}
+
+const ImagePreview: React.FC<ImagePreviewProps> = ({ imageUrl, alt = '이미지' }) => {
+  const [open, setOpen] = React.useState(false);
+
+  const handleClickOpen = () => {
+    setOpen(true);
+  };
+
+  const handleClose = () => {
+    setOpen(false);
+  };
+
+  return (
+    <>
+      <Box sx={{ position: 'relative', width: 100, height: 100, margin: 1 }}>
+        <img
+          src={imageUrl}
+          alt={alt}
+          style={{
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+            borderRadius: '4px',
+            cursor: 'pointer'
+          }}
+          onClick={handleClickOpen}
+        />
+        <IconButton
+          size="small"
+          sx={{
+            position: 'absolute',
+            top: 0,
+            right: 0,
+            backgroundColor: 'rgba(255, 255, 255, 0.8)',
+            '&:hover': {
+              backgroundColor: 'rgba(255, 255, 255, 0.9)',
+            }
+          }}
+          onClick={handleClickOpen}
+        >
+          <ZoomInIcon fontSize="small" />
+        </IconButton>
+      </Box>
+
+      <Dialog
+        open={open}
+        onClose={handleClose}
+        maxWidth="lg"
+        fullWidth
+      >
+        <DialogContent sx={{ position: 'relative', p: 0 }}>
+          <IconButton
+            onClick={handleClose}
+            sx={{
+              position: 'absolute',
+              right: 8,
+              top: 8,
+              color: 'white',
+              backgroundColor: 'rgba(0, 0, 0, 0.5)',
+              '&:hover': {
+                backgroundColor: 'rgba(0, 0, 0, 0.7)',
+              }
+            }}
+          >
+            <CloseIcon />
+          </IconButton>
+          <img
+            src={imageUrl}
+            alt={alt}
+            style={{
+              width: '100%',
+              height: 'auto',
+              maxHeight: '90vh',
+              objectFit: 'contain'
+            }}
+          />
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+};
 
 export default function Home() {
 
@@ -1552,6 +1641,58 @@ export default function Home() {
                                         }
                                     }}
                                 />
+                                <Divider sx={{ mt: 2, mb: 1 }} />
+                            </Grid>
+    
+                            <Grid item xs={12}>
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.2, mb: 0.8 }}>
+                                    <ImageIcon sx={{ color: '#1976d2', fontSize: 18 }} />
+                                    <Typography variant="subtitle2" sx={{ 
+                                        color: '#444',
+                                        fontSize: '13px',
+                                        fontWeight: 600,
+                                    }}>
+                                        첨부 이미지
+                                    </Typography>
+                                </Box>
+                                <Box sx={{ 
+                                    display: 'flex', 
+                                    flexWrap: 'wrap', 
+                                    gap: 1,
+                                    mt: 1,
+                                    p: 2,
+                                    backgroundColor: '#f8f9fa',
+                                    borderRadius: '4px',
+                                    border: '1px solid #eaeaea'
+                                }}>
+                                    {selectedContent?.img_path1 && (
+                                        <ImagePreview 
+                                            imageUrl={selectedContent.img_path1} 
+                                            alt="첨부 이미지 1" 
+                                        />
+                                    )}
+                                    {selectedContent?.img_path2 && (
+                                        <ImagePreview 
+                                            imageUrl={selectedContent.img_path2} 
+                                            alt="첨부 이미지 2" 
+                                        />
+                                    )}
+                                    {selectedContent?.img_path3 && (
+                                        <ImagePreview 
+                                            imageUrl={selectedContent.img_path3} 
+                                            alt="첨부 이미지 3" 
+                                        />
+                                    )}
+                                    {!selectedContent?.img_path1 && !selectedContent?.img_path2 && !selectedContent?.img_path3 && (
+                                        <Typography sx={{ 
+                                            color: '#666',
+                                            fontSize: '13px',
+                                            fontStyle: 'italic'
+                                        }}>
+                                            첨부된 이미지가 없습니다.
+                                        </Typography>
+                                    )}
+                                </Box>
                                 <Divider sx={{ mt: 2, mb: 1 }} />
                             </Grid>
          
