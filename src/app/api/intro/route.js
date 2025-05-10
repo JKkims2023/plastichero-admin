@@ -90,6 +90,7 @@ export async function POST(request) {
       start_date : '',
       done_date : '',
       success_yn : 'N',
+      spreaded_yn : 'N',
 
     };
 
