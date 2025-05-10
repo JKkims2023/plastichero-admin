@@ -38,6 +38,11 @@ export async function POST(request) {
 
     });
 
+    console.log('--------------------------------');
+    console.log(result.data.code);
+    console.log(result.data);
+    console.log('--------------------------------');
+
     if(result.data.success){
 
           const response = NextResponse.json({ 
